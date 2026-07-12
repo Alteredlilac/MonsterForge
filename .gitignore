@@ -1,0 +1,43 @@
+# virtual environment
+.venv/
+
+# env file
+.env
+
+# personal files
+PROJECT_NOTES.md
+
+# Development notes
+**/dev-notes/
+
+# logs
+*.log
+
+# editor
+.vscode/
+
+# python cache
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Type checking
+.mypy_cache/
+.pyright/
+
+# system (linux/windows/mac optional)
+.DS_Store
+Thumbs.db
+.thumbnails/
+*~
+
+# Coverage / test cache (Python testing)
+.coverage
+.pytest_cache/
+
+# Packaging / build
+dist/
+build/
+*.egg-info/
