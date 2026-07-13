@@ -11,6 +11,10 @@ including its usage, effects, requirements, and modifiers.
 This module introduces the ItemCard data structure used to represent
 items within the game.
 """
+# NOTE: unlike MoveCard (which represents a single atomic action), ItemCard
+# composes multiple sub-effects (ItemMove, ItemDamage, ItemModifier...) because
+# a single item can grant several simultaneous capabilities (e.g. an enchanted
+# sword that deals damage, grants a bonus, and can parry).
 
 from dataclasses import dataclass, field
 from .cards import Card
@@ -73,8 +77,4 @@ class ItemCard(Card):
     charges: int | None = None # cariche od usi limitati
     # ItemModifier
     modifiers: list[ItemModifier] = field(default_factory=list)
-    
-
-
-
-# TODO una volta finito items.py fare dei test su domain
+   
