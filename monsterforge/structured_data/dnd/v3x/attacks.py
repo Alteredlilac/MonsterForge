@@ -7,19 +7,13 @@ in creature stat blocks while keeping the data suitable for later
 conversion and transformation.
 """
 from dataclasses import dataclass, field
-from .enums import HitDiceType, DamageType, UnitSystem, Ability
+from .enums import UnitSystem
 from .special_attacks import SpecialAttack
+from .dice_effects import Damage
 
-@dataclass(kw_only=True)
-class Damage:
-    dice_number : int | None = None       # numero di dadi
-    dice_type: HitDiceType | None = None  # tipo di dado d6 , d8 eccetera
-    damage_type: DamageType | None = None # tipo di danni (normali, fuoco)
-    affected_ability: Ability | None = None
-    damage_bonus: int | None = None       # bonus ai danni
-    damage_bonus_type: DamageType | None = None # tipo di danni bonus (normali, fuoco)
-
-
+# =====================
+# ATTACK
+# =====================
 @dataclass(kw_only=True)
 class Attack:
     # Attack Data
@@ -39,7 +33,10 @@ class Attack:
     # Effects
     effects: list[SpecialAttack] = field(default_factory=list)   
     
-    
+
+# =====================
+# FULL ATTACK
+# =====================    
 @dataclass(kw_only=True)
 class FullAttack:
     attacks: list[Attack] = field(default_factory=list)

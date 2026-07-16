@@ -113,7 +113,7 @@ class Creature:
     # out of scope for this project.
     
 # =====================
-# CreatureModifier
+# CREATURE MODIFIER
 # =====================
 @dataclass(kw_only=True)
 class CreatureModifier:
