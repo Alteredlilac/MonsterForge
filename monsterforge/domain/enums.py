@@ -147,8 +147,6 @@ class Duration(str, Enum):                 # Durata
 # =====================
 # ITEM
 # =====================
-# TODO da implementare enums degli items
-# vedere se riutilizzare parde di quelli usati per moves
 class ItemType(str, Enum):
     WEAPON = "weapon"          # attack actions
     DEFENSE = "defense"        # defense actions
@@ -160,5 +158,3 @@ class RequirementType(str, Enum):
     STAT = "stat"
     MOVE = "move"
     CREATURE = "creature"
-
-

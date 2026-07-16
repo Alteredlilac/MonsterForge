@@ -1,0 +1,5 @@
+"""
+famiglio 
+cavalcatura
+compagno animale
+"""
