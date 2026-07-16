@@ -14,6 +14,11 @@ from enum import Enum
 # =====================
 # GENERAL
 # =====================
+
+class UnitSystem(str, Enum):
+    METRIC = "metric"
+    IMPERIAL = "imperial"
+    
 class Size(str, Enum):   # usato per creature e Item
     FINE = "fine"             #Minuta
     DIMINUTIVE = "diminutive" #Piccolissima
@@ -25,7 +30,7 @@ class Size(str, Enum):   # usato per creature e Item
     GARGANTUAN = "gargantuan" #Mastodontica
     COLOSSAL = "colossal"     #Colossale
 
-class HitDiceType(str, Enum):
+class DiceType(str, Enum):
     D4 = "d4"
     D6 = "d6"
     D8 = "d8"
@@ -39,6 +44,49 @@ class Ability(str, Enum):
     INTELLIGENCE = "intelligence"
     WISDOM = "wisdom"
     CHARISMA = "charisma"
+
+class SavingThrowType(str, Enum):
+    FORTITUDE = "fortitude"
+    REFLEX = "reflex"
+    WILL = "will"
+
+class SavingThrowEffect(str, Enum):
+    NEGATES = "negates"       # il tiro salvezza nega completamente l'effetto
+    HALF = "half"             # il tiro salvezza dimezza i danni
+    PARTIAL = "partial"       # il tiro salvezza riduce parzialmente l'effetto
+    DISBELIEF = "disbelief"   # il tiro salvezza permette di dubitare dell'illusione
+
+class TimeUnit(str, Enum):  # usato per move e Item
+    ROUND = "round"
+    MINUTE = "minute"
+    HOUR = "hour"
+    DAY = "day"
+    WEEK = "week"
+    MONTH = "month"
+    YEAR = "year"
+
+class Usage(str, Enum): # usato per move e Item
+    UNLIMITED = "unlimited"       # Illimitato
+    DAILY = "daily"                # Giornaliero
+    LIMITED = "limited"            # Limitato
+    SITUATIONAL = "situational"    # Situazionale
+
+class Duration(str, Enum):                 # Durata
+    INSTANT = "instant"               # Istantaneo
+    CONCENTRATION = "concentration"   # concentrazione
+    TEMPORARY = "temporary"           # Temporaneo
+    PERMANENT = "permanent"           # Permanente
+
+class AreaEffectShape(str, Enum):   # Forma dell'area di effetto
+    BURST = "burst"              # esplosione (si espande da un punto)
+    SPREAD = "spread"            # propagazione (si espande seguendo linee di effetto)
+    EMANATION = "emanation"      # emanazione (si estende da una creatura o punto)
+    LINE = "line"                # linea
+    CONE = "cone"                # cono
+    SQUARE = "square"            # quadrato
+    CUBE = "cube"                # cubo
+    SPHERE = "sphere"            # sfera
+    CYLINDER = "cylinder"        # cilindro
 
 # =====================
 # CREATURE
@@ -97,10 +145,6 @@ class FlyManeuverability(str, Enum): # manovrabilità di volo
     POOR = "poor"        # scarsa
     CLUMSY = "clumsy"    # maldestra
 
-class UnitSystem(str, Enum):
-    METRIC = "metric"
-    IMPERIAL = "imperial"
-
 class Alignment(str, Enum):
     LAWFUL_GOOD = "Lawful Good"
     NEUTRAL_GOOD = "Neutral Good"
@@ -145,3 +189,11 @@ class DamageType(str, Enum):
     POSITIVE_ENERGY = "positive_energy"
     # RISUCCHIO
     ENERGY_DRAIN = "energy_drain"
+
+# =====================
+# SPECIAL ABILITY
+# =====================
+class SpecialAbilityType(str, Enum):
+    EXTRAORDINARY = "extraordinary"
+    SUPERNATURAL = "supernatural"
+    SPELL_LIKE = "spell_like"

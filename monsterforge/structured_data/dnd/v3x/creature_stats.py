@@ -3,7 +3,7 @@ Contiene le statistiche delle creature
 """
 from dataclasses import dataclass, field
 from .enums import (
-    HitDiceType,
+    DiceType,
     UnitSystem, 
     MovementMode,  
     FlyManeuverability,
@@ -15,7 +15,7 @@ from .enums import (
 @dataclass(kw_only=True)
 class HitDice:
     num_hit_dice: int           # numero di dadi vita
-    hit_dice_type: HitDiceType  # tipo di dado vita
+    hit_dice_type: DiceType  # tipo di dado vita
 
 # =====================
 # Movimento
