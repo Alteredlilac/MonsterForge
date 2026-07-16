@@ -42,4 +42,4 @@ class Attack:
     
 @dataclass(kw_only=True)
 class FullAttack:
-    full_attack: list[Attack] = field(default_factory=list)
+    attacks: list[Attack] = field(default_factory=list)
