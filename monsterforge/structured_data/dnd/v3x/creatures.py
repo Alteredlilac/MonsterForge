@@ -35,12 +35,14 @@ from .feats import Feat
 from .items import Item
 from .spells import Spellcasting
 from .psionic_powers import Psionics
+import uuid
 
 # =====================
 # CREATURE 
 # =====================
 @dataclass(kw_only=True)
 class Creature:
+    id: uuid.UUID = field(default_factory=uuid.uuid4)
     # Creature data
     name: str    
     creature_type: CreatureType 
@@ -126,7 +128,7 @@ class CreatureModifier:
     # Overrides (sostituiscono il valore della creatura base, se presenti)
     # Additive (si sommano a quanto già presente nella creatura base)
     # Modifiers (bonus/penalità da applicare)
-
+    id: uuid.UUID = field(default_factory=uuid.uuid4)
     # Creature Data
     name: str                        # "Licantropia", "Vampirismo"
     type_override: CreatureType | None = None 

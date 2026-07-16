@@ -25,6 +25,20 @@ class Size(str, Enum):   # usato per creature e Item
     GARGANTUAN = "gargantuan" #Mastodontica
     COLOSSAL = "colossal"     #Colossale
 
+class HitDiceType(str, Enum):
+    D4 = "d4"
+    D6 = "d6"
+    D8 = "d8"
+    D10 = "d10"
+    D12 = "d12"
+
+class Ability(str, Enum):
+    STRENGTH = "strength"
+    DEXTERITY = "dexterity"
+    CONSTITUTION = "constitution"
+    INTELLIGENCE = "intelligence"
+    WISDOM = "wisdom"
+    CHARISMA = "charisma"
 
 # =====================
 # CREATURE
@@ -69,13 +83,6 @@ class CreatureSubtype(str, Enum):
     SWARM = "swarm" 
     WATER = "water" 
 
-class HitDiceType(str, Enum):
-    D4 = "d4"
-    D6 = "d6"
-    D8 = "d8"
-    D10 = "d10"
-    D12 = "d12"
-
 class MovementMode(str, Enum): # metodi di movimento
     LAND = "land"      # movimento via terra
     FLY = "fly"        # volare
@@ -111,3 +118,30 @@ class Alignment(str, Enum):
 class MagicType(str, Enum):
     ARCANE = "arcane"
     DIVINE = "divine"
+
+# =====================
+# ATTACKS
+# =====================
+class DamageType(str, Enum):
+    # FISICI
+    BLUDGEONING = "bludgeoning"
+    SLASHING = "slashing"
+    PIERCING = "piercing"
+    PHYSICAL = "physical"
+    # NOTE:
+    # PHYSICAL is a generic category used when the specific physical damage
+    # type is unknown or cannot be mapped to a standard D&D damage type.
+    # ENERGY DAMAGE
+    FIRE = "fire"              # fuoco
+    COLD = "cold"              # freddo
+    ACID = "acid"              # acido
+    ELECTRICITY = "electricity" # elettricità
+    SONIC = "sonic"            # sonoro
+    # FORCE / DISINTEGRATION
+    DISINTEGRATION = "disintegration"
+    FORCE = "force"
+    # ENERGIA NEGATIVA/ POSITIVA
+    NEGATIVE_ENERGY = "negative_energy"
+    POSITIVE_ENERGY = "positive_energy"
+    # RISUCCHIO
+    ENERGY_DRAIN = "energy_drain"
