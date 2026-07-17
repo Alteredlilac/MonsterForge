@@ -18,7 +18,8 @@ from .effect_mechanics import (
     EffectDuration,
     EffectUsage,
     EffectArea,
-    DamageOverTime
+    DamageOverTime,
+    EffectTarget
     )
 
 # =====================
@@ -52,3 +53,6 @@ class SpecialAttack(SpecialAbility):
     area_of_effect: EffectArea | None = None 
     # Damage over Time
     damage_over_time: DamageOverTime | None = None 
+    # Target
+    target: EffectTarget  # brasaglio dell'effetto
+    

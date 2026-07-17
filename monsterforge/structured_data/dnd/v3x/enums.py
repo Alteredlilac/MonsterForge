@@ -88,6 +88,57 @@ class AreaEffectShape(str, Enum):   # Forma dell'area di effetto
     SPHERE = "sphere"            # sfera
     CYLINDER = "cylinder"        # cilindro
 
+class DamageType(str, Enum):
+    # FISICI
+    BLUDGEONING = "bludgeoning"
+    SLASHING = "slashing"
+    PIERCING = "piercing"
+    PHYSICAL = "physical"
+    # NOTE:
+    # PHYSICAL is a generic category used when the specific physical damage
+    # type is unknown or cannot be mapped to a standard D&D damage type.
+    # ENERGY DAMAGE
+    FIRE = "fire"              # fuoco
+    COLD = "cold"              # freddo
+    ACID = "acid"              # acido
+    ELECTRICITY = "electricity" # elettricità
+    SONIC = "sonic"            # sonoro
+    # FORCE / DISINTEGRATION
+    DISINTEGRATION = "disintegration"
+    FORCE = "force"
+    # ENERGIA NEGATIVA/ POSITIVA
+    NEGATIVE_ENERGY = "negative_energy"
+    POSITIVE_ENERGY = "positive_energy"
+    # RISUCCHIO
+    ENERGY_DRAIN = "energy_drain"
+
+class TargetType(str, Enum):
+    CREATURE = "creature"
+    OBJECT = "object"
+    AREA = "area"
+    EFFECT = "effect"
+    SOMETHING = "something"   # creature ed oggetti
+    EVERYTHING = "everything" # anche effetti e incantesimi, esempio (campo antimagia)
+
+class RequirementOperator(str, Enum):
+    LESS_THAN = "less_than"
+    LESS_OR_EQUAL = "less_or_equal"
+    EQUAL = "equal"
+    GREATER_OR_EQUAL = "greater_or_equal"
+    GREATER_THAN = "greater_than"
+
+class GrantedType(str, Enum):
+    CREATURE = "creature"     # esempio evocazione o charme
+    PHYSICAL_FORM = "physical_form"
+    OBJECT = "object"
+    ATTACK = "attack"
+    CLASS = "class"
+    FEAT = "feat"
+    PSIONIC_POWER = "psionic_power"
+    SPECIAL_ATTACK = "special_attack"
+    SPECIAL_QUALITY = "special_quality"
+    SPELL = "spell"
+
 # =====================
 # CREATURE
 # =====================
@@ -162,33 +213,6 @@ class Alignment(str, Enum):
 class MagicType(str, Enum):
     ARCANE = "arcane"
     DIVINE = "divine"
-
-# =====================
-# ATTACKS
-# =====================
-class DamageType(str, Enum):
-    # FISICI
-    BLUDGEONING = "bludgeoning"
-    SLASHING = "slashing"
-    PIERCING = "piercing"
-    PHYSICAL = "physical"
-    # NOTE:
-    # PHYSICAL is a generic category used when the specific physical damage
-    # type is unknown or cannot be mapped to a standard D&D damage type.
-    # ENERGY DAMAGE
-    FIRE = "fire"              # fuoco
-    COLD = "cold"              # freddo
-    ACID = "acid"              # acido
-    ELECTRICITY = "electricity" # elettricità
-    SONIC = "sonic"            # sonoro
-    # FORCE / DISINTEGRATION
-    DISINTEGRATION = "disintegration"
-    FORCE = "force"
-    # ENERGIA NEGATIVA/ POSITIVA
-    NEGATIVE_ENERGY = "negative_energy"
-    POSITIVE_ENERGY = "positive_energy"
-    # RISUCCHIO
-    ENERGY_DRAIN = "energy_drain"
 
 # =====================
 # SPECIAL ABILITY
