@@ -89,3 +89,4 @@ class Saves:       # oggetto che rappresenta i tiri salvezza di una creatura
     fortitude_save: int  # tempra
     reflex_save: int     # riflessi
     will_save: int       # volontà
+    
