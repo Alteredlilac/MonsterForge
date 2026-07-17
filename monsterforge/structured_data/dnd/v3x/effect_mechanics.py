@@ -21,8 +21,13 @@ from .enums import (
     Ability,
     Alignment,
     RequirementOperator,
+    DiceType, 
+    ModifierTarget,
+    ModifierConditionType
     )
 from .dice_effects import TimeExpression, Damage
+from .creature_stats import ArmorClass, Abilities, Saves
+from .skills import Skills
 
 # =====================
 # EFFECT RANGE
@@ -107,13 +112,26 @@ class EffectTarget:
     target_alignment: list[Alignment] = field(default_factory=list)
 
 # =====================
-# BONUS
+# EFFECT MODIFIER
 # =====================
 @dataclass(kw_only=True)
 class EffectModifier:
-    # bonus derivanti dal tipo / sottotipo (esempio non morto)
-    # bonus abilità 
-    # bonus contro pietrificazione, disintegrazone, paralisi, sonno, veleno
-    # bonus / malus # mettere se è situazionale / bersaglio 
-    # eludere, eludere migliorato? 
-    ...
+    # Amount
+    dice_number: int | None = None        # es: 2 (per 2d4)
+    dice_type: DiceType | None = None     # es: d4
+    modifier: int | None = None           # es: +1
+    
+    # Modified subject
+    target: ModifierTarget # esempio (abilità, dani, tiro per colpire)
+
+    # Target specification
+    skill_to_apply: Skills | None = None # abilità
+    classe_armatura: ArmorClass | None = None # classe armatura
+    caratteristica: Abilities | None = None # caratteristica (esempio forza)
+    ts: Saves | None = None    # tiro salvezza (esempio Tempra)
+
+    # Modifier against    
+    against_type: ModifierConditionType | None = None # effetto, creatura, oggetto
+    against_description: str | None = None # descrizione della condizione
+    # esempio pietrificazione, disintegrazone, paralisi, sonno, veleno
+

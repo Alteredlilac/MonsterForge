@@ -139,6 +139,25 @@ class GrantedType(str, Enum):
     SPECIAL_QUALITY = "special_quality"
     SPELL = "spell"
 
+class ModifierTarget(str, Enum):
+    HIT_DICE = "hit_dice"      # dadi vita
+    RANGE = "range"            # portata
+    HIT_POINTS = "hit_points"  # punti ferita
+    SKILL_BONUS = "skill_bonus"  # abilità
+    ABILITY_SCORE = "ability_score" # caratteristiche
+    ATTACK_BONUS = "attack_bonus"  # tiro per colpire
+    SAVING_THROW = "saving_throw"  # tiro salvezza
+    SPELL_RESISTANCE = "spell_resistance" # resistenza incantesimi
+    POWER_RESISTANCE = "power_resistance" # resistenza poteri psionici
+    DAMAGE = "damage"             # danni
+    TURN_RESISTANCE = "turn_resistance" # resistenza allo scacciare
+
+class ModifierConditionType(str, Enum):
+    EFFECT = "effect"
+    CREATURE = "creature"
+    OBJECT = "object"
+
+
 # =====================
 # CREATURE
 # =====================

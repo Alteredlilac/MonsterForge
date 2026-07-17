@@ -14,7 +14,7 @@ from .enums import (
 # =====================
 @dataclass(kw_only=True)
 class HitDice:
-    num_hit_dice: int           # numero di dadi vita
+    num_hit_dice: int        # numero di dadi vita
     hit_dice_type: DiceType  # tipo di dado vita
 
 # =====================
