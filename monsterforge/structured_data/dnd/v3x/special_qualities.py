@@ -23,10 +23,11 @@ from .effect_mechanics import (
     SavingThrow,
     EffectDuration,
     EffectTarget,
-    EffectModifier
+    EffectModifier,
+    EffectGrant
     )
 from .defenses import DamageReduction, DamageResistance, Regeneration
-from .enums import DamageType, GrantedType, ConditionType
+from .enums import DamageType, ConditionType
 
 # =====================
 # SPECIAL QUALITIES
@@ -87,4 +88,4 @@ class SpecialQuality(SpecialAbility):
     regeneration: Regeneration | None = None
 
     # guadagna carte?
-    grants: list[GrantedType] = field(default_factory=list) # creatura, oggetto, effetto 
+    grants: list[EffectGrant] = field(default_factory=list) # creatura, oggetto, effetto 

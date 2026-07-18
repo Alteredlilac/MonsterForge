@@ -267,7 +267,7 @@ class Alignment(str, Enum):
     CHAOTIC_EVIL = "Chaotic Evil"
 
 # =====================
-# MAGIC
+# MAGIC / PSIONIC
 # =====================
 class MagicType(str, Enum):
     ARCANE = "arcane"
@@ -283,6 +283,14 @@ class MagicSchool(str, Enum):
     NECROMANCY = "necromancy"
     TRANSMUTATION = "transmutation"
     UNIVERSAL = "universal"
+
+class PsionicDiscipline(str, Enum):
+    CLAIRSENTIENCE = "clairsentience"
+    METACREATIVITY = "metacreativity"
+    PSYCHOKINESIS = "psychokinesis"
+    PSYCHOMETABOLISM = "psychometabolism"
+    PSYCHOPORTATION = "psychoportation"
+    TELEPATHY = "telepathy"
 
 class CastingTime(str, Enum):
     STANDARD_ACTION = "standard action"

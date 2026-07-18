@@ -80,7 +80,7 @@ class Creature:
     # A creature may have multiple spellcasting progressions (e.g. multiclass creatures).
     spellcasting: list[Spellcasting] = field(default_factory=list)
     # Psionics
-    psionics: Psionics | None = None
+    psionics: list[Psionics] = field(default_factory=list)
     # Saves -> tiri salvezza
     saves: Saves
     # Abilities -> caratteristiche

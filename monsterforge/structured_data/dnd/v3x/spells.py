@@ -5,9 +5,9 @@ Defines spell effects, spell level associations, casting data,
 and creature spellcasting capabilities.
 """
 from dataclasses import dataclass, field
-from .enums import MagicType, MagicSchool, CastingTime, SpellRangeType, ConditionType, DamageType, GrantedType
-from .dice_effects import Damage, Healing, TimeExpression, Dice
-from .effect_mechanics import EffectRange, SavingThrow, EffectDuration, EffectTarget, EffectArea, EffectModifier
+from .enums import MagicType, MagicSchool, CastingTime, SpellRangeType, ConditionType, DamageType
+from .dice_effects import Damage, Healing, TimeExpression
+from .effect_mechanics import EffectRange, SavingThrow, EffectDuration, EffectTarget, EffectArea, EffectModifier, EffectGrant
 from .defenses import DamageReduction, DamageResistance, Regeneration
 from .creature_stats import Movement
 
@@ -93,11 +93,7 @@ class Spell:
     regeneration: Regeneration | None = None
 
     # guadagna carte?
-    grants: list[GrantedType] = field(default_factory=list) # creatura, oggetto, effetto
-
-    # la cosa concessa viene mappata a parte come carta di tipo diverso
-    grants_number: Dice  | None = None  # quante creature, oggetti o effetti ?  esempio evoco 2d4+1 lupi 
-
+    grants: list[EffectGrant] = field(default_factory=list) # esempio evoca 2d4 lupi 
 
     saving_throw: SavingThrow | None = None # None = nessun tiro salvezza
     # si calcola con 10+liv+ caratteristica minima di lancio

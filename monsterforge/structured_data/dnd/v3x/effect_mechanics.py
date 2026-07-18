@@ -23,9 +23,10 @@ from .enums import (
     RequirementOperator,
     DiceType, 
     ModifierTarget,
-    ModifierConditionType
+    ModifierConditionType,
+    GrantedType
     )
-from .dice_effects import TimeExpression, Damage
+from .dice_effects import TimeExpression, Damage, Dice
 from .creature_stats import ArmorClass, Abilities, Saves
 from .skills import Skills
 
@@ -135,3 +136,12 @@ class EffectModifier:
     against_description: str | None = None # descrizione della condizione
     # esempio pietrificazione, disintegrazone, paralisi, sonno, veleno
 
+# =====================
+# EFFECT GRANT
+# =====================
+@dataclass(kw_only=True)
+class EffectGrant:
+    """Represents content granted by an effect."""
+    grant_type: GrantedType
+    amount: Dice | int = 1
+    description: str
