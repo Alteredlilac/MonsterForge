@@ -112,6 +112,46 @@ class DamageType(str, Enum):
     # RISUCCHIO
     ENERGY_DRAIN = "energy_drain"
 
+class ConditionType(str, Enum):
+    BLEEDING = "bleeding"
+    BLINDED = "blinded"
+    BLOWN_AWAY = "blown_away"
+    CHECKED = "checked"
+    CONFUSED = "confused"
+    COWERING = "cowering"
+    DAZED = "dazed"
+    DAZZLED = "dazzled"
+    DEAD = "dead"
+    DEAFENED = "deafened"
+    DISABLED = "disabled"
+    DOMINATED = "dominated"
+    DYING = "dying"
+    ENERGY_DRAINED = "energy_drained"
+    ENTANGLED = "entangled"
+    EXHAUSTED = "exhausted"
+    FASCINATED = "fascinated"
+    FATIGUED = "fatigued"
+    FLAT_FOOTED = "flat_footed"
+    FRIGHTENED = "frightened"
+    GRAPPLING = "grappling"
+    HELPLESS = "helpless"
+    INCORPOREAL = "incorporeal"
+    INVISIBLE = "invisible"
+    KNOCKED_DOWN = "knocked_down"
+    NAUSEATED = "nauseated"
+    PANICKED = "panicked"
+    PARALYZED = "paralyzed"
+    PETRIFIED = "petrified"
+    PINNED = "pinned"
+    PRONE = "prone"
+    SHAKEN = "shaken"
+    SICKENED = "sickened"
+    STABLE = "stable"
+    STAGGERED = "staggered"
+    STUNNED = "stunned"
+    TURNED = "turned"
+    UNCONSCIOUS = "unconscious"
+
 class TargetType(str, Enum):
     CREATURE = "creature"
     OBJECT = "object"
@@ -232,6 +272,34 @@ class Alignment(str, Enum):
 class MagicType(str, Enum):
     ARCANE = "arcane"
     DIVINE = "divine"
+
+class MagicSchool(str, Enum):
+    ABJURATION = "abjuration"
+    CONJURATION = "conjuration"
+    DIVINATION = "divination"
+    ENCHANTMENT = "enchantment"
+    EVOCATION = "evocation"
+    ILLUSION = "illusion"
+    NECROMANCY = "necromancy"
+    TRANSMUTATION = "transmutation"
+    UNIVERSAL = "universal"
+
+class CastingTime(str, Enum):
+    STANDARD_ACTION = "standard action"
+    MOVE_ACTION = "move action"
+    FULL_ROUND_ACTION = "full-round action"
+    FREE_ACTION = "free action"
+    IMMEDIATE_ACTION = "immediate action"
+    SWIFT_ACTION = "swift action"  
+    ROUND = "round"
+    MINUTE = "minute"
+    HOUR = "hour"
+    DAY = "day"
+
+class SpellRangeType(str, Enum):
+    TOUCH = "touch"
+    PERSONAL = "personal"
+    UNLIMITED = "unlimited"
 
 # =====================
 # SPECIAL ABILITY

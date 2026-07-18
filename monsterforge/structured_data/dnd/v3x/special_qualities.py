@@ -26,7 +26,7 @@ from .effect_mechanics import (
     EffectModifier
     )
 from .defenses import DamageReduction, DamageResistance, Regeneration
-from .enums import DamageType, GrantedType
+from .enums import DamageType, GrantedType, ConditionType
 
 # =====================
 # SPECIAL QUALITIES
@@ -56,6 +56,8 @@ class SpecialQuality(SpecialAbility):
     effect_duration: EffectDuration | None = None
     # Target
     target: EffectTarget | None = None # brasaglio dell'effetto
+
+    applied_conditions: list[ConditionType] = field(default_factory=list) # condizioni applicate esempio paralizzato, pietrificato 
     
     # resistenze e immunità
     # riduzione del danno

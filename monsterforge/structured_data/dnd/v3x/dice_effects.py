@@ -11,6 +11,16 @@ from dataclasses import dataclass
 from .enums import DiceType, DamageType, Ability, TimeUnit
 
 # =====================
+# DICE
+# =====================
+@dataclass(kw_only=True)
+class Dice:    
+    dice_number: int | None = None        # es: 2 (per 2d4)
+    dice_type: DiceType | None = None     # es: d4
+    modifier: int | None = None           # es: +1
+
+
+# =====================
 # DAMAGE
 # =====================
 @dataclass(kw_only=True)

@@ -21,6 +21,7 @@ from .effect_mechanics import (
     DamageOverTime,
     EffectTarget
     )
+from .enums import ConditionType
 
 # =====================
 # SPECIAL ATTACK
@@ -55,4 +56,5 @@ class SpecialAttack(SpecialAbility):
     damage_over_time: DamageOverTime | None = None 
     # Target
     target: EffectTarget  # brasaglio dell'effetto
+    applied_conditions: list[ConditionType] = field(default_factory=list) # condizioni applicate esempio paralizzato, pietrificato  
     
