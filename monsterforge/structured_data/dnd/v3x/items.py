@@ -4,6 +4,16 @@ armature
 oggetti magici
 simbionti
 oggetti intelligenti
+
+- Oggetti
+- costo
+- attacco
+- difesa
+- magico 
+- psionico
+- bonus
+- poteri / incantesimi 
+
 """
 from enum import Enum
 from dataclasses import dataclass, field

@@ -15,7 +15,12 @@ class Power:
 # Incantatore Psionico
 # =====================
 @dataclass(kw_only=True)
-class Psionics:
+class Manifester:
+    """Represents il fatto che una creatura sia un psionico"""
+    ...
+
+@dataclass(kw_only=True)
+class Psionics(Manifester):
     """Represents the psionic manifestation data of a creature."""
     psionic_classes: list[str] = field(default_factory=list) # classi psioniche
     manifester_level: int | None = None # livello di manifestazione

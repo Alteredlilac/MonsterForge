@@ -240,3 +240,47 @@ class SpecialAbilityType(str, Enum):
     EXTRAORDINARY = "extraordinary"
     SUPERNATURAL = "supernatural"
     SPELL_LIKE = "spell_like"
+
+# =====================
+# FEATS
+# =====================
+class FeatCategory(str, Enum):
+    METAMAGIC = "metamagic"       # metamagico 
+    METAPSIONIC = "metapsionic"   # metapsionico
+    GRANTS_BONUS = "grants_bonus" # concede bonus (esempio +2 abilità)
+    CRAFTING = "crafting"         # fabbricazione (creare bacchette)
+    GRANTS_ATTACK = "grants_attack" # concede attachi o attacchi speciali 
+    GRANTS_QUALITY = "grants_quality" # concede qualità speciali 
+    GRANTS_PROFICIENCY = "grants_proficiency" # concede competenza in qualcosa
+    GRANTS_ITEM = "grants_item"    # concede un oggetto o ne simula il possesso
+    GRANTS_CREATURE = "grants_creature" # concede una o più creature (autorità, ottenere famiglio)
+    GENERIC = "generic"           # generico 
+    PSIONIC = "psionic"           # psionico
+    CLASS_RELATED = "class_related" # relativo a una classe * o di classe
+
+# =====================
+# CHARACTER CLASS
+# =====================
+class ProgressionRate(str, Enum):
+    LOW = "low"        # +10 max -> esempio mago (1/2 liv)
+    MEDIUM = "medium"  # +15 max -> esempio chierco  (3/4 liv)
+    HIGH = "high"      # +20 max -> esempio guerriero (= liv)
+
+class SaveProgression(str, Enum):
+    POOR = "poor"   # basso
+    GOOD = "good"   # alto
+
+class ClassPrivilegeType(str, Enum):
+    ATTACK = "attack"
+    FULL_ATTACK = "full_attack"
+    SPECIAL_ATTACK = "special_attack"
+    SPECIAL_QUALITY = "special_quality"
+    FEAT = "feat"
+    COMPANION = "companion"
+    DOMAIN = "domain"
+    ITEM = "item"
+    PSIONIC_POWER = "psionic_power"
+    SPELL = "spell"
+    SPELLCASTING = "spellcasting"
+    PSIONIC_MANIFESTING = "psionic_manifesting"
+    CREATURE_TYPE = "creature_type"
