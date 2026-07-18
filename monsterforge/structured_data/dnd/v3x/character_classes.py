@@ -27,6 +27,7 @@ from .spells import Spell, Spellcaster
 from .creatures import CreatureModifier
 from .skills import Skills
 from .creature_stats import Abilities, ArmorClass, Saves, Movement
+import uuid
 
 
 # =====================
@@ -37,6 +38,9 @@ GrantedContent = (
     Companion | ClericDomain | Item | Power | Spell | Spellcaster | Manifester |
     CreatureModifier
 )
+# NOTE:
+# A privilege can grant heterogeneous content (attacks, feats, items, etc.),
+# so a broad union type is used.
 @dataclass(kw_only=True)
 class ClassPrivilege:
     """
@@ -57,10 +61,17 @@ class CharacterClass:
     """
     Represents a D&D 3.x character class and its progression.
     """
+    id: uuid.UUID = field(default_factory=uuid.uuid4)
     name: str 
     description: str
 
     hit_die: DiceType  # dado vita della classe
+
+    # NOTE:
+    # Class skills are intentionally not mapped: in the card-based game
+    # system, skill values are assigned as a fixed number per level
+    # regardless of character class, and there is no concept of
+    # class-restricted or unavailable skills.
 
     total_levels: int # numero di livelli totali della classe (esempio 5 , 10, 20)
 
@@ -70,7 +81,7 @@ class CharacterClass:
     reflex_save: SaveProgression # alta o bassa
     will_save: SaveProgression # alta o bassa
 
-    privileges: dict[int, list[ClassPrivilege]] = field(default_factory=dict) # dizionario con livello come chiave e lista di oggetti
+    privileges: dict[int, list[ClassPrivilege]] = field(default_factory=dict) # key = level, value = list of privileges granted at that level
     # NOTE:
     # Spellcasting data is intentionally simplified.
     # Spell slots and known spells are not mapped at class level.

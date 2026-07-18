@@ -283,4 +283,18 @@ class ClassPrivilegeType(str, Enum):
     SPELL = "spell"
     SPELLCASTING = "spellcasting"
     PSIONIC_MANIFESTING = "psionic_manifesting"
-    CREATURE_TYPE = "creature_type"
+    CREATURE_MODIFIER = "creature_modifier"
+
+# =====================
+# COMPANION
+# =====================
+class CompanionPrivilegeType(str, Enum):
+    ATTACK = "attack"
+    FULL_ATTACK = "full_attack"
+    SPECIAL_ATTACK = "special_attack"
+    SPECIAL_QUALITY = "special_quality"
+    FEAT = "feat"
+    ITEM = "item"
+    PSIONIC_POWER = "psionic_power"
+    SPELL = "spell"
+    CREATURE_MODIFIER = "creature_modifier"
