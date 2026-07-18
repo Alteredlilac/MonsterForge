@@ -6,7 +6,15 @@ including progression data, saving throw profiles, spellcasting progression,
 and requirements needed to access prestige classes.
 """
 from dataclasses import dataclass, field
-from .enums import ProgressionRate, SaveProgression, ClassPrivilegeType, Alignment, CreatureType, CreatureSubtype
+from .enums import (
+ProgressionRate,
+SaveProgression,
+ClassPrivilegeType,
+Alignment,
+CreatureType,
+CreatureSubtype,
+DiceType
+)
 from .special_attacks import SpecialAttack
 from .special_qualities import SpecialQuality
 from .feats import Feat
@@ -51,6 +59,8 @@ class CharacterClass:
     """
     name: str 
     description: str
+
+    hit_die: DiceType  # dado vita della classe
 
     total_levels: int # numero di livelli totali della classe (esempio 5 , 10, 20)
 
