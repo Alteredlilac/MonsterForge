@@ -31,7 +31,7 @@ class Attack:
     critical_threat_min: int | None = None  # minimum value of the critical threat range (e.g. 18 for 18-20)
     critical_multiplier: int | None = None  # critical multiplier (e.g. 2 for x2, 3 for x3)    
     # Effects
-    effects: list[SpecialAttack] = field(default_factory=list)   
+    effects: list[SpecialAttack] = field(default_factory=list)
     
 
 # =====================

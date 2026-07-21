@@ -144,4 +144,5 @@ class EffectGrant:
     """Represents content granted by an effect."""
     grant_type: GrantedType
     amount: Dice | int = 1
+    usage: EffectUsage = field(default_factory=EffectUsage)
     description: str

@@ -374,3 +374,26 @@ class CompanionPrivilegeType(str, Enum):
     PSIONIC_POWER = "psionic_power"
     SPELL = "spell"
     CREATURE_MODIFIER = "creature_modifier"
+
+# =====================
+# ITEM 
+# =====================
+class ItemType(str, Enum):
+    WEAPON = "weapon"
+    ARMOR = "armor"
+    GENERIC = "generic"
+    TOOL = "tool"
+    ALCHEMICAL = "alchemical"
+    POISON = "poison"
+    CLOTHING = "clothing"
+    ACCESSORY = "accessory"
+
+class ItemPowerType(str, Enum):
+    MAGICAL = "magical"
+    PSIONIC = "psionic"
+
+class IntelligentItemType(str, Enum):
+    INTELLIGENT = "intelligent"
+    SYMBIOTIC = "symbiotic"
+    POSSESSED = "possessed"
+    
