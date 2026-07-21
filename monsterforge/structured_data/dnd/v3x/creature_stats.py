@@ -77,19 +77,18 @@ class Abilities:       # oggetto che rappresenta le caratteristiche di una creat
     # Wisdom and Charisma are intentionally allowed to be undefined, as the
     # Abilities model is shared across multiple modules and must support
     # contexts beyond creature stat blocks.
-    strength: int | None     # forza
-    dexterity: int | None    # destrezza
-    constitution: int | None # costituzione
-    intelligence: int | None # intelligenza
-    wisdom: int | None       # saggezza
-    charisma: int | None     # carisma
+    strength: int | None = None     # forza
+    dexterity: int | None = None    # destrezza
+    constitution: int | None = None # costituzione
+    intelligence: int | None = None # intelligenza
+    wisdom: int | None = None       # saggezza
+    charisma: int | None = None     # carisma
 
 # =====================
 # TIRI SALVEZZA
 # =====================
 @dataclass(kw_only=True)
-class Saves:       # oggetto che rappresenta i tiri salvezza di una creatura
+class Saves:       # oggetto che rappresenta i tiri salvezza di una creatura    
     fortitude_save: int  # tempra
     reflex_save: int     # riflessi
     will_save: int       # volontà
-    

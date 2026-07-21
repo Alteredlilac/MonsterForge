@@ -13,7 +13,8 @@ ClassPrivilegeType,
 Alignment,
 CreatureType,
 CreatureSubtype,
-DiceType
+DiceType, 
+SavingThrowType
 )
 from .special_attacks import SpecialAttack
 from .special_qualities import SpecialQuality
@@ -29,6 +30,13 @@ from .skills import Skills
 from .creature_stats import Abilities, ArmorClass, Saves, Movement
 import uuid
 
+# =====================
+# HELPER
+# =====================
+@dataclass(kw_only=True)
+class SaveRequirement:
+    save_type: SavingThrowType
+    minimum_value: int
 
 # =====================
 # PRIVILEGES
@@ -125,7 +133,7 @@ class PrestigeClass(CharacterClass):
     required_attack_bonus: int | None = None
     required_feats: list[Feat] = field(default_factory=list)
     required_spells: list[Spell] = field(default_factory=list)
-    required_saves: Saves | None = None
+    required_saves: list[SaveRequirement] = field(default_factory=list)
     # livello incantatore
     required_caster_level: int | None = None
     # oggetti

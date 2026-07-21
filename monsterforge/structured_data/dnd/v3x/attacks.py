@@ -7,7 +7,7 @@ in creature stat blocks while keeping the data suitable for later
 conversion and transformation.
 """
 from dataclasses import dataclass, field
-from .enums import UnitSystem
+from .effect_mechanics import CriticalHit, EffectRange
 from .special_attacks import SpecialAttack
 from .dice_effects import Damage
 
@@ -23,13 +23,11 @@ class Attack:
     melee: bool = True      #mischia / distanza
     touch: bool = False     # attacco di contatto
     # Range
-    attack_range: int | None = None   # Gittata in metri / portata
-    range_unit_system: UnitSystem | None = None
+    attack_range: EffectRange | None = None
     # Damages
     damages: list[Damage] = field(default_factory=list) # elenco dei danni dell'attacco
     # Critical Hit
-    critical_threat_min: int | None = None  # minimum value of the critical threat range (e.g. 18 for 18-20)
-    critical_multiplier: int | None = None  # critical multiplier (e.g. 2 for x2, 3 for x3)    
+    critical_hit: CriticalHit | None = None 
     # Effects
     effects: list[SpecialAttack] = field(default_factory=list)
     

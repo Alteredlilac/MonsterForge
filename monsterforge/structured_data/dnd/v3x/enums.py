@@ -205,7 +205,7 @@ class CreatureType(str, Enum):
     ANIMAL = "animal"               # ANIMALE
     ABERRATION = "aberration"       # ABBERRAZIONE
     BEAST = "beast"                 # BESTIA  -> V3.0 only
-    MAGICAL_BEAST = "magical beast" # BESTIA_MAGICA
+    MAGICAL_BEAST = "magical_beast" # BESTIA_MAGICA
     CONSTRUCT = "construct"         # COSTRUTTO
     DRAGON = "dragon"               # DRAGO
     ELEMENTAL = "elemental"         # ELEMENTALE    
@@ -216,7 +216,7 @@ class CreatureType(str, Enum):
     UNDEAD = "undead"               # NON_MORTO
     VERMIN = "vermin"               # PARASSITA
     HUMANOID = "humanoid"           # UMANOIDE
-    MONSTROUS_HUMANOID = "monstrous humanoid" # UMANOIDE_MOSTRUOSO 
+    MONSTROUS_HUMANOID = "monstrous_humanoid" # UMANOIDE_MOSTRUOSO 
     PLANT = "plant"                 # VEGETALE
 
 class CreatureSubtype(str, Enum):
@@ -256,15 +256,15 @@ class FlyManeuverability(str, Enum): # manovrabilità di volo
     CLUMSY = "clumsy"    # maldestra
 
 class Alignment(str, Enum):
-    LAWFUL_GOOD = "Lawful Good"
-    NEUTRAL_GOOD = "Neutral Good"
-    CHAOTIC_GOOD = "Chaotic Good"
-    LAWFUL_NEUTRAL = "Lawful Neutral"
+    LAWFUL_GOOD = "Lawful_Good"
+    NEUTRAL_GOOD = "Neutral_Good"
+    CHAOTIC_GOOD = "Chaotic_Good"
+    LAWFUL_NEUTRAL = "Lawful_Neutral"
     NEUTRAL = "Neutral"
-    CHAOTIC_NEUTRAL = "Chaotic Neutral"
-    LAWFUL_EVIL = "Lawful Evil"
-    NEUTRAL_EVIL = "Neutral Evil"
-    CHAOTIC_EVIL = "Chaotic Evil"
+    CHAOTIC_NEUTRAL = "Chaotic_Neutral"
+    LAWFUL_EVIL = "Lawful_Evil"
+    NEUTRAL_EVIL = "Neutral_Evil"
+    CHAOTIC_EVIL = "Chaotic_Evil"
 
 # =====================
 # MAGIC / PSIONIC
@@ -293,12 +293,12 @@ class PsionicDiscipline(str, Enum):
     TELEPATHY = "telepathy"
 
 class CastingTime(str, Enum):
-    STANDARD_ACTION = "standard action"
-    MOVE_ACTION = "move action"
-    FULL_ROUND_ACTION = "full-round action"
-    FREE_ACTION = "free action"
-    IMMEDIATE_ACTION = "immediate action"
-    SWIFT_ACTION = "swift action"  
+    STANDARD_ACTION = "standard_action"
+    MOVE_ACTION = "move_action"
+    FULL_ROUND_ACTION = "full-round_action"
+    FREE_ACTION = "free_action"
+    IMMEDIATE_ACTION = "immediate_action"
+    SWIFT_ACTION = "swift_action"  
     ROUND = "round"
     MINUTE = "minute"
     HOUR = "hour"

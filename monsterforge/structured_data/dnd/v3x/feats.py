@@ -10,7 +10,8 @@ system while keeping complex or supplement-specific requirements
 flexible.
 """
 from dataclasses import dataclass, field
-from .creature_stats import Abilities, Saves
+from .enums import SavingThrowType
+from .creature_stats import Abilities
 from .skills import Skills
 from .enums import FeatCategory
 from .effect_mechanics import EffectModifier, EffectGrant
@@ -21,6 +22,11 @@ from .special_qualities import SpecialQuality
 # HELPER
 # =====================
 @dataclass(kw_only=True)
+class SaveRequirement:
+    save_type: SavingThrowType
+    minimum_value: int
+
+@dataclass(kw_only=True)
 class FeatRequirement:
     """
     Represents a single requirement needed to acquire a feat.
@@ -29,7 +35,7 @@ class FeatRequirement:
     # Feat, class feature, proficiency, and specific class requirements are
     # kept as strings to maintain flexibility across different supplements.
     ability: Abilities | None = None    # caratteristica
-    saving_throw: Saves | None = None   # tiro salvezza
+    saving_throw: list[SaveRequirement] = field(default_factory=list)
     skill: Skills | None = None         # abilità
     feat: str | None = None   
     character_class_feature: str | None = None # qualità di classe richiesta

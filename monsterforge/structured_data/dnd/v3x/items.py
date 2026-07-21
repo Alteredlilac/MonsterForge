@@ -8,14 +8,12 @@ The module focuses on item data required by the card-based game
 system, while leaving unsupported or lore-specific details
 unmapped.
 """
-
-from enum import Enum
 from dataclasses import dataclass, field
-from .enums import ItemType, UnitSystem, ItemPowerType, IntelligentItemType
-from .dice_effects import Damage
+from .enums import ItemType, ItemPowerType, IntelligentItemType
+from .dice_effects import Damage, Healing
 from .special_attacks import SpecialAttack
 from .special_qualities import SpecialQuality
-from .effect_mechanics import EffectModifier, EffectGrant
+from .effect_mechanics import EffectModifier, EffectGrant, CriticalHit, EffectRange
 from .defenses import DamageReduction
 
 @dataclass(kw_only=True)
@@ -38,7 +36,9 @@ class Item:
     # Item materials are not mapped as structured data, as the number of
     # possible materials across D&D supplements is too large.
     # A free-text description is used instead to maintain flexibility. 
-    
+
+    is_consumable: bool = False  # true if the item is destroyed/used up after activation
+
     # NOTE:
     # Item capacity is intentionally not mapped, as it is not required by the
     # card-based game system.
@@ -47,13 +47,11 @@ class Item:
     melee: bool = False      #utilizzabile per attaccare in mischia 
     touch: bool = False     # attacco di contatto
     # Range
-    attack_range: int | None = None   # Gittata in metri / portata
-    range_unit_system: UnitSystem | None = None
+    attack_range: EffectRange | None = None
     # Damages
     damages: list[Damage] = field(default_factory=list) # elenco dei danni dell'attacco
-    # Critical Hit
-    critical_threat_min: int | None = None  # minimum value of the critical threat range (e.g. 18 for 18-20)
-    critical_multiplier: int | None = None  # critical multiplier (e.g. 2 for x2, 3 for x3)    
+    # Critical Hit    
+    critical_hit: CriticalHit | None = None   
     # Effects
     attack_effects: list[SpecialAttack] = field(default_factory=list)
 
@@ -79,7 +77,11 @@ class MagicItem(Item):
     is_artifact: bool = False
     is_cursed: bool = False
 
+    charges: int | None = None  # cariche dell'oggetto, esempio bacchetta = 50 cariche
+
     defense_effects: list[SpecialQuality] = field(default_factory=list)
+    # Healing
+    healing_effects: list[Healing] # elenco delle cure dell'oggetto
     
     # guadagna carte?
     grants: list[EffectGrant] = field(default_factory=list) # creatura, oggetto, effetto
