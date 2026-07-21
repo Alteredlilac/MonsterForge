@@ -74,12 +74,15 @@ class Abilities:       # oggetto che rappresenta le caratteristiche di una creat
     # Dexterity may be absent ("-") for immobile creatures (e.g. certain plants or fungi).
     # Constitution is omitted for creatures without a living body (undead,
     # constructs), while Intelligence is omitted for mindless creatures.
-    strength: int | None    # forza
-    dexterity: int | None     # destrezza
+    # Wisdom and Charisma are intentionally allowed to be undefined, as the
+    # Abilities model is shared across multiple modules and must support
+    # contexts beyond creature stat blocks.
+    strength: int | None     # forza
+    dexterity: int | None    # destrezza
     constitution: int | None # costituzione
-    intelligence: int | None  # intelligenza
-    wisdom: int        # saggezza
-    charisma: int      # carisma
+    intelligence: int | None # intelligenza
+    wisdom: int | None       # saggezza
+    charisma: int | None     # carisma
 
 # =====================
 # TIRI SALVEZZA

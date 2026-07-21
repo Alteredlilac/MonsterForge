@@ -321,18 +321,18 @@ class SpecialAbilityType(str, Enum):
 # FEATS
 # =====================
 class FeatCategory(str, Enum):
-    METAMAGIC = "metamagic"       # metamagico 
-    METAPSIONIC = "metapsionic"   # metapsionico
-    GRANTS_BONUS = "grants_bonus" # concede bonus (esempio +2 abilità)
-    CRAFTING = "crafting"         # fabbricazione (creare bacchette)
-    GRANTS_ATTACK = "grants_attack" # concede attachi o attacchi speciali 
-    GRANTS_QUALITY = "grants_quality" # concede qualità speciali 
-    GRANTS_PROFICIENCY = "grants_proficiency" # concede competenza in qualcosa
-    GRANTS_ITEM = "grants_item"    # concede un oggetto o ne simula il possesso
-    GRANTS_CREATURE = "grants_creature" # concede una o più creature (autorità, ottenere famiglio)
-    GENERIC = "generic"           # generico 
-    PSIONIC = "psionic"           # psionico
-    CLASS_RELATED = "class_related" # relativo a una classe * o di classe
+    METAMAGIC = "metamagic"          # metamagico
+    METAPSIONIC = "metapsionic"      # metapsionico
+    GRANTS_BONUS = "grants_bonus"    # concede bonus o modificatori
+    CRAFTING = "crafting"            # talenti di creazione oggetto
+    GRANTS_ATTACK = "grants_attack"  # concede attacchi speciali
+    GRANTS_QUALITY = "grants_quality"# concede qualità speciali
+    PROFICIENCY = "proficiency"      # concede competenze
+    GRANTS_ITEM = "grants_item"      # concede o simula il possesso di oggetti
+    GRANTS_CREATURE = "grants_creature" # concede creature o compagni
+    GENERIC = "generic"              # categoria generica
+    PSIONIC = "psionic"              # talento psionico
+    CLASS_RELATED = "class_related"  # talento legato a una classe
 
 # =====================
 # CHARACTER CLASS
@@ -396,4 +396,3 @@ class IntelligentItemType(str, Enum):
     INTELLIGENT = "intelligent"
     SYMBIOTIC = "symbiotic"
     POSSESSED = "possessed"
-    
