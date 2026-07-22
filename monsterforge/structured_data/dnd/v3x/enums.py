@@ -236,6 +236,7 @@ class CreatureSubtype(str, Enum):
     INCORPOREAL = "incorporeal"
     LAWFUL = "lawful" 
     NATIVE = "native" 
+    PSIONIC = "psionic"
     REPTILIAN = "reptilian" 
     SHAPECHANGER = "shapechanger" 
     SWARM = "swarm" 
