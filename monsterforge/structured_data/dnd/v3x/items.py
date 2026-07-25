@@ -81,7 +81,7 @@ class MagicItem(Item):
 
     defense_effects: list[SpecialQuality] = field(default_factory=list)
     # Healing
-    healing_effects: list[Healing] # elenco delle cure dell'oggetto
+    healing_effects: list[Healing] = field(default_factory=list) # elenco delle cure dell'oggetto
     
     # guadagna carte?
     grants: list[EffectGrant] = field(default_factory=list) # creatura, oggetto, effetto

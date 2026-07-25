@@ -73,14 +73,15 @@ class Skills:       # oggetto che rappresenta le abilità di una creatura
 
     # NOTE: the following skills are specific to version 3.0.
     # STANDARD SKILLS 3.0
-    alchemy: int              # Alchimia
-    innuendo: int             # Comunicazione Segreta
-    animal_empathy: int       # Empatia Animale
-    read_lips: int            # Leggere Labbra
-    intuit_direction: int     # Orientamento
-    scry: int                 # Scrutare
-    pick_pocket: int          # Svuotare Tasche
+    alchemy: int | None = None              # Alchimia
+    innuendo: int | None = None            # Comunicazione Segreta
+    animal_empathy: int | None = None      # Empatia Animale
+    read_lips: int  | None = None         # Leggere Labbra
+    intuit_direction: int | None = None    # Orientamento
+    scry: int | None = None            # Scrutare
+    pick_pocket: int | None = None        # Svuotare Tasche
 
     # PSIONIC SKILLS 3.0
-    stabilize_self: int       # Stabilizzarsi
-    remote_view: int          # Vista Remota
+    stabilize_self: int | None = None      # Stabilizzarsi
+    remote_view: int | None = None          # Vista Remota
+    
