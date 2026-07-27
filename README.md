@@ -208,18 +208,47 @@ Logging makes each transformation stage observable and simplifies debugging, val
 
 ```
 monsterforge/
-├── domain/          # core models (entity, card, ability)
-├── config/          # runtime settings (LLM API key, confidence thresholds, DB config — see .env.example)
-├── rules/           # typed conversion tables (dataclasses: size→HP, characteristic→attribute, ...)
-├── parsing/         # HTML parsing logic
-├── transformation/  # numerical algorithms
-├── llm/             # semantic classification
-├── validation/      # human review logic
-├── rendering/       # card generation (HTML/templates)
-├── ui/              # PyQt5 validation tool
-├── pipeline/        # orchestration
-└── tests/           # unit tests
+├── domain/            # core models (entity, card, ability) — the final,
+│                       # source-independent representation
+├── config/             # runtime settings (LLM API key, confidence thresholds, DB config — see .env.example)
+├── db/                  # RECORD DB schema and access (raw scraped content, generic table)
+├── rules/                 # typed conversion tables (dataclasses: size→HP, characteristic→attribute, ...)
+├── scraping/                # HTML acquisition (requests + BeautifulSoup), writes to db/
+├── parsing/                   # extraction + conversion, per RPG system and edition
+│   └── dnd/v3x/
+│       ├── raw_fields/          # stage 1: mirrors rulebook tables almost verbatim
+│       │                          (e.g. RawArmorFields, RawCreatureFields — still
+│       │                          mostly strings, not yet cast or interpreted)
+│       └── ...                    # stage 2: casts raw_fields into structured_data,
+│                                    routing free-text content to llm/ when needed
+├── structured_data/               # typed, source-specific intermediate models
+│   └── dnd/v3x/                    # (Creature, Item, Spell, Feat, ...) — the
+│                                     "Dati Strutturati" stage from DESIGN.md
+├── transformation/                  # numerical algorithms (HP, Body/Spirit, Interpretation)
+├── llm/                               # semantic classification (attacks, qualities, feats, spells)
+├── validation/                          # human review logic
+├── rendering/                             # card generation (HTML/templates)
+├── ui/                                     # PyQt5 validation tool
+├── pipeline/                                 # orchestration
+└── tests/                                     # unit tests
 ```
+**Two-stage parsing.** Extraction is split into `raw_fields/` (source-format
+strings, mirroring the rulebook table structure) and a conversion stage that
+casts and normalizes into `structured_data/`. This decouples the fragile,
+source-specific part of parsing (HTML layout, per-site formatting) from
+interpretation and typing, and means:
+
+- multiple scraping sources can converge on the same `raw_fields` shape
+  before any interpretation happens;
+- **manual input is a first-class path, not a workaround** — a `raw_fields`
+  instance can be populated directly (CLI, or a future form) instead of
+  scraped, letting a user hand-enter a custom weapon or character and still
+  get a generated card, bypassing scraping entirely;
+- simple entries with no free-text description can skip LLM classification
+  and go straight to `structured_data` via direct type casting.
+
+See **[PIPELINE_ARCHITECTURE.md](./docs/PIPELINE_ARCHITECTURE.md)** for the
+full pipeline schema and the rationale behind this split.
 
 ---
 
