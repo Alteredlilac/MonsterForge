@@ -33,7 +33,7 @@ class SpellLevel:
 class Spell:
     name: str 
     # data
-    scuola: MagicSchool # 8 scuole +  universal
+    school: MagicSchool # 8 scuole +  universal
     # NOTE:
     # Spell subschools and descriptors are intentionally not mapped,
     # as they are not required by this domain model.

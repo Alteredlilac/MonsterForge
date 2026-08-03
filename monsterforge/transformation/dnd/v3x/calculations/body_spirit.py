@@ -32,3 +32,4 @@ Exception rule (caster-based swap):
 Notes:
 - Incorporeal entities may not have attack/defense (handled elsewhere).
 """
+

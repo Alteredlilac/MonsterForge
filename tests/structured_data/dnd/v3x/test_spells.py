@@ -22,14 +22,14 @@ def test_spell_level_creation():
 
 def test_spell_minimal_creation():
     fireball = Spell(
-        name="Fireball", scuola=MagicSchool.EVOCATION,
+        name="Fireball", school=MagicSchool.EVOCATION,
         level=[SpellLevel(caster_class="wizard", level=3)],
         casting_time=CastingTimeValue(unit=CastingTime.STANDARD_ACTION),
         effect_description="A burst of fire",
         long_description="A burst of fire deals damage in an area.",
     )
     assert fireball.name == "Fireball"
-    assert fireball.scuola == MagicSchool.EVOCATION
+    assert fireball.school == MagicSchool.EVOCATION
     assert fireball.spell_resistance is True  # default
 
 
@@ -37,7 +37,7 @@ def test_spell_supports_multiclass_levels():
     """The same spell can appear at different levels for different
     caster classes (e.g. Cure Light Wounds: Clr 1, Pal 1)."""
     spell = Spell(
-        name="Cure Light Wounds", scuola=MagicSchool.CONJURATION,
+        name="Cure Light Wounds", school=MagicSchool.CONJURATION,
         level=[
             SpellLevel(caster_class="cleric", level=1),
             SpellLevel(caster_class="paladin", level=1),
@@ -50,7 +50,7 @@ def test_spell_supports_multiclass_levels():
 
 def test_spell_with_damage_and_healing(make_damage, make_healing):
     spell = Spell(
-        name="Chaos Bolt", scuola=MagicSchool.EVOCATION,
+        name="Chaos Bolt", school=MagicSchool.EVOCATION,
         level=[SpellLevel(caster_class="sorcerer", level=1)],
         casting_time=CastingTimeValue(unit=CastingTime.STANDARD_ACTION),
         effect_description="x", long_description="x",

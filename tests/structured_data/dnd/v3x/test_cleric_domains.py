@@ -30,7 +30,7 @@ def test_cleric_domain_can_grant_heterogeneous_content():
 
 def test_cleric_domain_with_domain_spells():
     fireball = Spell(
-        name="Fireball", scuola=MagicSchool.EVOCATION,
+        name="Fireball", school=MagicSchool.EVOCATION,
         level=[SpellLevel(caster_class="cleric", level=3)],
         casting_time=CastingTimeValue(unit=CastingTime.STANDARD_ACTION),
         effect_description="x", long_description="x",
