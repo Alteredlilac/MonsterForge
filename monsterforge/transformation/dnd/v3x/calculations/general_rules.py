@@ -19,13 +19,13 @@ They rely on rule tables and general math utilities, but do not define
 static mappings themselves.
 """
 from monsterforge.structured_data.dnd.v3x.enums import DiceType, ProgressionRate
-from .general_math import floor_value, halve_value, convert_dice_to_value
+from .general_math import halve_value, convert_dice_to_value
 from monsterforge.rules.dnd.v3x.progression_tables import SPELLS_PER_LEVEL_MAPPING, COMBAT_ABILITIES_PER_LEVEL_MAPPING
 
 # =====================
 # DRAINED ABILITY
 # =====================
-def calculate_drained_ability_value(value: DiceType) -> int:
+def normalize_drained_ability(*, dice_type: DiceType, num_dice: int = 1) -> int:
     """
     Convert a D&D 3.x drained ability value into a deterministic value.
 
@@ -38,45 +38,52 @@ def calculate_drained_ability_value(value: DiceType) -> int:
         D6 -> 3 -> 1
         D8 -> 4 -> 2
     """
-    return halve_value(convert_dice_to_value(value))
+    return halve_value(convert_dice_to_value(dice_type)* num_dice)
 
 # =====================
 # DAMAGE
 # =====================
-def normalize_damage(value: DiceType) -> int:
+def normalize_damage(*, dice_type: DiceType, num_dice: int = 1) -> int:
     """
-    Convert a D&D 3.x damage value into a deterministic value.
+    Convert a D&D 3.x drained ability value into a deterministic value.
 
     Rules:
-    - Dice-based values are converted using their average value.
+    - Dice-based values are converted using their deterministic average.
+    - The resulting value is halved using floor rounding.
+    - The final result has a minimum value of 1.
 
     Examples:
-        D6 -> 3
-        D8 -> 4
+        D6 -> 3 -> 1
+        2D8 -> 8 -> 4
     """
-    return convert_dice_to_value(value)
+    return convert_dice_to_value(dice_type)* num_dice
 
 # =====================
 # HEALING
 # =====================
-def normalize_healing(value: DiceType | int) -> int:
+def normalize_healing(*, healing_value: DiceType | int, num_dice: int = 1) -> int:
     """
     Normalize healing values from D&D 3.x into deterministic values.
 
     Rules:
-    - DiceType values are converted using their average value. #valore delle dice_rules
+    - DiceType values are converted using their deterministic average value.
+    - Multiple dice values are calculated by multiplying the average value
+      by the number of dice.
     - Absolute integer values are halved using floor rounding,
       with a minimum result of 1.
+    - num_dice is ignored when healing_value is an integer, because
+      absolute values do not represent dice expressions.
 
     Examples:
         D6 -> 3
+        2D8 -> 8
         5 -> 2
     """
-    if isinstance(value, DiceType):
-        return convert_dice_to_value(value)
+    if isinstance(healing_value, DiceType):
+        return convert_dice_to_value(healing_value)* num_dice
     
-    if isinstance(value, int):
-        return halve_value(value)
+    if isinstance(healing_value, int):
+        return halve_value(healing_value)
     
     raise TypeError("value must be an int or DiceType")
     

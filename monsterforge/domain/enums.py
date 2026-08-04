@@ -158,3 +158,23 @@ class RequirementType(str, Enum):
     STAT = "stat"
     MOVE = "move"
     CREATURE = "creature"
+
+
+# =====================
+# DOMAIN STATS
+# =====================
+# NOTE:
+# These enums represent MonsterForge domain concepts.
+# They are currently consumed by transformation logic to build
+# domain objects from external systems.
+class BodyStat(str, Enum):
+    ATTACK  = "attack"    #ATTACCO
+    DEFENSE  = "defense"  #DIFESA
+    SPEED  = "speed"      #VELOCITA
+
+class SpiritStat(str, Enum):
+    POWER  = "power"  #POTERE
+    WARD  = "ward"    #TANGENZA
+    FLOW  = "flow"    #SPIN
+
+   

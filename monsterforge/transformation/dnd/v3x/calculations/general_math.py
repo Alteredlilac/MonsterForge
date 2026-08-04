@@ -47,7 +47,7 @@ def halve_value(value: int) -> int:
     return max(1, abs(value) // 2)
 
 
-def convert_dice_to_value(value: DiceType) -> int:
+def convert_dice_to_value(dice_type: DiceType) -> int:
     """
     Convert a D&D 3.x dice type into its deterministic MonsterForge value.
 
@@ -58,4 +58,4 @@ def convert_dice_to_value(value: DiceType) -> int:
         D6 -> 3
         D8 -> 4
     """  
-    return DICE_AVERAGE_VALUES[value]
+    return DICE_AVERAGE_VALUES[dice_type]
