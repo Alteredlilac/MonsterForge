@@ -177,4 +177,11 @@ class SpiritStat(str, Enum):
     WARD  = "ward"    #TANGENZA
     FLOW  = "flow"    #SPIN
 
+class Interpretation(str, Enum): #INTERPRETAZIONE
+    ATHLETICS  = "athletics"    #ATLETICA
+    EMPATHY  = "empathy"        #EMPATIA
+    PERCEPTION  = "perception"  #PERCEZIONE
+    STEALTH  = "stealth"        #FURTIVITA
+    KNOWLEDGE  = "knowledge"    #CULTURA
+    CRAFTING  = "crafting"      #ARTIGIANATO
    

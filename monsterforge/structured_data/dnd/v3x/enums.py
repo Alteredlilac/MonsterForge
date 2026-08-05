@@ -397,3 +397,82 @@ class IntelligentItemType(str, Enum):
     INTELLIGENT = "intelligent"
     SYMBIOTIC = "symbiotic"
     POSSESSED = "possessed"
+
+# =====================
+# SKILL ID
+# =====================
+# NOTE:
+# These enum is currently consumed by transformation logic to build
+# domain objects from external systems.
+class SkillId(str, Enum):
+    # STANDARD SKILLS 3.5
+    APPRAISE = "appraise"              # Valutare
+    BALANCE = "balance"                # Equilibrio
+    BLUFF = "bluff"                    # Raggirare
+    CLIMB = "climb"                    # Scalare
+    CONCENTRATION = "concentration"    # Concentrazione
+
+    CRAFT = "craft"  # Artigianato
+    ## Craft (alchemy, weaponsmithing, etc.)
+
+    DECIPHER_SCRIPT = "decipher_script"   # Decifrare Scritture
+    DIPLOMACY = "diplomacy"               # Diplomazia
+    DISABLE_DEVICE = "disable_device"     # Disattivare Congegni
+    DISGUISE = "disguise"                 # Camuffare
+    ESCAPE_ARTIST = "escape_artist"       # Artista della Fuga
+    FORGERY = "forgery"                   # Falsificare
+    GATHER_INFORMATION = "gather_information"  # Raccogliere Informazioni
+    HANDLE_ANIMAL = "handle_animal"       # Addestrare Animali
+    HEAL = "heal"                         # Guarire
+    HIDE = "hide"                         # Nascondersi
+    INTIMIDATE = "intimidate"             # Intimidire
+    JUMP = "jump"                         # Saltare
+
+    KNOWLEDGE = "knowledge"  # Conoscenze
+    ## Knowledge (arcana, nature, religion, etc.)
+
+    LISTEN = "listen"                    # Ascoltare
+    MOVE_SILENTLY = "move_silently"      # Muoversi Silenziosamente
+    OPEN_LOCK = "open_lock"              # Scassinare
+
+    PERFORM = "perform"  # Intrattenere
+    # Perform (sing, dance, oratory, etc.)
+
+    PROFESSION = "profession"  # Professione
+    # Profession (farmer, sailor, merchant, etc.)
+
+    RIDE = "ride"                        # Cavalcare
+    SEARCH = "search"                    # Cercare
+    SENSE_MOTIVE = "sense_motive"        # Percepire Intenzioni
+    SLEIGHT_OF_HAND = "sleight_of_hand"  # Rapidità di Mano
+
+    # NOTE: speak_language is intentionally excluded from skill mapping:
+    # languages are tracked separately, as known languages rather than numeric skill values
+
+    SPELLCRAFT = "spellcraft"            # Sapienza Magica
+    SPOT = "spot"                        # Osservare
+    SURVIVAL = "survival"                # Sopravvivenza
+    SWIM = "swim"                        # Nuotare
+    TUMBLE = "tumble"                    # Acrobazia
+    USE_MAGIC_DEVICE = "use_magic_device"  # Utilizzare Oggetti Magici
+    USE_ROPE = "use_rope"                # Usare Corde
+
+    # PSIONIC SKILLS 3.5
+    AUTOHYPNOSIS = "autohypnosis"        # autoipnosi
+    PSICRAFT = "psicraft"                # sapienza psionica
+    USE_PSIONIC_DEVICE = "use_psionic_device"  # Utilizzare Oggetti Psionici
+
+    # NOTE: the following skills are specific to version 3.0.
+    # STANDARD SKILLS 3.0
+    ALCHEMY = "alchemy"                  # Alchimia
+    INNUENDO = "innuendo"                # Comunicazione Segreta
+    ANIMAL_EMPATHY = "animal_empathy"    # Empatia Animale
+    READ_LIPS = "read_lips"              # Leggere Labbra
+    INTUIT_DIRECTION = "intuit_direction"  # Orientamento
+    SCRY = "scry"                        # Scrutare
+    PICK_POCKET = "pick_pocket"          # Svuotare Tasche
+
+    # PSIONIC SKILLS 3.0
+    STABILIZE_SELF = "stabilize_self"    # Stabilizzarsi
+    REMOTE_VIEW = "remote_view"          # Vista Remota
+    
