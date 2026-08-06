@@ -45,16 +45,16 @@ def normalize_drained_ability(*, dice_type: DiceType, num_dice: int = 1) -> int:
 # =====================
 def normalize_damage(*, dice_type: DiceType, num_dice: int = 1) -> int:
     """
-    Convert a D&D 3.x drained ability value into a deterministic value.
+    Convert a D&D 3.x damage expression into a deterministic value.
 
     Rules:
     - Dice-based values are converted using their deterministic average.
-    - The resulting value is halved using floor rounding.
-    - The final result has a minimum value of 1.
+    - No halving is applied — unlike drained abilities, damage uses
+      the full average value.
 
     Examples:
-        D6 -> 3 -> 1
-        2D8 -> 8 -> 4
+        1d6 -> 3
+        2d8 -> 8
     """
     return convert_dice_to_value(dice_type)* num_dice
 

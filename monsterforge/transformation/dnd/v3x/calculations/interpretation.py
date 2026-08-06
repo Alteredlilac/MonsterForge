@@ -34,9 +34,15 @@ from monsterforge.domain.enums import Interpretation
 # =====================
 # HELPERS
 # =====================
-def ability_modifier(ability_value:int)-> int:
+def ability_modifier(ability_value: int)-> int:
     """calcola il modificatore di una catatteristica"""
     return (ability_value - 10)//2
+# NOTE:
+# Uses integer division (//) instead of floor_value() from general_math.py
+# because this follows D&D rules, not internal normalization logic.
+# floor_value() represents a project-specific rule, while this is a
+# direct implementation of the D&D ability modifier formula.
+
 
 
 def calculate_skill_contribution(
