@@ -28,6 +28,21 @@ def floor_value(value: float) -> int:
     """
     return math.floor(value)
 
+def feet_to_meters(feet: int | float) -> float:
+    """
+    Convert D&D 3.x feet-based measurements into MonsterForge meters.
+
+    Some values in D&D 3.x are expressed in feet and must be
+    converted into the metric system used by MonsterForge.
+    """
+    # NOTE:
+    # D&D 3.x movement values are based on a 5-foot grid.
+    # When converting to meters, values are normalized to the nearest
+    # 1.5 meter increment to preserve the original movement scale.
+    meters = feet * 0.3048
+    return round(meters / 1.5) * 1.5
+
+
 def halve_value(value: int) -> int:
     """
     Halve an integer value using floor rounding, ignoring the sign,
@@ -45,6 +60,17 @@ def halve_value(value: int) -> int:
         -5 -> 2
     """
     return max(1, abs(value) // 2)
+
+# NOTE:
+# Values are stored as absolute values without sign.
+# The positive or negative behavior is handled elsewhere based on
+# the effect semantics.
+#
+# Examples:
+# - damage: decreases the target value
+# - healing: increases the target value
+# - bonus: increases the target value
+# - penalty: decreases the target value
 
 
 def convert_dice_to_value(dice_type: DiceType) -> int:

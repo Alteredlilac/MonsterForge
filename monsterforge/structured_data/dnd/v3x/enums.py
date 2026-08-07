@@ -31,6 +31,8 @@ class Size(str, Enum):   # usato per creature e Item
     COLOSSAL = "colossal"     #Colossale
 
 class DiceType(str, Enum):
+    D2 = "d2"
+    D3 = "d3"
     D4 = "d4"
     D6 = "d6"
     D8 = "d8"

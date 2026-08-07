@@ -28,6 +28,8 @@ from monsterforge.structured_data.dnd.v3x.enums import DiceType
 # =====================
 # Average numerical value for each dice type
 DICE_AVERAGE_VALUES: Mapping[DiceType, int] = MappingProxyType({
+    DiceType.D2: 1,
+    DiceType.D3: 1,
     DiceType.D4: 2,
     DiceType.D6: 3,
     DiceType.D8: 4,

@@ -30,17 +30,27 @@ from .enums import (
     )
 
 
+# MOVE EFFECT 
+@dataclass(kw_only=True)
+class MoveEffect:
+    """e.g 2 fuoco , 4 Power"""
+    damage_type: DamageType | None = None # Tipo di Danno esempio("Fuoco")
+    effect_unit : AffectedAttribute | None = None # Quale valore influenza (esempio Vita, Armatura)
+    effect_value: int | None = None  # Valore numerico dell'effetto (danno/cura)
 
+# MOVE CARD
 @dataclass(kw_only=True)
 class MoveCard(Card):
     # Classification
     move_type: MoveType        # Tipo  esempio("Fisico")
     category: MoveCategory     # Categoria esempio("Attacco")
     mode: MoveMode             # Modalita esempio("Attivo")
+
     effect: EffectType         # esempio("Danno", "Cura", "Bonus", "Malus")
-    damage_type: DamageType  | None = None # Tipo di Danno esempio("Fuoco")
-    effect_unit : AffectedAttribute | None = None # Quale valore influenza (esempio Vita, Armatura)
-    effect_value: int | None = None  # Valore numerico dell'effetto (danno/cura)
+
+    # forse queste 3 vanno aggregate
+    move_effects: list[MoveEffect] = field(default_factory=list) # 5 danni fisici, 2 fuoco
+    
     entity_effect: list[EntityEffect] = field(default_factory=list) # Effetto sull'entità (creatura, mossa, oggetto)
     cards_to_add: list[Card] = field(default_factory=list)  # Carte da aggiungere in caso di entity effect
     cards_to_remove: list[Card] = field(default_factory=list) # Carte da togliere in caso di entity effect

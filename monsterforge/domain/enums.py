@@ -116,7 +116,7 @@ class EffectType(str, Enum):     #"Danno", "Cura", Bonus, malus,  fare enumerabi
     BONUS = "bonus"
     MALUS = "malus"
     ENTITY = "entity"       # influenza l'entità in quanto tale aggiunge o toglie carte al mazzo
-
+                            # usato anche per effetti tipo spinta o altro che influenzano entità
 class EntityEffect(str, Enum):
     CREATURES = "creatures"
     MOVES = "moves"
