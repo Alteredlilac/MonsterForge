@@ -23,7 +23,7 @@ Notes:
 """
 from monsterforge.domain.moves import MoveEffect
 from monsterforge.structured_data.dnd.v3x.dice_effects import Damage
-from monsterforge.structured_data.dnd.v3x.enums import DiceType, DamageType, Ability
+from monsterforge.structured_data.dnd.v3x.enums import DiceType, DamageType
 from monsterforge.rules.dnd.v3x.enum_mapping import (DAMAGE_TYPE_MAPPING,
                                                      ABILITY_DAMAGE_MAPPING)
 from monsterforge.transformation.dnd.v3x.calculations.general_rules import normalize_damage, normalize_drained_ability
@@ -303,11 +303,11 @@ def resolve_drain(d: Damage)-> None:
     raise InvalidDamageConfigurationError(
             "Drain damage requires either dice or a numeric value")
 
-def resolve_no_values(d: Damage)-> list[MoveEffect]:
+def resolve_no_values(_: Damage)-> list[MoveEffect]:
     """
-    Return an empty MoveEffect for damage definitions without values.
+    Return an empty effect list for damage definitions without values.
     """
-    return [MoveEffect()]
+    return []
 
 # =====================
 # DAMAGE RESOLVER
