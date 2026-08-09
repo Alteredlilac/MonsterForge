@@ -21,9 +21,10 @@ Notes:
 - Mixed damage types may produce multiple MoveEffect instances
 - Invalid combinations raise a domain-specific error
 """
+
 from monsterforge.domain.moves import MoveEffect
 from monsterforge.structured_data.dnd.v3x.dice_effects import Damage
-from monsterforge.structured_data.dnd.v3x.enums import DiceType, DamageType
+from monsterforge.structured_data.dnd.v3x.enums import DiceType, DamageType, Ability
 from monsterforge.rules.dnd.v3x.enum_mapping import (DAMAGE_TYPE_MAPPING,
                                                      ABILITY_DAMAGE_MAPPING)
 from monsterforge.transformation.dnd.v3x.calculations.general_rules import normalize_damage, normalize_drained_ability
@@ -32,7 +33,7 @@ from monsterforge.transformation.dnd.v3x.calculations.general_math import halve_
 # =====================
 # HELPERS
 # =====================
-def dice_sum(num_of_dice: int, type_of_dice= DiceType):
+def dice_sum(num_of_dice: int | None, type_of_dice= DiceType):
     """
     Resolve the numeric value of a D&D 3.x dice damage component.
 
@@ -48,7 +49,6 @@ def dice_sum(num_of_dice: int, type_of_dice= DiceType):
         num = num_of_dice
 
     return normalize_damage(dice_type= type_of_dice, num_dice=num)
-
 
 # =====================
 # DAMAGE CATEGORY
@@ -118,13 +118,13 @@ def resolve_dice_drain_modifier(d: Damage)-> list[MoveEffect]:
     # ENERGY_DRAIN for ability damage resolution.     
 
     dice_value = dice_sum(num_of_dice= num_of_dice, type_of_dice= type_of_dice)
+    effect_unit = ABILITY_DAMAGE_MAPPING[drained_ability]
 
     # Case 1: dice damage and modifier share the ENERGY_DRAIN type
     # e.g. 1d6 + 1 Dexterity damage
     if dice_damages_type == type_of_damage_modifier:
         # MoveEffect
-        damage_type = dice_damages_type        
-        effect_unit = ABILITY_DAMAGE_MAPPING[drained_ability]
+        damage_type = dice_damages_type    
         effect_value = normalize_drained_ability(dice_value + damage_modifier)
 
         return [MoveEffect(
@@ -180,7 +180,7 @@ def resolve_dice_drain(d: Damage)-> list[MoveEffect]:
     dice_value = dice_sum(num_of_dice= num_of_dice, type_of_dice= type_of_dice)  
 
     # MoveEffect
-    damage_type = dice_damages_type
+    damage_type= DAMAGE_TYPE_MAPPING[damage_type],
     effect_unit = ABILITY_DAMAGE_MAPPING[drained_ability]
     effect_value = normalize_drained_ability(dice_value)
 

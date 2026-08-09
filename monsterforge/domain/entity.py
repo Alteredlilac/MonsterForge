@@ -38,4 +38,4 @@ class Entity:
 
     @property
     def base_form(self):    # indice 0 = forma base
-        return self.creature_cards[0]
+        return self.creature_cards[0] if self.creature_cards else None
