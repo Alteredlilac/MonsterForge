@@ -32,9 +32,11 @@ from .attacks_effects_parser import get_attack_effects
 # ERRORS
 # =====================
 class InvalidAttackConfigurationError(ValueError):
+    """Raised when a raw attack contains an invalid configuration."""
     pass
 
-class UnknownAttackRange(ValueError): # secondo me è AttributeError
+class UnknownAttackRange(ValueError):
+    """Raised when an attack range cannot be resolved."""
     pass
 
 # =====================
@@ -118,7 +120,7 @@ def get_known_attack_range(
     if is_melee(raw_attack):
         return None
 
-    if semantic_range_result: 
+    if semantic_range_result is not None:
         return semantic_range_result
 
     weapon_name = raw_attack.name.lower()
@@ -137,7 +139,19 @@ def get_known_attack_range(
 # =====================
 def raw_to_structured_attack(raw_attack: RawAttack) -> StructuredAttack:
     """
-    converte un raw attack in uno structured attack e richiama LLM x classificazione
+    Convert a raw D&D 3.x attack into a structured Attack.
+
+    The conversion combines deterministic parsing of the raw attack
+    fields and attack effects with semantic information produced by
+    the attack classifier.
+
+    Args:
+        raw_attack: Raw D&D 3.x attack definition.
+
+    Returns:
+        A fully structured Attack containing the parsed attack properties,
+        damage information, critical-hit information, special attack
+        effects, and semantic classification results.
     """
     semantic_result = classify_attack(raw_attack) # Call the LLM classifier 
     touch_attack = is_touch(raw_attack)
@@ -151,13 +165,8 @@ def raw_to_structured_attack(raw_attack: RawAttack) -> StructuredAttack:
         attack_bonus = get_modifier(raw_attack),
         melee = is_melee(raw_attack),
         touch = touch_attack,
-        # rendere condizionale attack range a melee False
         attack_range = get_known_attack_range(raw_attack, semantic_result.move_range), 
         damages = attack_effects.damages,
         critical_hit = attack_effects.critical_hit,  
-        effects = attack_effects.special_attack_names 
+        effects = attack_effects.special_attacks 
         )
-
-#NOTE: 
-# attualmente passa una lista di nomi non una lista di attachi speciali
-# andrebbe implementato con lista attacchi speciali
