@@ -57,8 +57,8 @@ class GeminiClient:
         try:
             response = self.model.generate_content(question)
             return getattr(response, "text", "")
-        except GoogleAPIError as e:
-            raise RuntimeError(f"Gemini API error: {e}")
+        except GoogleAPIError as exc:
+            raise RuntimeError(f"Gemini API error: {exc}") from exc
         
     def list_text_models(self) -> list[str]:
         models = genai.list_models()
