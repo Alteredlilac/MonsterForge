@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from .effect_mechanics import CriticalHit, EffectRange
 from .special_attacks import SpecialAttack
 from .dice_effects import Damage
+from .enums import MoveType
 
 # =====================
 # ATTACK
@@ -17,6 +18,7 @@ from .dice_effects import Damage
 @dataclass(kw_only=True)
 class Attack:
     # Attack Data
+    move_type: MoveType
     name: str
     description: str | None = None    
     attack_bonus: int | None = None    #tiro per colpire

@@ -1,28 +1,37 @@
 """
 Convert D&D 3.x structured attack data into MonsterForge MoveCard objects.
 
-This module transforms structured attack definitions into domain-level
-MoveCard instances, resolving their damage, type, range, resource cost,
-and special effects.
+This module transforms fully structured D&D 3.x attack definitions into
+domain-level MoveCard instances.
 
 The conversion process includes:
 
 - damage resolution through the damage resolver dispatch table
-- attack type classification
-- resource assignment based on attack type
+- resource assignment based on the structured move type
 - range extraction and unit conversion
 - conversion of special attack effects into additional cards
+- mapping of structured attack attributes into the corresponding
+  MoveCard fields
+
+Semantic classification is not performed in this module. Fields such as
+the move type and description are expected to have already been resolved
+during the structured conversion / semantic classification stages and are
+read directly from the structured Attack object.
 
 The module also validates attack configurations that are inconsistent
 with the expected D&D 3.x attack structure.
 
 Design notes:
 
-- Attacks without damage are treated as special attacks rather than standard attacks,
-  e.g. the aranea's web attack and the stirge's attach attack.
+- Attacks without damage are treated as special attacks rather than standard
+  attacks, e.g. the aranea's web attack and the stirge's attach attack.
 
 - Attacks composed of multiple attacks are treated as multiple attacks and are
-  handled by the full_attacks_converter module. 
+  handled by the full_attacks_converter module.
+
+- The conversion is deterministic and does not perform LLM calls. Any semantic
+  interpretation required to construct the structured Attack is completed
+  before this module is invoked.
 """
 # NOTE:
 # TypedDict is used here instead of dataclass because these types represent
@@ -49,44 +58,6 @@ from monsterforge.transformation.dnd.v3x.calculations.general_math import feet_t
 from .damages_converter import damage_category, DAMAGE_RESOLVERS
 from .special_attacks_converter import special_attack_converter
 
-
-# =====================
-# FAKE LLM - DESCRIPTION
-# =====================
-# Fake semantic classifier used only as a stub
-def attack_description(attack: Attack) -> str:
-    """
-    Generate the attack description.
-
-    Design note:
-        This is currently a stub for a future semantic classifier.
-
-        The initial description template is expected to follow this structure:
-            "{adjective based on damage [e.g. 'powerful', 'sudden']}"
-            Attack.name | if an effect is present | that {effect description}
-
-        The final wording and generation logic will be refined when the
-        semantic classifier is implemented.
-
-        If Attack.touch is True, the MoveCard description should also state
-        that this attack grants a +2 attack-roll bonus when used.
-    """
-    return ""
-
-# =====================
-# FAKE LLM - ATTACK TYPE
-# =====================
-# Fake semantic classifier used only as a stub
-def attack_type(attack: Attack) -> MoveType:
-    """
-    Classify the attack as physical or magical.
-
-    Design note:
-        This is currently a stub for a future semantic classifier.
-        The final implementation will determine the MoveType of the attack
-        from its structured D&D 3.x properties and semantic characteristics.
-    """
-    ...
 
 # =====================
 # ERRORS
@@ -219,6 +190,20 @@ def extract_special_attacks(attack:Attack) -> SpecialAttackEffects:
 
 
 # =====================
+# DESCRIPTION 	 
+# =====================
+def augment_attack_description(
+    description: str,
+    touch: bool,
+    ) -> str:
+    """If Attack.touch is True, the MoveCard description should also state
+    that this attack grants a +2 attack-roll bonus when used."""
+    if touch:
+        return f"{description} This attack grants a +2 attack-roll bonus when used."
+
+    return description
+
+# =====================
 # ATTACK CONVERTER
 # =====================
 def attack_converter(
@@ -237,16 +222,18 @@ def attack_converter(
     Returns:
         A fully constructed MoveCard representing the attack.
     """
-    move_type= attack_type(attack) # Avoid calling the LLM classifier twice
 
     return MoveCard(
         # Card class attributes
         name=  attack.name,
-        description= attack_description(attack),
+        description= augment_attack_description(
+                    attack.description,
+                    attack.touch,
+                ),
         image_uri= attack_image_uri,
 
         # MoveCard attributes
-        move_type= move_type,   
+        move_type= attack.move_type,   
 
         # default attributes
         category= MoveCategory.ATTACK,   
@@ -259,7 +246,7 @@ def attack_converter(
         # derived attributes
         move_effects = extract_attack_damages(attack),   
         **extract_attack_range(attack),
-        resource= attack_resource_type(move_type),
+        resource= attack_resource_type(attack.move_type),
 
         # bonus effects: 
         **extract_special_attacks(attack)        

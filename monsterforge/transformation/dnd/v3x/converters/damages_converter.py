@@ -27,7 +27,7 @@ from monsterforge.structured_data.dnd.v3x.dice_effects import Damage
 from monsterforge.structured_data.dnd.v3x.enums import DiceType, DamageType, Ability
 from monsterforge.rules.dnd.v3x.enum_mapping import (DAMAGE_TYPE_MAPPING,
                                                      ABILITY_DAMAGE_MAPPING)
-from monsterforge.transformation.dnd.v3x.calculations.general_rules import normalize_damage, normalize_drained_ability
+from monsterforge.transformation.dnd.v3x.calculations.general_rules import normalize_damage
 from monsterforge.transformation.dnd.v3x.calculations.general_math import halve_value
 
 # =====================
@@ -125,7 +125,7 @@ def resolve_dice_drain_modifier(d: Damage)-> list[MoveEffect]:
     if dice_damages_type == type_of_damage_modifier:
         # MoveEffect
         damage_type = dice_damages_type    
-        effect_value = normalize_drained_ability(dice_value + damage_modifier)
+        effect_value = halve_value(dice_value + damage_modifier)
 
         return [MoveEffect(
             damage_type= DAMAGE_TYPE_MAPPING[damage_type],
@@ -138,7 +138,7 @@ def resolve_dice_drain_modifier(d: Damage)-> list[MoveEffect]:
         return [MoveEffect( 
                     damage_type= DAMAGE_TYPE_MAPPING[dice_damages_type],
                     effect_unit= effect_unit,
-                    effect_value= normalize_drained_ability(dice_value)),
+                    effect_value= halve_value(dice_value)),
                 MoveEffect(
                     damage_type= DAMAGE_TYPE_MAPPING[type_of_damage_modifier],
                     effect_value= damage_modifier)
@@ -180,9 +180,9 @@ def resolve_dice_drain(d: Damage)-> list[MoveEffect]:
     dice_value = dice_sum(num_of_dice= num_of_dice, type_of_dice= type_of_dice)  
 
     # MoveEffect
-    damage_type= DAMAGE_TYPE_MAPPING[damage_type],
+    damage_type= DAMAGE_TYPE_MAPPING[dice_damages_type]
     effect_unit = ABILITY_DAMAGE_MAPPING[drained_ability]
-    effect_value = normalize_drained_ability(dice_value)
+    effect_value = halve_value(dice_value)
 
     return [MoveEffect(
         damage_type= damage_type,

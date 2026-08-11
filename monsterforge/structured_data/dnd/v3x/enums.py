@@ -14,7 +14,10 @@ from enum import Enum
 # =====================
 # GENERAL
 # =====================
-
+class MoveType(str, Enum):       # TIPO
+    PHYSICAL = "physical"   # Fisico
+    MAGICAL = "magical"     # Magico
+    
 class UnitSystem(str, Enum):
     METRIC = "metric"
     IMPERIAL = "imperial"
