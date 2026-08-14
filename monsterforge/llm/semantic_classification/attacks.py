@@ -73,7 +73,9 @@ PROMPT_TEMPLATE_DIR = (
 )
 ATTACK_PROMPT_TEMPLATE = "attacks/classify_attack.jinja2"
 
-LLM_MODEL = "gemini-1.5-flash"  # Temporary model configuration; should be centralized later.
+# NOTE:
+# Model selection is centralized in llm.client.get_llm_client() (see
+# _DEFAULT_MODEL there), not repeated per classifier module.
 
 
 
@@ -188,7 +190,7 @@ def _call_attack_classifier(
     Returns:
         The raw structured response returned by the LLM.
     """
-    client = get_llm_client(llm_model=LLM_MODEL)
+    client = get_llm_client()
 
     try:
         response = client.generate_text(prompt)
