@@ -9,8 +9,11 @@ from the source system into the generic card-game vocabulary.
 from types import MappingProxyType
 from typing import Mapping
 from monsterforge.structured_data.dnd.v3x.enums import (DamageType as StructDamageType,
-                                                        Ability)
-from monsterforge.domain.enums import (DamageType as DomainDamageType, AffectedAttribute)
+                                                        Ability,
+                                                        SpecialAbilityType)
+from monsterforge.domain.enums import (DamageType as DomainDamageType,
+                                       AffectedAttribute,
+                                       MoveType as DomainMoveType)
 
 
 # =====================
@@ -49,4 +52,14 @@ ABILITY_DAMAGE_MAPPING: Mapping[Ability, AffectedAttribute] = MappingProxyType({
     Ability.INTELLIGENCE: AffectedAttribute.POWER,
     Ability.WISDOM: AffectedAttribute.WARD,
     Ability.CHARISMA: AffectedAttribute.FLOW,
+})
+
+
+# =====================
+# SPECIAL ABILITY TYPE
+# =====================
+SPECIAL_ABILITY_TYPE_TO_MOVE_TYPE_MAPPING: Mapping[SpecialAbilityType, DomainMoveType] = MappingProxyType({
+    SpecialAbilityType.EXTRAORDINARY: DomainMoveType.PHYSICAL,  # Ex = non-magico in D&D 3.x
+    SpecialAbilityType.SUPERNATURAL: DomainMoveType.MAGICAL,
+    SpecialAbilityType.SPELL_LIKE: DomainMoveType.MAGICAL,
 })
