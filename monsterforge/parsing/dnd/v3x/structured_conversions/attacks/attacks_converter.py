@@ -23,7 +23,7 @@ structured Attack.
 from monsterforge.parsing.dnd.v3x.raw_fields.attacks import Attack as RawAttack
 from monsterforge.structured_data.dnd.v3x.attacks import Attack as StructuredAttack
 from monsterforge.structured_data.dnd.v3x.effect_mechanics import EffectRange
-from monsterforge.llm.semantic_classification.attacks import classify_attack
+from monsterforge.llm.semantic_classification.attacks import AttackSemanticResult
 from .attack_mappings import KNOWN_ATTACKS
 from .attacks_effects_parser import get_attack_effects
 
@@ -137,23 +137,35 @@ def get_known_attack_range(
 # =====================
 # RAW TO STRUCTURED
 # =====================
-def raw_to_structured_attack(raw_attack: RawAttack) -> StructuredAttack:
+def raw_to_structured_attack(
+        raw_attack: RawAttack,
+        semantic_result: AttackSemanticResult) -> StructuredAttack:
     """
     Convert a raw D&D 3.x attack into a structured Attack.
 
     The conversion combines deterministic parsing of the raw attack
-    fields and attack effects with semantic information produced by
-    the attack classifier.
+    fields and attack effects with the semantic classification result.
+
+    NOTE:
+    The semantic classification is performed by the caller (see
+    llm.semantic_classification.classify_attack) and passed in here,
+    rather than called internally. This keeps the conversion free of
+    I/O and safe to call repeatedly without re-invoking the LLM — the
+    same pattern already used by get_known_attack_range() below for the
+    range portion of this same result. It is also the seam where a
+    future validation/caching step can intercept or replace the
+    classification result before structuring proceeds.
 
     Args:
         raw_attack: Raw D&D 3.x attack definition.
+        semantic_result: Semantic classification result for this attack,
+            produced by llm.semantic_classification.classify_attack.
 
     Returns:
         A fully structured Attack containing the parsed attack properties,
         damage information, critical-hit information, special attack
         effects, and semantic classification results.
     """
-    semantic_result = classify_attack(raw_attack) # Call the LLM classifier 
     touch_attack = is_touch(raw_attack)
     attack_effects = get_attack_effects(raw_attack)
 
