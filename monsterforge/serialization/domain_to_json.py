@@ -70,8 +70,22 @@ class DomainJSONEncoder(json.JSONEncoder):
         return super().default(obj)
 
 def card_to_json(card: Card) -> str:
-    """Serialize a Card domain object into a JSON string."""
-    return json.dumps(card, cls=DomainJSONEncoder)
+    """
+    Serialize a Card domain object into a JSON string, fully expanded.
+
+    NOTE:
+    json.dumps() calls DomainJSONEncoder.default() on the root object
+    too, so default() alone cannot distinguish "the card being
+    serialized" from "a Card encountered while recursing into someone
+    else's structure" — both would hit the isinstance(obj, Card) branch
+    and collapse to {name, id}. This function sidesteps that by building
+    the root's field dict directly, bypassing default() for the root
+    only: any Card values nested inside those fields (e.g.
+    MoveCard.cards_to_add) still go through default() normally and are
+    correctly reduced to references.
+    """
+    data = {f.name: getattr(card, f.name) for f in fields(card)}
+    return json.dumps(data, cls=DomainJSONEncoder)
 
 def domain_entity_to_json(domain_entity: Entity) -> str:
     """Serialize an Entity domain object into a JSON string."""
