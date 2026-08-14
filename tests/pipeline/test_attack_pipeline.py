@@ -1,0 +1,55 @@
+"""
+Tests for pipeline.attack_pipeline.convert_attack().
+
+Covers the full "bite plus trip" reference scenario end to end, with
+the LLM classifier mocked (no real API calls in tests).
+"""
+from unittest.mock import patch
+from monsterforge.parsing.dnd.v3x.raw_fields.attacks import Attack as RawAttack
+from monsterforge.llm.semantic_classification.attacks import AttackSemanticResult
+from monsterforge.structured_data.dnd.v3x.enums import MoveType
+from monsterforge.pipeline.attack_pipeline import convert_attack
+
+
+def make_semantic_result(**overrides):
+    defaults = dict(
+        description="A vicious bite that can knock the target down.",
+        move_type=MoveType.PHYSICAL,
+        move_range=None,
+        confidence=0.95,
+        rationale="Natural melee attack with a secondary maneuver.",
+    )
+    defaults.update(overrides)
+    return AttackSemanticResult(**defaults)
+
+
+def test_convert_attack_bite_plus_trip_end_to_end():
+    raw_attack = RawAttack(
+        name="Bite", modifier="+7", attack_type="melee", attack_effect="1d6+3 plus trip"
+    )
+
+    with patch(
+        "monsterforge.pipeline.attack_pipeline.classify_attack",
+        return_value=make_semantic_result(),
+    ) as mock_classify:
+        card = convert_attack(raw_attack)
+
+    mock_classify.assert_called_once_with(raw_attack=raw_attack)
+    assert card.name == "Bite"
+    assert card.move_effects[0].effect_value == 6  # 1d6 avg (3) + bonus (3)
+    assert len(card.cards_to_add) == 1
+    assert card.cards_to_add[0].name == "Trip"
+
+
+def test_convert_attack_without_effects_has_no_cards_to_add():
+    raw_attack = RawAttack(
+        name="Claw", modifier="+9", attack_type="melee", attack_effect="2d6+4"
+    )
+
+    with patch(
+        "monsterforge.pipeline.attack_pipeline.classify_attack",
+        return_value=make_semantic_result(description="A raking claw."),
+    ):
+        card = convert_attack(raw_attack)
+
+    assert card.cards_to_add == []
