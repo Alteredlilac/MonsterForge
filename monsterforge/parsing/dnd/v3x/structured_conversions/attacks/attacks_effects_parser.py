@@ -23,9 +23,9 @@ import re
 from dataclasses import dataclass
 from monsterforge.parsing.dnd.v3x.raw_fields.attacks import Attack as RawAttack
 from monsterforge.structured_data.dnd.v3x.special_attacks import SpecialAttack
-from monsterforge.structured_data.dnd.v3x.enums import SpecialAbilityType
+from monsterforge.structured_data.dnd.v3x.enums import SpecialAbilityType, TargetType
 from monsterforge.structured_data.dnd.v3x.dice_effects import Damage
-from monsterforge.structured_data.dnd.v3x.effect_mechanics import CriticalHit
+from monsterforge.structured_data.dnd.v3x.effect_mechanics import CriticalHit, EffectTarget
 from .attacks_effects_patterns import (CRITICAL_MULTIPLIER_PATTERN,
                                        CRITICAL_THRESHOLD_PATTERN)
 from .attacks_effects_helpers import _normalize_text, _parse_damage_part
@@ -119,11 +119,8 @@ def get_damages(raw_attack: RawAttack) -> list[Damage]:
 
     damages: list[Damage] = []
 
-    for index, part in enumerate(parts):
-        damage = _parse_damage_part(
-            part,
-            allow_standalone_damage_type=(index == 0),
-        )
+    for part in parts:
+        damage = _parse_damage_part(part)
 
         if damage is not None:
             damages.append(damage)
@@ -144,8 +141,11 @@ def _get_special_attacks_names(raw_attack: RawAttack) -> list[str]:
         1d3+2 plus corporeal instability -> ["corporeal instability"]
         paralysis -> ["paralysis"]
         1d8 fire plus combustion -> ["combustion"]
-        1d6 plus energy drain -> []
-        because "energy drain" is represented by DamageType.
+        1d6 plus energy drain -> ["energy drain"]
+        positive energy -> ["positive energy"]
+        A component becomes a special attack whenever it carries no
+        quantifiable dice/bonus of its own — even if it names a
+        recognized DamageType (e.g. "energy drain", "positive energy").
     """
     text = raw_attack.attack_effect
 
@@ -195,11 +195,17 @@ def get_special_attacks(raw_attack: RawAttack) -> list[SpecialAttack]:
     """Convert special attack names into SpecialAttack objects."""
     special_attack_names = _get_special_attacks_names(raw_attack)
 
+    # NOTE:
+    # special_ability_type and target are deterministic placeholders, not a
+    # semantic classification: the regex-based parser has no way to know
+    # whether an effect is Ex/Su/Sp or what it actually targets.
+    # TargetType.SOMETHING is used because it covers both creatures and
+    # objects (some secondary effects, e.g. "rust", can target equipment).
     return [
         SpecialAttack(
             name=special_attack_name,
             special_ability_type=SpecialAbilityType.EXTRAORDINARY,
-            # EXTRAORDINARY usato solo come placeholder perchè obbligatorio passala
+            target=EffectTarget(target_type=TargetType.SOMETHING),
         )
         for special_attack_name in special_attack_names
     ]

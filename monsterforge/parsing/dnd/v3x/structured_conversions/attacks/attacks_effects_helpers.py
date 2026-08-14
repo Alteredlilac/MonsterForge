@@ -104,19 +104,20 @@ def _parse_dice_expression(
 
 def _parse_damage_part(
     part: str,
-    *,
-    allow_standalone_damage_type: bool = True,
     ) -> Damage | None:
     """
     Parse one damage/effect component.
 
+    Rules:
+    - A component is only considered damage if it expresses a quantity,
+      via dice or a numeric bonus. A bare DamageType keyword with no
+      dice/bonus of its own (e.g. "energy drain", "positive energy",
+      "trip") never becomes a Damage, regardless of where it appears in
+      the attack_effect text — it is left for the caller to treat as a
+      special attack/effect instead.
+
     Args:
         part: Raw damage or effect component to parse.
-        allow_standalone_damage_type: Whether standalone DamageType values,
-            such as ``energy drain`` or ``positive energy``, can be parsed
-            as Damage. This is disabled for components occurring after
-            the ``plus`` separator, where the same values represent
-            special attacks/effects.
 
     Returns:
         A structured Damage object if the component represents damage,
@@ -128,7 +129,6 @@ def _parse_damage_part(
         1 fire
         1d6 Str
         1d4 Wisdom drain
-        positive energy
     """
     part = _normalize_text(part)
 
@@ -235,20 +235,10 @@ def _parse_damage_part(
             )
 
     # NOTE:
-    # Typed effect without a numeric value.
-    # Examples: positive energy, energy drain 
-    # These can represent DamageType values when they occur as the
-    # main damage expression. When they occur after "plus", they
-    # represent special attacks/effects instead.
-
-    if allow_standalone_damage_type:
-        damage_type = _get_damage_type(part)
-
-        if damage_type:
-            return Damage(
-                dice_number=None,
-                dice_type=None,
-                damage_type=damage_type,
-            )
+    # A bare DamageType keyword with no dice/bonus (e.g. "positive
+    # energy", "energy drain", "trip") never becomes a Damage on its
+    # own — it carries no quantifiable value to compute. It is always
+    # left for the caller to treat as a special attack/effect, whether
+    # it is the entire attack_effect or a component after "plus".
 
     return None

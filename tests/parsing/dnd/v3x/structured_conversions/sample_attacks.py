@@ -151,7 +151,12 @@ SAMPLE_ATTACKS = [
         "attack_type": "ranged",
         "attack_effect": "1d8+6",
     },
-    {},
+    {
+        "name": "",
+        "modifier": "",
+        "attack_type": "",
+        "attack_effect": "",
+    },
     {
         "name": "Bite",
         "modifier": "+2",
@@ -355,5 +360,48 @@ SAMPLE_ATTACKS = [
         "modifier": "+3",
         "attack_type": "melee",
         "attack_effect": "1d6+1",
+    },
+    # NOTE:
+    # Invented cases (not from a real stat block) added to cover
+    # entity-affecting maneuvers (trip/push/unbalance/grapple/stagger/
+    # disarm), a family absent from the samples above, which only
+    # contain status-condition-style secondary effects (poison, disease,
+    # paralysis, fear, petrification, corporeal instability, combustion,
+    # slime, rust). Four physical, two magic-flavored.
+    {
+        "name": "Bite",
+        "modifier": "+7",
+        "attack_type": "melee",
+        "attack_effect": "1d6+3 plus trip",
+    },
+    {
+        "name": "Slam",
+        "modifier": "+9",
+        "attack_type": "melee",
+        "attack_effect": "1d8+5 plus push",
+    },
+    {
+        "name": "Tail sweep",
+        "modifier": "+6",
+        "attack_type": "melee",
+        "attack_effect": "1d6+2 plus unbalance",
+    },
+    {
+        "name": "Pincers",
+        "modifier": "+8",
+        "attack_type": "melee",
+        "attack_effect": "1d4+4 plus grapple",
+    },
+    {
+        "name": "Psychic lash",
+        "modifier": "+5",
+        "attack_type": "ranged touch",
+        "attack_effect": "1d6 plus stagger",
+    },
+    {
+        "name": "Arcane slam",
+        "modifier": "+4",
+        "attack_type": "melee touch",
+        "attack_effect": "1d4+2 plus disarm",
     },
 ]
