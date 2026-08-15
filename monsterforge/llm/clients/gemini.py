@@ -31,9 +31,23 @@ Example:
 from dotenv import load_dotenv
 import os
 import google.generativeai as genai
-from google.api_core.exceptions import GoogleAPIError
+from google.api_core.exceptions import GoogleAPIError, NotFound
 
 load_dotenv()
+
+
+class ModelUnavailableError(RuntimeError):
+    """
+    Raised when the configured model can't generate content for this
+    API key/account (deprecated, region-restricted, tier-restricted...).
+
+    Distinguished from other Gemini API errors (rate limits, invalid
+    arguments...) so callers can react specifically — e.g. ask the user
+    to pick a different model — instead of treating every failure the
+    same way.
+    """
+    pass
+
 
 class GeminiClient:
     def __init__(self, llm_model:str):
@@ -57,6 +71,16 @@ class GeminiClient:
         try:
             response = self.model.generate_content(question)
             return getattr(response, "text", "")
+        except NotFound as exc:
+            # NOTE:
+            # Gemini raises NotFound both when a model doesn't exist at
+            # all and when it exists but is "no longer available to new
+            # users" for this account/tier — a restriction
+            # list_text_models() doesn't surface, so it can only be
+            # detected here, at actual generation time.
+            raise ModelUnavailableError(
+                f"Model {self.model_name!r} is not available: {exc}"
+            ) from exc
         except GoogleAPIError as exc:
             raise RuntimeError(f"Gemini API error: {exc}") from exc
         
