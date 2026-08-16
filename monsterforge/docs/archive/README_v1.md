@@ -1,23 +1,18 @@
+> **Historical document.** This is the project's original README, kept for
+> reference (original vision and pitch). It predates the API/serialization
+> layer, the LLM model-fallback work, and describes a PyQt5 desktop
+> validation tool that was never built and is no longer planned. For the
+> current README see [../../../README.md](../../../README.md); for the
+> current project state see [../PROJECT_STATUS.md](../PROJECT_STATUS.md).
+
 # MonsterForge — RPG Data Transformation Engine
 
 A Python-based pipeline that transforms semi-structured RPG data into normalized, game entities through deterministic rules and LLM-assisted classification.
 
----
 
-## Current Status
+![MonsterForge creature card example](./docs/images/creature_card_example.png)
+*Example output: a generated creature card and move card for a converted D&D monster.*
 
-The project is under active development. A first vertical slice — converting a
-single D&D 3.x attack all the way from raw input to a domain `MoveCard`,
-classified live against the real Gemini API — works end to end today via CLI
-tools. Persistence, the HTTP API, and human validation are designed in detail
-but not yet built.
-
-For the full, up-to-date picture (what's implemented, test coverage, known
-limitations) see **[monsterforge/docs/PROJECT_STATUS.md](./monsterforge/docs/PROJECT_STATUS.md)**.
-The rest of this README describes the project's overall vision and design —
-where it's headed, not only where it stands right now.
-
----
 
 ## Overview
 
@@ -33,17 +28,17 @@ It combines:
 
 to produce consistent and explainable outputs.
 
+Currently evaluated against a dataset of 40 D&D 3.5 monsters, covering multiple creature types (animals, undead, magical beasts) to stress-test attribute mapping and classification edge cases.
+
 > Full design documentation (conversion algorithms, classification schema, card system) is available in **[DESIGN.md](./DESIGN.md)**.
 
 ---
 
 ## Demo
 
-Not available yet — card rendering (`rendering/`) hasn't been built. Once it
-exists, a walkthrough GIF and sample rendered cards will live here.
 
-In the meantime, the CLI entry points (see [Example Usage](#example-usage))
-produce the same data a rendered card would draw from, as JSON.
+- [Short walkthrough (GIF)](./docs/demo.gif) — scraping → classification → card generation, end-to-end 
+- [Sample generated cards](./docs/samples/) — pre-rendered output for 5 monsters 
 
 ---
 
@@ -73,7 +68,7 @@ MonsterForge implements a pipeline that:
 3. Transforms numerical values via deterministic rules
 4. Classifies abilities using an LLM with a constrained schema
 5. Applies human validation when confidence is low
-6. Generates card-based representations, exposed via a JSON API and rendered as printable cards
+6. Generates card-based representations ready for rendering
 
 ---
 
@@ -104,16 +99,13 @@ Numerical Transformation   LLM Classification
         Intermediate Entity Model
                    |
                    v
-             Serialization
+            Card Generation
                    |
-          +--------+--------+
-          |                 |
-          v                 v
-     JSON API          Card Rendering
-     (FastAPI)          (HTML / Image)
+                   v
+        HTML / Image Output
 ```
 
-This pipeline follows an ETL-like structure where transformation is split between deterministic algorithms and constrained semantic classification. After the domain model, the pipeline forks into two independent consumers sharing one serialized representation — see [PIPELINE_ARCHITECTURE.md](./monsterforge/docs/PIPELINE_ARCHITECTURE.md) for the full schema and the rationale behind that split.
+This pipeline follows an ETL-like structure where transformation is split between deterministic algorithms and constrained semantic classification.
 
 ---
 
@@ -152,20 +144,13 @@ This allows extensibility, multiple output formats, and decoupling from source s
 
 ## Features
 
-Built and working today:
-
-- Deterministic parsing of D&D 3.x attack notation (dice, damage types, critical hits, secondary effects) via regex, no LLM involved where the format is fixed
-- Semantic classification of attack descriptions via the Gemini API, with explicit handling when the configured model becomes unavailable (no silent fallback — see [LLM_ARCHITECTURE.md](./monsterforge/docs/LLM_ARCHITECTURE.md))
-- Full conversion path from raw attack input to a domain `MoveCard`, including secondary/referenced cards (e.g. a bite granting Trip)
-- CLI entry points for manual input, prompt iteration, and batch data collection against the real API
-
-Planned, not yet built:
-
 - Web scraping with `requests` + `BeautifulSoup`
-- SQL persistence of raw and structured data
-- A JSON API (FastAPI) exposing the domain model
+- SQL storage of raw and structured data
+- Custom transformation algorithms (HP, attributes, resources, skills)
+- Semantic classification using an LLM (schema-constrained, not generative)
 - Confidence-based human validation workflow
 - Card rendering pipeline (HTML → printable format)
+- Desktop validation tool built with PyQt5
 
 ---
 
@@ -188,9 +173,9 @@ Attack: Bite 1d6
 CREATURE CARD
 HP: 23
 Attack: 1        Speed: 2        Defense: 2
-Power: 0         Ward: 1         Flow: 0
+Power: 0         Tangency: 1     Spin: 0
 Athletics: 2     Empathy: 0      Perception: 2
-Stealth: 2       Knowledge: 0    Crafting: 0
+Stealth: 2       Culture: 0      Craft: 0
 
 MOVE CARD
 Name: Bite
@@ -205,7 +190,7 @@ Full attribute derivation (HP, Body/Spirit, Interpretation) is documented in [DE
 
 ## Pipeline Execution Example
 
-A typical pipeline execution is designed to produce traceable logs for each transformation stage:
+A typical pipeline execution produces traceable logs for each transformation stage:
 ```text
 [2026-07-10 14:32:01] INFO  Loading raw record: monster_id=wolf_001 source=d20srd
 [2026-07-10 14:32:01] INFO  Parsing stat block...
@@ -222,7 +207,7 @@ A typical pipeline execution is designed to produce traceable logs for each tran
 [2026-07-10 14:32:11] INFO  Generating card templates (1 creature, 2 moves)...
 [2026-07-10 14:32:11] INFO  Export completed: creature_card.html, bite_card.html, keen_scent_card.html
 ```
-Logging makes each transformation stage observable and simplifies debugging, validation, and future rule changes. This illustrates the target end-to-end flow — scraping, validation, and rendering aren't built yet, see [Current Status](#current-status).
+Logging makes each transformation stage observable and simplifies debugging, validation, and future rule changes.
 
 ---
 
@@ -232,8 +217,6 @@ Logging makes each transformation stage observable and simplifies debugging, val
 monsterforge/
 ├── domain/            # core models (entity, card, ability) — the final,
 │                       # source-independent representation
-├── serialization/      # domain model → external representation (JSON-
-│                        # compatible dict), shared by api/ and rendering/
 ├── config/             # runtime settings (LLM API key, confidence thresholds, DB config — see .env.example)
 ├── db/                  # RECORD DB schema and access (raw scraped content, generic table)
 ├── rules/                 # typed conversion tables (dataclasses: size→HP, characteristic→attribute, ...)
@@ -243,20 +226,18 @@ monsterforge/
 │       ├── raw_fields/          # stage 1: mirrors rulebook tables almost verbatim
 │       │                          (e.g. RawArmorFields, RawCreatureFields — still
 │       │                          mostly strings, not yet cast or interpreted)
-│       └── structured_conversions/ # stage 2: casts raw_fields into structured_data,
+│       └── ...                    # stage 2: casts raw_fields into structured_data,
 │                                    routing free-text content to llm/ when needed
 ├── structured_data/               # typed, source-specific intermediate models
 │   └── dnd/v3x/                    # (Creature, Item, Spell, Feat, ...) — the
 │                                     "Dati Strutturati" stage from DESIGN.md
 ├── transformation/                  # numerical algorithms (HP, Body/Spirit, Interpretation)
 ├── llm/                               # semantic classification (attacks, qualities, feats, spells)
-├── pipeline/                           # orchestration (e.g. attack_pipeline.convert_attack)
-├── entrypoints/                         # CLI tools: manual conversion, prompt testing,
-│                                          real-API data collection
-├── validation/                          # human review logic (planned)
-├── api/                                  # JSON API, FastAPI (planned)
-├── rendering/                             # card generation (HTML/templates, planned)
-└── tests/                                  # unit tests
+├── validation/                          # human review logic
+├── rendering/                             # card generation (HTML/templates)
+├── ui/                                     # PyQt5 validation tool
+├── pipeline/                                 # orchestration
+└── tests/                                     # unit tests
 ```
 **Two-stage parsing.** Extraction is split into `raw_fields/` (source-format
 strings, mirroring the rulebook table structure) and a conversion stage that
@@ -273,34 +254,18 @@ interpretation and typing, and means:
 - simple entries with no free-text description can skip LLM classification
   and go straight to `structured_data` via direct type casting.
 
-See **[PIPELINE_ARCHITECTURE.md](./monsterforge/docs/PIPELINE_ARCHITECTURE.md)** for the
+See **[PIPELINE_ARCHITECTURE.md](./docs/PIPELINE_ARCHITECTURE.md)** for the
 full pipeline schema and the rationale behind this split.
 
 ---
 
 ## Example Usage
 
-What runs today, against the real Gemini API:
-
-```bash
-python -m monsterforge.entrypoints.convert_attack_cli
-```
-
-Prompts for a raw attack (and optional context) interactively, then prints
-the resulting `MoveCard` as JSON.
-
-```bash
-python -m monsterforge.entrypoints.test_llm_prompt_cli
-```
-
-Renders any Jinja2 prompt template with real input and prints the LLM's raw
-response — useful for iterating on prompts directly.
-
-The target CLI shape once the full pipeline exists:
-
 ```
 python -m monsterforge generate --entity wolf
 ```
+
+Output:
 
 ```
 Generated:
@@ -317,7 +282,7 @@ The LLM is used strictly as a semantic classifier, not a generator.
 - Fixed output schema
 - Low temperature
 - Confidence scoring
-- Automatic fallback to human validation when confidence < threshold (planned; today confidence is captured but not yet routed anywhere)
+- Automatic fallback to human validation when confidence < threshold
 
 Example output *(simplified — see [DESIGN.md](./DESIGN.md) for the full schema, including duration, usage, and card fields)*:
 
@@ -331,9 +296,6 @@ Example output *(simplified — see [DESIGN.md](./DESIGN.md) for the full schema
   "confidence": 0.92
 }
 ```
-
-See [LLM_ARCHITECTURE.md](./monsterforge/docs/LLM_ARCHITECTURE.md) for how the model is
-selected, verified, and what happens when it becomes unavailable.
 
 ---
 
@@ -380,14 +342,12 @@ def test_wolf_conversion():
 - Not all RPG mechanics are fully represented
 - Designed primarily for D&D 3.5 / Pathfinder 1E
 - Full game ruleset is intentionally out of scope — this project is a transformation engine, not a game
-- See [PROJECT_STATUS.md](./monsterforge/docs/PROJECT_STATUS.md) for what's concretely built vs. still planned
 
 ---
 
 ## Future Improvements
 
-- HTTP API (FastAPI) exposing the domain model as JSON
-- CLI-based human validation workflow for low-confidence classifications
+- Web interface for validation
 - Transformation versioning system
 - Support for additional RPG systems
 - Advanced balancing heuristics
@@ -397,20 +357,15 @@ def test_wolf_conversion():
 
 ## Tech Stack
 
-Currently used:
-
 - Python
-- `google-generativeai` (Gemini API)
-- Jinja2
-- dataclasses
-- pytest
-
-Planned:
-
 - requests / BeautifulSoup
 - SQLite / SQLAlchemy
-- FastAPI
+- PyQt5
+- dataclasses
+- Jinja2
 - HTML/CSS templates
+- LLM API
+- pytest
 
 ---
 
@@ -429,10 +384,8 @@ This project is designed to demonstrate real-world software engineering patterns
 
 ## Documentation
 
-- **[DESIGN.md](./DESIGN.md)** — original technical vision: architecture, transformation algorithms, intermediate data model, and LLM classification workflow
-- **[monsterforge/docs/PROJECT_STATUS.md](./monsterforge/docs/PROJECT_STATUS.md)** — current state: what's built, test coverage, known limitations
-- **[monsterforge/docs/PIPELINE_ARCHITECTURE.md](./monsterforge/docs/PIPELINE_ARCHITECTURE.md)** — full pipeline schema and architectural decisions
-- **[monsterforge/docs/LLM_ARCHITECTURE.md](./monsterforge/docs/LLM_ARCHITECTURE.md)** — how the LLM client layer is structured
+- **[DESIGN.md](./DESIGN.md)** — technical documentation: architecture, transformation algorithms, intermediate data model, and LLM classification workflow
+- *(optional)* [RULES_REFERENCE.pdf](./docs/RULES_REFERENCE.pdf) — the target game ruleset generated by the engine, included for reference only; not the focus of this project
 
 ---
 

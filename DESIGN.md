@@ -1,39 +1,55 @@
 # RPG Data Transformation Engine for Card Generation
 
-## Obiettivo del progetto
+> This document describes MonsterForge's original design vision and the
+> numeric algorithms that convert D&D/Pathfinder stat blocks into card
+> values — the algorithms are still implemented exactly as described here.
+> For the current, detailed pipeline architecture see
+> [PIPELINE_ARCHITECTURE.md](./monsterforge/docs/PIPELINE_ARCHITECTURE.md);
+> for current project status see
+> [PROJECT_STATUS.md](./monsterforge/docs/PROJECT_STATUS.md).
 
-Creare un motore di trasformazione in grado di convertire
-stat block RPG complessi in rappresentazioni semplificate
-utilizzabili come carte da gioco mantenendo:
+## Project Goal
 
-- identità della creatura
-- differenze tra archetipi
-- bilanciamento numerico
-- velocità di gioco
+Build a transformation engine capable of converting complex RPG stat
+blocks into simplified representations usable as game cards, while
+preserving:
 
-## Descrizione:
+- the creature's identity
+- differences between archetypes
+- numeric balance
+- game speed
+
+## Description
+
 - Scraped and parsed OGL RPG data from web sources
 - Designed custom lossy transformation algorithms
 - LLM-based semantic classifier with human-in-the-loop validation
 - Converted complex stat blocks into simplified card representations
 - Built a rendering pipeline for printable card layouts
-- Developed a desktop validation tool with PyQt5
+- Planned a JSON API (FastAPI) exposing the converted data, with
+  human validation reachable through CLI tooling
 
+## Explanation
 
-## Spiegazione
+A scraping project where I wanted to build a program that uses my own
+conversion algorithms (lossy, non-invertible) to transform D&D 3.5 or
+Pathfinder 1st edition monster data into game cards. Using `requests` to
+download HTML pages and BeautifulSoup on d20.org to extract OGL
+information and save it to a SQL DB, then applying the conversions with
+my own algorithms and generating the cards as static web pages with a
+print option to save them as images.
 
-Progetto di scraping in cui volevo fare un programma che usando alcuni algoritmi miei di conversione (lossy non invertibili)
-trasformano i dati dei mostri di D&D 3.5 o Pathfinder 1ª edizione in carte da gioco.
-Usando requests per scaricare le pagine html e Beautifulsoup sul sito d20.org per prendere le informazioni OGL e salvarle su un DB SQL
-e poi applicare le conversioni con i miei algoritmi e generare le carte statiche come pagine web con l'opzione stampa per salvarle come immagini.
-Il tutto fatto con una semplice interfaccia fatta con PyQt5 per validare le carte o modificarle manualmente.
-per i dati numerici si utilizzano gli algoritmi in modo da garantire bilanciamento, mentre per valori non numerici si utilizza un LLM
-come classificatore semantico e un controllo umano per la validazione/modifica dei valori proposti.
-L'LLM non genera liberamente dati di gioco, ma effettua una classificazione vincolata da uno schema.
-
+Numeric data is handled with the algorithms to guarantee balance, while
+non-numeric values use an LLM as a semantic classifier plus a human
+check for validating/adjusting the proposed values. The LLM does not
+freely generate game data — it performs a classification constrained by
+a schema. Card validation and manual editing are exposed through a JSON
+API and CLI tooling, rather than the desktop tool originally planned
+with PyQt5.
 
 ## PIPELINE
 
+```
 Raw RPG Text
      |
      v
@@ -54,527 +70,545 @@ Numerical Rules       LLM Semantic Classification
              |
              v
         Card Generator
-
+```
 
 ## Design decisions
 
-- La conversione è volutamente lossy:
-  il sistema conserva l'identità funzionale della creatura,
-  non tutti i dettagli dello stat block originale.
+- The conversion is deliberately lossy: the system preserves the
+  creature's functional identity, not every detail of the original stat
+  block.
 
-- I valori numerici vengono generati tramite formule deterministiche
-  per mantenere coerenza e bilanciamento.
+- Numeric values are generated through deterministic formulas to
+  maintain consistency and balance.
 
-- I dati descrittivi vengono classificati semanticamente tramite LLM
-  con validazione umana.
+- Descriptive data is semantically classified via LLM with human
+  validation.
 
-- Il numero massimo di azioni per turno è limitato per mantenere
-  la velocità del gioco.
+- The maximum number of actions per turn is limited to keep the game
+  fast.
 
+---
 
-## ALGORITMI
+## ALGORITHMS
 
-####REGOLA GENERALE -> tutti i valori decimali vengono arrotondati per difetto
+#### GENERAL RULE -> all decimal values are rounded down
 
-### Calcolo del valore VITA
+### Calculating the LIFE value
 
-| VITA | TAGLIA       |
-|------|--------------|
-| 1    | Minuta       |
-| 2    | Piccolissima |
-| 5    | Minuscola    |
-| 10   | Piccola      |
-| 15   | Media        |
-| 30   | Grande       |
-| 45   | Enorme       |
-| 60   | Mastodontica |
-| 90   | Colossale    |
+| LIFE | SIZE       |
+|------|------------|
+| 1    | Fine       |
+| 2    | Diminutive |
+| 5    | Tiny       |
+| 10   | Small      |
+| 15   | Medium     |
+| 30   | Large      |
+| 45   | Huge       |
+| 60   | Gargantuan |
+| 90   | Colossal   |
 
+To this, add the average hit die value multiplied by the number of hit dice
 
-A questi aggiungo valore medio del dado vita moltiplicato per il numero di DV
+| Dice Type | LIFE |
+|-----------|------|
+| D2        | 1    |
+| D4        | 2    |
+| D6        | 3    |
+| D8        | 4    |
+| D10       | 5    |
+| D12       | 6    |
 
-| Tipo di Dado | VITA |
-|--------------|------|
-| D2           | 1    |
-| D4           | 2    |
-| D6           | 3    |
-| D8           | 4    |
-| D10          | 5    |
-| D12          | 6    |
-
-#### Esempio conversione -> Lupo : taglia media , 2d8 DV -> 15 + 2*4 = VITA 23
+#### Conversion example -> Wolf: Medium size, 2d8 HD -> 15 + 2*4 = LIFE 23
 
 -----------------
 
-### Calcolo dei valori di CORPO e SPIRITO
+### Calculating BODY and SPIRIT values
 
-- Usare i modificatori caratteristica come indicatore per valori corpo e spirito
-- I modificatori caratteristica vengono utilizzati come feature
-normalizzate evitando di trasferire direttamente il sistema D&D.
-- modificatori negativi valgono 0
+- Use the characteristic modifiers as the indicator for Body and Spirit values
+- The characteristic modifiers are used as normalized features, avoiding
+  transferring the D&D system directly.
+- Negative modifiers count as 0
 
-| CARATTERISTICA D&D | CARATTERISTICA CORPO |
-|--------------------|----------------------|
-| Forza              | Attacco              |
-| Destrezza          | Velocità             |
-| Costituzione       | Difesa               |
-| Destrezza*         | Difesa (non morti)   |
+| D&D CHARACTERISTIC | BODY CHARACTERISTIC |
+|---------------------|----------------------|
+| Strength             | Attack                |
+| Dexterity            | Speed                 |
+| Constitution         | Defense               |
+| Dexterity*           | Defense (undead)      |
 
-* Per i non morti, la Difesa utilizza la Destrezza invece della Costituzione
+* For undead, Defense uses Dexterity instead of Constitution
 
-| CARATTERISTICA D&D | CARATTERISTICA SPIRITO |
-|--------------------|------------------------|
-| Intelligenza       | Potere                 |
-| Saggezza           | Tangenza               |
-| Carisma            | Spin                   |
-
-Per alcuni Mostri usare il Carisma per determinare il Potere e l'intelligenza per determinare lo Spin.
-
-Incorporei non hanno attacco e difesa
-
-#### Esempio conversione -> Lupo : 
-
-| CARATTERISTICA D&D  | CARATTERISTICA CORPO   |
+| D&D CHARACTERISTIC | SPIRIT CHARACTERISTIC |
 |---------------------|------------------------|
-| - Forza = 13        | - Attacco = 1          |
-| - Destrezza = 15    | - Velocità = 2         |
-| - Costituzione = 15 | - Difesa =  2          |
-| CARATTERISTICA D&D  | CARATTERISTICA SPIRITO |
-| - Intelligenza = 2  | - Potere =  0          |
-| - Saggezza = 12     | - Tangenza = 1         |
-| - Carisma = 6       | - Spin = 0             |
+| Intelligence         | Power                   |
+| Wisdom                | Ward                    |
+| Charisma              | Flow                    |
 
+For some monsters, use Charisma to determine Power and Intelligence to determine Flow.
 
------------------
+Incorporeal creatures have no Attack or Defense.
 
-### Calcolo dei valori di ARMATURA e TALISMANO
+#### Conversion example -> Wolf:
 
-- Armatura = CA totale - Destrezza- 10 (Deviazione e bonus di taglia non vengono considerati)
-- Talismano = Resistenza agli incantesimi -10 + Deviazione
-
-#### Esempio conversione -> Lupo : 
-
-| CA D&D                          | ARMATURA                              |
-|---------------------------------|---------------------------------------|
-| CA totale = 14                  | 14 - 2 (valore di Destrezza) - 10 = 2 |
-| CA D&D                          | TALISMANO                             |
-| --------                        | -----------                           |
-| Resistenza agli incantesimi = 0 | 0                                     |
+| D&D CHARACTERISTIC   | BODY CHARACTERISTIC    |
+|-----------------------|--------------------------|
+| - Strength = 13        | - Attack = 1              |
+| - Dexterity = 15       | - Speed = 2               |
+| - Constitution = 15    | - Defense = 2             |
+| D&D CHARACTERISTIC   | SPIRIT CHARACTERISTIC  |
+| - Intelligence = 2     | - Power = 0                |
+| - Wisdom = 12          | - Ward = 1                 |
+| - Charisma = 6         | - Flow = 0                 |
 
 -----------------
 
-### Calcolo dei valori di INTERPRETAZIONE
+### Calculating ARMOR and TALISMAN values
 
-#### Esistono 6 valori di interpretazione: 
-- Atletica
-- Empatia
-- Percezione
-- Furtività
-- Cultura
-- Artigianato
+- Armor = total AC - Dexterity - 10 (deflection and size bonuses are not considered)
+- Talisman = Spell Resistance - 10 + Deflection
 
-raggruppare le varie abilità di D&D nei 6 gruppi interpretazione e fare una media,
-da quella ricavare il valore da esssegnare 
+#### Conversion example -> Wolf:
 
-- per ognuna delle abilità di un gruppo di abilità di D&D associate a un valore di interpretazione
-si prende il valore dell' abilità utilizzando il metodo di calcolo esposto sotto per
-ognuna delle abilità di quel gruppo si fa la media e si ottiene il valore di interpretazione associata
+| D&D AC                        | ARMOR                                 |
+|--------------------------------|-----------------------------------------|
+| Total AC = 14                  | 14 - 2 (Dexterity value) - 10 = 2       |
+| D&D AC                        | TALISMAN                              |
+| --------                       | -----------                             |
+| Spell Resistance = 0           | 0                                       |
 
+-----------------
 
-- metodo di calcolo utilizzato:
-descrizione a parole: 
-Prendo la caratteristica associata, se positiva o prendo 0 se negativa, 
+### Calculating INTERPRETATION values
 
-se il valore è 0 cioè non ci sono gadi di abilità assegnati o altri bonus prendo come valore la caratteristica associata,
-altrimenti prendo il valore a cui sottraggo la caratteristica associata e 3 (quindi ottengo i gradi di abilità) 
+#### There are 6 Interpretation values:
+- Athletics
+- Empathy
+- Perception
+- Stealth
+- Knowledge
+- Crafting
 
-e faccio la media di tutti i valori non nulli del gruppo di valori considerati 
+Group the various D&D skills into the 6 Interpretation groups and average
+them; the value to assign is derived from that average.
 
+- for each skill in a D&D skill group associated with an Interpretation
+  value, take the skill's value using the calculation method described
+  below; for each skill in that group compute the average to obtain the
+  associated Interpretation value.
 
-poi controllo, se la caratteristica di riferimento del valore di interpretazione è minore di 0, 
-il valore di interpretazione sarà 0 (indipendentemente dalla media ottenuta), altrimenti sarà la media ottenuta.
+- calculation method used:
+  description in words:
+  Take the associated characteristic, if positive, or take 0 if negative.
 
+  If the value is 0 — i.e. there are no skill ranks assigned or other
+  bonuses — take the associated characteristic as the value; otherwise
+  take the value and subtract the associated characteristic and 3 (this
+  gives the skill ranks),
 
+  then average all the non-zero values in the group being considered.
 
-- metodo di calcolo utilizzato possibile versione in python:
+  Then check: if the reference characteristic for the Interpretation
+  value is less than 0, the Interpretation value will be 0 (regardless of
+  the average obtained); otherwise it will be the computed average.
+
+- calculation method used, possible Python version:
 ```python
-def calcola_interpretazione(valori_abilita, mod_caratteristica):
+def calculate_interpretation(skill_values, characteristic_modifier):
     """
-    valori_abilita: lista dei valori delle abilità D&D (es: [2,2,0,3,...])
-    mod_caratteristica: modificatore della caratteristica associata (es: +2, -1, ecc.)
+    skill_values: list of D&D skill values (e.g. [2,2,0,3,...])
+    characteristic_modifier: modifier of the associated characteristic (e.g. +2, -1, etc.)
     """
 
-    # Se la caratteristica è negativa → risultato finale sarà 0
-    if mod_caratteristica < 0:
+    # If the characteristic is negative -> final result is 0
+    if characteristic_modifier < 0:
         return 0
 
-    # Per i calcoli uso comunque max(0, mod)
-    mod_car = max(0, mod_caratteristica)
+    # For the calculations, still use max(0, mod)
+    char_mod = max(0, characteristic_modifier)
 
-    valori_calcolati = []
+    computed_values = []
 
-    for val in valori_abilita:
-        if val == 0:
-            risultato = mod_car
+    for value in skill_values:
+        if value == 0:
+            result = char_mod
         else:
-            risultato = val - mod_car - 3
+            result = value - char_mod - 3
 
-        # considero solo valori NON nulli
-        if risultato != 0:
-            valori_calcolati.append(risultato)
+        # only consider non-zero values
+        if result != 0:
+            computed_values.append(result)
 
-    # evitare divisione per zero
-    if not valori_calcolati:
+    # avoid division by zero
+    if not computed_values:
         return 0
 
-    # media finale
-    media = sum(valori_calcolati) / len(valori_calcolati)
+    # final average
+    average = sum(computed_values) / len(computed_values)
 
-    return media
+    return average
 ```
 
+- Negative modifiers count as 0
 
-- modificatori negativi valgono 0
+| D&D SKILL             | INTERPRETATION |
+|------------------------|-----------------|
+| Acrobatics              | Athletics       |
+| Escape Artist           | Athletics       |
+| Ride                    | Athletics       |
+| Balance                 | Athletics       |
+| Swim                    | Athletics       |
+| Jump                    | Athletics       |
+| Climb                   | Athletics       |
+| -------------           | ----------------- |
+| Handle Animal           | Empathy         |
+| Diplomacy               | Empathy         |
+| Intimidate              | Empathy         |
+| Perform                 | Empathy         |
+| Sense Motive            | Empathy         |
+| Gather Information      | Empathy         |
+| Bluff                   | Empathy         |
+| -------------           | ----------------- |
+| Listen                  | Perception      |
+| Search                  | Perception      |
+| Spot                    | Perception      |
+| -------------           | ----------------- |
+| Disguise                | Stealth         |
+| Move Silently           | Stealth         |
+| Hide                    | Stealth         |
+| Sleight of Hand         | Stealth         |
+| -------------           | ----------------- |
+| Concentration           | Knowledge       |
+| Knowledge               | Knowledge       |
+| Decipher Script         | Knowledge       |
+| Heal                    | Knowledge       |
+| Profession              | Knowledge       |
+| Spellcraft              | Knowledge       |
+| Survival                | Knowledge       |
+| Appraise                | Knowledge       |
+| -------------           | ----------------- |
+| Craft                   | Crafting        |
+| Disable Device          | Crafting        |
+| Forgery                 | Crafting        |
+| Open Lock               | Crafting        |
+| Use Rope                | Crafting        |
+| Use Magic Device        | Crafting        |
+| -------------           | ----------------- |
 
-| ABILITÀ D&D               | INTERPRETAZIONE   |
-|---------------------------|-------------------|
-| Acrobazia                 | Atletica          |
-| Artista della fuga        | Atletica          |
-| Cavalcare                 | Atletica          |
-| Equilibrio                | Atletica          |
-| Nuotare                   | Atletica          |
-| Saltare                   | Atletica          |
-| Scalare                   | Atletica          |
-| -------------             | ----------------- |
-| Addestrare animali        | Empatia           |
-| Diplomazia                | Empatia           |
-| Intimidire                | Empatia           |
-| Intrattenere              | Empatia           |
-| Percepire intenzioni      | Empatia           |
-| Raccogliere informazioni  | Empatia           |
-| Raggirare                 | Empatia           |
-| -------------             | ----------------- |
-| Ascoltare                 | Percezione        |
-| Cercare                   | Percezione        |
-| Osservare                 | Percezione        |
-| -------------             | ----------------- |
-| Camuffare                 | Furtività         |
-| Muoversi silenziosamente  | Furtività         |
-| Nascondersi               | Furtività         |
-| Rapidità di mano          | Furtività         |
-| -------------             | ----------------- |
-| Concentrazione            | Cultura           |
-| Conoscenze                | Cultura           |
-| Decifrare scritture       | Cultura           |
-| Guarire                   | Cultura           |
-| Professione               | Cultura           |
-| Sapienza magica           | Cultura           |
-| Sopravvivenza             | Cultura           |
-| Valutare                  | Cultura           |
-| -------------             | ----------------- |
-| Artigianato               | Artigianato       |
-| Disattivare congegni      | Artigianato       |
-| Falsificare               | Artigianato       |
-| Scassinare serrature      | Artigianato       |
-| Utilizzare corde          | Artigianato       |
-| Utilizzare oggetti magici | Artigianato       |
-| -------------             | ----------------- |
+| D&D REFERENCE CHARACTERISTIC | INTERPRETATION |
+|--------------------------------|-----------------|
+| Strength                        | Athletics       |
+| Charisma                        | Empathy         |
+| Wisdom                          | Perception      |
+| Dexterity                       | Stealth         |
+| Intelligence                    | Knowledge       |
+| Intelligence                    | Crafting        |
 
+#### Conversion example -> Wolf: (showing results for simplicity)
 
-| CARATTERISTICA DI RIFERIMENTO D&D | INTERPRETAZIONE |
-|-----------------------------------|-----------------|
-| Forza                             | Atletica        |
-| Carisma                           | Empatia         |
-| Saggezza                          | Percezione      |
-| Destrezza                         | Furtività       |
-| Intelligenza                      | Cultura         |
-| Intelligenza                      | Artigianato     |
-
-#### Esempio conversione -> Lupo : (mostro i risultati per semplicità)
-
-Atletica = 2
-Empatia  = 0
-Percezione = 2
-Furtività = 2
-Cultura = 0
-Artigianato = 0
+Athletics = 2
+Empathy = 0
+Perception = 2
+Stealth = 2
+Knowledge = 0
+Crafting = 0
 
 -----------------
 
-### Calcolo dei valori di FIATO e MAGIA
+### Calculating STAMINA and MANA values
 
-#### FIATO  = pool di azioni fisiche per turno
-Bab diventa punti fiato -> numero di attacchi = Fiato 
+#### STAMINA = pool of physical actions per turn
+BAB becomes Stamina points -> number of attacks = Stamina
 
-Bab/5 = Fiato (minimo 1)
+BAB/5 = Stamina (minimum 1)
 
- 
-#### MAGIA  = pool di azioni magiche per turno
 
-Usare livello incatore per definire i punti magia
+#### MANA = pool of magical actions per turn
 
-livello incantatore/5 = Magia (minimo 1 se ha livello incantare, altrimenti 0)
+Use caster level to define Mana points
 
-#### EXTRA su puti fiato e magia
-- bonus -> Attacchi multipli diventano punti bonus (esempio idra) oppure
-possibilità di usare più volte una carta attacco specifica esempio morso
-- per capacità magiche con usi limitati (in quel caso si ha limite di utilizzi massimi)
+Caster level/5 = Mana (minimum 1 if it has a caster level, otherwise 0)
 
-##### nota di design
-Il numero massimo di attacchi per turno è limitato a 4 per garantire velocità di gioco.
-Eventuali attacchi aggiuntivi vengono convertiti in bonus o utilizzi extra di abilità.
+#### EXTRA on Stamina and Mana points
+- bonus -> multiple attacks become bonus points (e.g. a hydra) or the
+  ability to use a specific attack card multiple times (e.g. bite)
+- for magical abilities with limited uses (in that case there is a
+  maximum-uses limit)
+
+##### design note
+The maximum number of attacks per turn is capped at 4 to keep the game
+fast. Any additional attacks are converted into bonuses or extra ability
+uses.
 -----------------
 
-- bias su abilità non nulle -> voluto e conosciuto 
+- bias towards non-zero skills -> intentional and acknowledged
 
-- ignoro valore di costituzione x vita (meno pf ma bilanciato da taglia) -> Si non ci interessa
+- ignoring the Constitution value for Life (fewer HP, but balanced by
+  size) -> Yes, not a concern
 
-- problema con attacchi, attacchi speciali, qualità speciali e oggetti -> risolto con classificazione semantica
+- problem with attacks, special attacks, special qualities, and items ->
+  resolved via semantic classification
 
-- vedere come gestire risucchio caratteristiche -> media come per pf e dimezzati (minimo 1) -> non possono diventare negativi
+- how to handle ability drain -> average like HP and halved (minimum 1)
+  -> cannot go negative
 
-- vedere come gestire cura diventano media come pf  -> 1d6 = 3 danni curati 
-- nel caso di valori assoluti (non modificatori) esempio 5 =  vengono dimezzati e arrotondati per difetto 
+- how to handle healing -> becomes an average like HP -> 1d6 = 3 HP
+  healed
+- for absolute values (not modifiers), e.g. 5 -> halved and rounded down
 
-- problema con metodi di movimento (volare, nuotare, velcità) non inclusi -> uso VELOCITÀ come velocità e metodi speciali come carte
+- problem with movement methods (fly, swim, speed) not included -> use
+  SPEED as speed and special methods as cards
 
-- danni diventano media come pf  -> 1d6 = 3 danni 
-
+- damage becomes an average like HP -> 1d6 = 3 damage
 
 ----------------
 
-# REGOLE DI CLASSIFICAZIONE DI ATTACCHI, TALENTI QUALITÀ SPECIALI E INCANTESIMI
+# CLASSIFICATION RULES FOR ATTACKS, TALENTS, SPECIAL QUALITIES AND SPELLS
 
-usare AI come classificatore semantico per dati non numerici, umano come validatore / correttore
+> **Status note.** This section describes the original, general classification
+> vision — an 8-field schema meant to apply uniformly to any ability type
+> (attacks, talents, spells, special qualities). What's actually implemented
+> so far (see `llm/semantic_classification/attacks.py`) is narrower and
+> specific to attacks: only `description`, `move_type`, and `move_range` are
+> LLM-classified. `category`, `mode`, `effect`, `target`, `duration`, and
+> `usage` are deterministic defaults for the attack case (see
+> `attack_converter()`); `resource` is derived from `move_type`, not
+> classified; and the damage value is never LLM-computed — it's parsed with
+> regex from the fixed dice notation, per this project's non-negotiable
+> "regex over LLM whenever the format is fixed" rule. The full 8-field
+> classifier below remains future work for talents, spells, and special
+> qualities, which don't yet exist in the codebase.
 
-Tipo Fisico/ Magico
+Use AI as a semantic classifier for non-numeric data, a human as
+validator/corrector.
 
-Carte Attacco = metodi di attacco 
-Carte difesa = metodi di difesa
-Carte speciali = altri metodi
+Type: Physical / Magical
 
-Attacco, difesa e speciale possono essere = Attivi (deve fare qualcosa per) oppure Passivo (sempre in funzione o automatici)
+Attack cards = methods of attack
+Defense cards = methods of defense
+Special cards = other methods
 
-Esempi:
-Attacco-attivo = pugno
-Attacco-passivo = aura infuocata
-Difesa-attivo = parata
-Difesa-passivo = durezza
-Speciale-attivo = mega salto
-Speciale-passivo = rigenerazione
+Attack, defense, and special can each be: Active (requires doing
+something) or Passive (always in effect or automatic).
 
+Examples:
+Attack-active = punch
+Attack-passive = fire aura
+Defense-active = parry
+Defense-passive = toughness
+Special-active = mega jump
+Special-passive = regeneration
 
-quindi 
+So:
 
-Tipo
+Type
  ↓
-Categoria principale
+Main Category
  ↓
-Modalità
+Mode
  ↓
-Effetto
+Effect
  ↓
-Bersaglio
+Target
  ↓
-Risorsa
+Resource
 
-
-esempio: 
+example:
 {
- "tipo": "Fisico",
- "categoria": "Speciale",
- "modalita": "Passivo",
- "effetto": "Cura",
- "bersaglio": "Se stesso",
- "risorsa": "Nessuna"
+ "type": "Physical",
+ "category": "Special",
+ "mode": "Passive",
+ "effect": "Healing",
+ "target": "Self",
+ "resource": "None"
 }
 
-vanno aggiunti questi due: 
+These two must be added:
 
-"durata": "Istantaneo / Temporaneo / Permanente"
-"utilizzo": "Illimitato / Giornaliero / Limitato / Situazionale"  
-spiegazione: (limitato esempio ogni 1d4 round come per le armi a soffio, situazionale esempio attacco furtivo)
+"duration": "Instant / Temporary / Permanent"
+"usage": "Unlimited / Daily / Limited / Situational"
+explanation: (limited, e.g. every 1d4 rounds as for breath weapons;
+situational, e.g. sneak attack)
 
-e poi vanno aggiunti questi 3 per la carta:
-- Nome 
-- descrizione
-- valore del danno (usa la stessa logica dei punti vita ->  media come pf  -> 1d6 = 3 danni) 
+And then these 3 must be added for the card:
+- Name
+- Description
+- Damage value (uses the same logic as HP -> average like HP -> 1d6 = 3 damage)
 
-per revisione umana va aggiunto valore di confidenza 
-- "confidence": 0.92 Se confidence < 0.7 -> manda a revisione manuale. 
+For human review, a confidence value must be added:
+- "confidence": 0.92. If confidence < 0.7 -> send for manual review.
 
-### Esempi pratici
+### Practical examples
 
-#### Esempio 1
-##### Input D&D
+#### Example 1
+##### D&D Input
 ```text
-Morso:
-Attacco naturale che infligge 1d6 danni perforanti.
+Bite:
+Natural attack that deals 1d6 piercing damage.
 ```
 
 ##### Output
 ```json
 {
-  "tipo": "Fisico",
-  "categoria": "Attacco",
-  "modalita": "Attivo",
-  "effetto": "Danno",
-  "bersaglio": "Singolo",
-  "risorsa": "Fiato",
-  "durata": "Istantaneo",
-  "utilizzo": "Illimitato",
+  "type": "Physical",
+  "category": "Attack",
+  "mode": "Active",
+  "effect": "Damage",
+  "target": "Single",
+  "resource": "Stamina",
+  "duration": "Instant",
+  "usage": "Unlimited",
 
-  "carta": {
-    "nome": "Morso",
-    "descrizione": "Attacco naturale che infligge danni perforanti.",
-    "danno": 3
+  "card": {
+    "name": "Bite",
+    "description": "Natural attack that deals piercing damage.",
+    "damage": 3
   }
 }
 ```
 
-#### Esempio 2
-##### Input D&D
+#### Example 2
+##### D&D Input
 ```text
-Aura di fuoco:
-Ogni creatura adiacente subisce 1d4 danni da fuoco automaticamente.
+Fire aura:
+Every adjacent creature automatically takes 1d4 fire damage.
 ```
 
 ##### Output
 ```json
 {
-  "tipo": "Magico",
-  "categoria": "Attacco",
-  "modalita": "Passivo",
-  "effetto": "Danno area",
-  "bersaglio": "Vicini",
-  "risorsa": "Nessuna",
-  "durata": "Permanente",
-  "utilizzo": "Illimitato",
+  "type": "Magical",
+  "category": "Attack",
+  "mode": "Passive",
+  "effect": "Area damage",
+  "target": "Nearby",
+  "resource": "None",
+  "duration": "Permanent",
+  "usage": "Unlimited",
 
-  "carta": {
-    "nome": "Aura di fuoco",
-    "descrizione": "Le creature vicine subiscono automaticamente danni da fuoco.",
-    "danno": 2
+  "card": {
+    "name": "Fire aura",
+    "description": "Nearby creatures automatically take fire damage.",
+    "damage": 2
   }
 }
 ```
 
-#### Esempio 3
-##### Input D&D
+#### Example 3
+##### D&D Input
 ```text
-Rigenerazione 5:
-La creatura recupera 5 PF ogni round.
+Regeneration 5:
+The creature recovers 5 HP every round.
 ```
 
 ##### Output
 ```json
 {
-  "tipo": "Fisico",
-  "categoria": "Speciale",
-  "modalita": "Passivo",
-  "effetto": "Cura",
-  "bersaglio": "Se stesso",
-  "risorsa": "Nessuna",
-  "durata": "Permanente",
-  "utilizzo": "Illimitato",
+  "type": "Physical",
+  "category": "Special",
+  "mode": "Passive",
+  "effect": "Healing",
+  "target": "Self",
+  "resource": "None",
+  "duration": "Permanent",
+  "usage": "Unlimited",
 
-  "carta": {
-    "nome": "Rigenerazione",
-    "descrizione": "La creatura recupera punti vita ogni round.",
-    "danno": 0
+  "card": {
+    "name": "Regeneration",
+    "description": "The creature recovers hit points every round.",
+    "damage": 0
   }
 }
 ```
 
-
-#### Esempio 4 -> Talento
-##### Input D&D
-```txt
-Attacco Poderoso:
-Puoi sacrificare precisione per aumentare il danno.
-```
-
-##### Output
-```json
-{
-  "tipo": "Fisico",
-  "categoria": "Attacco",
-  "modalita": "Passivo",
-  "effetto": "Bonus danno",
-  "bersaglio": "Se stesso",
-  "risorsa": "Nessuna",
-  "durata": "Permanente",
-  "utilizzo": "Situazionale",
-
-  "carta": {
-    "nome": "Attacco Poderoso",
-    "descrizione": "Aumenta il danno degli attacchi sacrificando precisione.",
-    "danno": 0
-  }
-}
-```
-
-#### Esempio 5 -> Capacità con utilizzo limitato
-##### Input D&D
+#### Example 4 -> Talent
+##### D&D Input
 ```text
-Arma a soffio:
-Una volta ogni 1d4 round la creatura emette un cono di fuoco.
-Infligge 6d6 danni.
+Power Attack:
+You can trade accuracy for extra damage.
 ```
 
 ##### Output
 ```json
 {
-  "tipo": "Magico",
-  "categoria": "Attacco",
-  "modalita": "Attivo",
-  "effetto": "Danno area",
-  "bersaglio": "Area",
-  "risorsa": "Magia",
-  "durata": "Istantaneo",
-  "utilizzo": "Limitato",
+  "type": "Physical",
+  "category": "Attack",
+  "mode": "Passive",
+  "effect": "Bonus damage",
+  "target": "Self",
+  "resource": "None",
+  "duration": "Permanent",
+  "usage": "Situational",
 
-  "carta": {
-    "nome": "Arma a soffio",
-    "descrizione": "Emette un cono di fuoco che infligge danni alle creature nell'area.",
-    "danno": 18
+  "card": {
+    "name": "Power Attack",
+    "description": "Increases attack damage at the cost of accuracy.",
+    "damage": 0
   }
 }
 ```
 
-#### Esempio 6 -> Capacità Situazionale
-##### Input D&D
+#### Example 5 -> Ability with limited use
+##### D&D Input
 ```text
-Attacco furtivo:
-Infligge danni extra quando il bersaglio è colto alla sprovvista.
+Breath weapon:
+Once every 1d4 rounds the creature breathes a cone of fire.
+Deals 6d6 damage.
 ```
 
 ##### Output
 ```json
 {
-  "tipo": "Fisico",
-  "categoria": "Attacco",
-  "modalita": "Passivo",
-  "effetto": "Bonus danno",
-  "bersaglio": "Singolo",
-  "risorsa": "Nessuna",
-  "durata": "Istantaneo",
-  "utilizzo": "Situazionale",
+  "type": "Magical",
+  "category": "Attack",
+  "mode": "Active",
+  "effect": "Area damage",
+  "target": "Area",
+  "resource": "Mana",
+  "duration": "Instant",
+  "usage": "Limited",
 
-  "carta": {
-    "nome": "Attacco furtivo",
-    "descrizione": "Infligge danni aggiuntivi contro bersagli vulnerabili o impreparati.",
-    "danno": 0
+  "card": {
+    "name": "Breath weapon",
+    "description": "Breathes a cone of fire that damages creatures in the area.",
+    "damage": 18
   }
 }
 ```
+
+#### Example 6 -> Situational ability
+##### D&D Input
+```text
+Sneak attack:
+Deals extra damage when the target is caught off guard.
+```
+
+##### Output
+```json
+{
+  "type": "Physical",
+  "category": "Attack",
+  "mode": "Passive",
+  "effect": "Bonus damage",
+  "target": "Single",
+  "resource": "None",
+  "duration": "Instant",
+  "usage": "Situational",
+
+  "card": {
+    "name": "Sneak attack",
+    "description": "Deals additional damage against vulnerable or unprepared targets.",
+    "damage": 0
+  }
+}
+```
+
 ----------------
 
-# MODELLO DATI INTERMEDIO
+# INTERMEDIATE DATA MODEL
 
-il flusso non è D&D -> carta 
+The flow is not D&D -> card,
 
-ma: 
+but:
 
 D&D Monster
       |
@@ -584,142 +618,136 @@ Monster Intermediate Representation
       v
 Card Object
 
-in questo modo è estendibile
-
+This way it's extensible.
 
 ----------------
 
-# SISTEMA DI GIOCO
+# GAME SYSTEM
 
-## DESCRIZIONE DISCORSIVA
-descrizione sommaria, esistono carte di vario tipo:
+## NARRATIVE DESCRIPTION
+Summary description: there are cards of various types:
 
-- CREATURA
+- CREATURE
+- MOVE
+- ITEM
 
-- MOSSA
+So the program creates several cards even for the same monster —
+for example, a dragon has a creature card (representing its stats)
+and move cards representing (talents, attacks, special qualities,
+spells, and special attacks), and it may also have item cards
+representing objects it possesses.
 
-- OGGETTO
+So in this game, we say every entity is a deck of cards.
 
+## Game system (draft)
+Basic concept
+Every entity in the game is represented by a set of cards.
+A monster, a character, or a complex entity is not represented by a
+single card, but by a personal deck made up of:
+- a main card defining the base characteristics;
+- ability cards representing the available actions;
+- item cards representing equipment and possessions.
 
-quindi il programma crea varie carte anche per lo stesso mostro, 
-esempio il drago ha una carta creatura (che rappresenta i suoi valori)  
-e delle carte mossa che rappreentano  (talenti, attacchi, qualità speciali,
- incantesimi e attacchi speciali) e poi può avere delle carte oggetto che 
-rappresentano gli oggetti da lui posseduti.
+## Card types
+CREATURE card -> defines who the creature is.
+Represents the main entity.
+Contains: the creature's general values and available resources.
 
-quindi in questo gioco diciamo che ogni entità è un mazzo di carte.
+MOVE card -> Represents a capability usable by the creature.
+A move can derive from:
+- a natural attack
+- a talent
+- a special ability
+- a special quality
+- a spell
+- a spell-like ability
+- a class feature
 
-## Sistema di gioco (bozza)
-Concetto base
-Ogni entità del gioco è rappresentata da un insieme di carte.
-Un mostro, un personaggio o un'entità complessa non viene rappresentata da una singola carta,
-ma da un mazzo personale composto da:
-- una carta principale che definisce le caratteristiche base;
-- carte abilità che rappresentano le azioni disponibili;
-- carte oggetto che rappresentano equipaggiamento e possedimenti.
+### Examples
+MOVE
 
-## Tipi di carta
-Carta CREATURA -> definisce chi è la creatura.
-Rappresenta l'entità principale.
-Contiene: valori generali della creatura e Risorse disponibili
+Bite
 
-Carta MOSSA -> Rappresenta una capacità utilizzabile dalla creatura.
-Una mossa può derivare da:
-- attacco naturale
-- talento
-- capacità speciale
-- qualità speciale
-- incantesimo
-- capacità magica
-- capacità di classe
+Type: Physical
+Category: Attack
+Usage: Unlimited
 
-### Esempi 
-MOSSA
-
-Morso
-
-Tipo: Fisico
-Categoria: Attacco
-Utilizzo: Illimitato
-
-Effetto:
-Infligge 3 danni a un bersaglio singolo.
+Effect:
+Deals 3 damage to a single target.
 
 ---
 
-MOSSA
+MOVE
 
-Arma a soffio
+Breath Weapon
 
-Tipo: Magico
-Categoria: Attacco
+Type: Magical
+Category: Attack
 
-Utilizzo:
-Limitato
+Usage:
+Limited
 
-Effetto:
-Infligge 18 danni ad area.
-
----
-
-
-
-Carta OGGETTO -> Rappresenta un oggetto posseduto o equipaggiato.
-Può derivare da:
-- armi
-- armature
-- oggetti magici
-- tesori
-- equipaggiamento
-
-### Esempi 
-
-OGGETTO
-
-Spada infuocata
-
-Tipo:
-Arma
-
-Effetto:
-+2 danni da fuoco agli attacchi fisici.
+Effect:
+Deals 18 area damage.
 
 ---
 
-## STRUTTURA DI UN ENTITÀ 
-esempio Drago 
+ITEM card -> Represents a possessed or equipped item.
+Can derive from:
+- weapons
+- armor
+- magic items
+- treasure
+- equipment
 
-MAZZO DEL DRAGO
+### Examples
 
-[CARTA CREATURA]
+ITEM
 
-Drago Rosso
+Flaming Sword
+
+Type:
+Weapon
+
+Effect:
++2 fire damage on physical attacks.
+
+---
+
+## STRUCTURE OF AN ENTITY
+example: Dragon
+
+DRAGON'S DECK
+
+[CREATURE CARD]
+
+Red Dragon
 
 
-[CARTE MOSSA]
+[MOVE CARDS]
 
-Morso
-Artiglio
-Coda
-Arma a soffio
-Presenza terrificante
-Incantesimi
+Bite
+Claw
+Tail
+Breath Weapon
+Frightful Presence
+Spells
 
 
-[CARTE OGGETTO]
+[ITEM CARDS]
 
-Corona del drago
-Tesoro antico
-Amuleto magico
+Dragon's Crown
+Ancient Treasure
+Magic Amulet
 
-## FILOSOFIA DEL GIOCO SEMPLIFICATA
+## SIMPLIFIED GAME PHILOSOPHY
 
-Il sistema separa:
-- Identità = Carta creatura: "Che cosa sei?"
-- Azioni = Carte mossa: "Che cosa puoi fare?"
-- Personalizzazione = Carte oggetto: "Che cosa possiedi?"
+The system separates:
+- Identity = Creature card: "What are you?"
+- Actions = Move cards: "What can you do?"
+- Customization = Item cards: "What do you own?"
 
-## PIPELINE PER CREAZIONE ENTITÀ 
+## PIPELINE FOR ENTITY CREATION
 
 D&D / Pathfinder Database
 
@@ -738,228 +766,28 @@ Entity Model
         |                |                |
         v                v                v
 
-Carta Creatura       Carte Mossa     Carte Oggetto
+Creature Card       Move Cards       Item Cards
         |                |                |
         +----------------+----------------+
                          |
                          v
-                 Mazzo dell'entità
+                 Entity's Deck
 
 ----------------
 
-## NOTA FINALE SUL "BILANCIAMENTO"
-- il bilanciamento richiede playtest,
-metre questo sistema permette di mantenere una distribuzione coerente dei valori
-e preservare il rapporto di potenza relativo
+## FINAL NOTE ON "BALANCING"
+- Balancing requires playtesting, while this system helps maintain a
+  consistent distribution of values and preserve relative power ratios.
 
-Il sistema garantisce:
-- coerenza numerica
-- proporzioni relative
-- normalizzazione
-
-----------------
-
-## REGOLAMENTO
-POIché il progetto principale è il motore di trasformazione, non il gioco.
-Per portfolio terrei il gioco come:
-"target representation"
-cioè:
-il formato finale generato dal motore.
-il regolamento completo non è incluso per non deviare dal progetto
+The system guarantees:
+- numeric consistency
+- relative proportions
+- normalization
 
 ----------------
 
-## IPOTESI DI STRUTTURA FINALE DEL PROGETTO
-
-1. Obiettivo
-
-2. Architettura generale
-
-3. Pipeline dati
-
-4. Modello intermedio
-
-5. Algoritmi numerici
-   - Vita
-   - Corpo/Spirito
-   - Armatura
-   - Interpretazione
-   - Risorse
-
-6. Classificazione semantica LLM
-
-7. Generazione carte
-
-8. Sistema di entità e mazzi
-
-9. Validazione umana
-
-10. Limitazioni e scelte di design
-
-----------------
-
-#OGGETTI PRINCIPALI DEL PROGETTO
-
-Ecco l'elenco completo, organizzato per fase della pipeline:
-
-**1. Acquisizione dati**
-
-- **RECORD DB (OGL)** — riga persistita nel DB SQL dopo lo scraping, prima del parsing
-
-Scraping "dumb" — scarichi la pagina e basta, senza interpretarla: ID, URL, descrizione, contenuto grezzo (HTML/testo).
-Questo è il RECORD DB: un contenitore generico, uguale per qualunque tipo di pagina (mostro, incantesimo, talento...).
-Fatto per non sovraccaricare il server — una sola passata di scraping, poi lavoro in locale sui dati già salvati.
-
-**2. Dati grezzi
-
-- **SCHEDA D&D** — stat block grezzo scrapato da fonte D&D 3.5 (HTML/testo originale)
-- **SCHEDA PF** — stat block grezzo scrapato da fonte Pathfinder 1E
-
--  **INCANTESIMO D&D** — stat block grezzo scrapato da fonte D&D 3.5 (HTML/testo originale)
--  **TALENTO D&D** — stat block grezzo scrapato da fonte D&D 3.5 (HTML/testo originale)
--  **EQUIP D&D** — stat block grezzo scrapato da fonte D&D 3.5 (HTML/testo originale)
--  **CLASSE D&D** — stat block grezzo scrapato da fonte D&D 3.5 (HTML/testo originale)
-
--  **INCANTESIMO PF** — stat block grezzo scrapato da fonte Pathfinder 1E
--  **TALENTO PF** — stat block grezzo scrapato da fonte Pathfinder 1E
--  **EQUIP PF** — stat block grezzo scrapato da fonte Pathfinder 1E
--  **CLASSE PF** — stat block grezzo scrapato da fonte Pathfinder 1E
-
-
-**3. Parsing e struttura**
-
-- **DATI STRUTTURATI** — output del parser: campi tipizzati (caratteristiche, DV, CA, abilità, attacchi grezzi...) pronti per essere smistati tra ramo numerico e ramo LLM
-
-**4. Ramo numerico**
-
-- **RISULTATO ALGORITMI NUMERICI** — output aggregato delle formule deterministiche (Vita, Corpo, Spirito, Armatura, Talismano, Interpretazione, Fiato, Magia) per una singola entità
-
-**5. Ramo semantico (LLM)**
-
-- **TEMPLATE PROMPT** — struttura del prompt inviato all'LLM per la classificazione di un singolo elemento (attacco, talento, qualità speciale, incantesimo)
-- **RISPOSTA LLM** — output grezzo del classificatore, secondo lo schema fisso (tipo, categoria, modalità, effetto, bersaglio, risorsa, durata, utilizzo, confidence)
-
-**6. Validazione**
-
-- **RECORD DI VALIDAZIONE UMANA** — esito della revisione: stato (auto-approvato/corretto/rifiutato), valore originale vs corretto, note del validatore, timestamp
-
-**7. Modello intermedio**
-
-- **ENTITY MODEL (Rappresentazione Intermedia)** — oggetto che unifica risultato numerico + risposte LLM validate in un'unica rappresentazione dell'entità, indipendente dal formato di origine (D&D o PF) e dal formato di destinazione (carta); è il punto di estendibilità del sistema
-
-**8. Oggetti di gioco**
-
-- **CARTA CREATURA** — identità e valori base dell'entità
-- **CARTA MOSSA** — singola capacità/azione (attacco, talento, incantesimo convertito)
-- **CARTA OGGETTO** — equipaggiamento o possedimento
-- **MAZZO ENTITÀ** — aggregato di una Carta Creatura + N Carte Mossa + N Carte Oggetto, rappresenta l'intera entità di gioco
-
-**9. Template di rendering**
-
-- **TEMPLATE CARTA CREATURA**
-- **TEMPLATE CARTA MOSSA**
-- **TEMPLATE CARTA OGGETTO**
-- **TEMPLATE MAZZO ENTITÀ** — layout che compone le carte del mazzo in visualizzazione/stampa unificata
-
-**10. Output finale**
-
-- **CARTA RENDERIZZATA / EXPORT** — file finale generato (HTML pronto stampa → immagine), a valle del template, eventualmente versionato
-
-**11. Tabelle di regole conversione**
-**Dataclass generica + funzione condivisa** —  non JSON+Pydantic.
-
-Perché funziona bene:
-La dataclass resta pura struttura dati (nessuna logica dentro), quindi è facile da leggere, testare, 
-ed estendere aggiungendo un elemento alla lista.
-La funzione condivisa contiene tutta la logica una volta sola — se cambi la formula 
-(es. arrotondamento per eccesso invece che per difetto), la cambi in un punto e si applica automaticamente
- a tutti i gruppi/caratteristiche.
-Aggiungere una nuova caratteristica o un nuovo gruppo di interpretazione diventa "aggiungo una riga alla lista", zero nuovo codice.
-
-Motivi, in sintesi di tutto il ragionamento fatto finora:
-
-1. **Il JSON risolve un problema che non hai davvero.** Il vantaggio del JSON è "editabilità senza toccare Python",
-ma sei tu il solo sviluppatore/bilanciatore — non c'è nessun altro attore per cui vale la pena pagare quel costo di indirezione.
-2. **La maggior parte dei cambi che farai sono logica, non dati puri** (l'hai dimostrato tu stesso con l'esempio Costituzione/arrotondamento)
-— quindi finiresti comunque ad aprire Python per la maggior parte delle modifiche, JSON o no.
-3. **Una dataclass + una funzione condivisa ti dà il meglio**: struttura pulita, zero duplicazione di logica,
-autocompletamento/type-check gratis, e "aggiungere una regola" diventa letteralmente aggiungere una riga a una lista.
-4. **Si difende meglio in un colloquio**: mostra che hai scelto lo strumento più semplice che risolve il problema reale,
-invece di aggiungere un livello di configurazione esterna "perché sembra più professionale" senza un bisogno concreto dietro.
-
-Tienilo come principio generale per il resto del progetto: JSON/config esterna la introduci solo quando emerge un bisogno
-reale di editabilità senza deploy (es. un domani un tool web per il playtest) — non come default.
-Per ora, dataclass ovunque per queste tabelle.
-
-###Ipotesi di dataclass
-
-Corpo/Spirito
-```python
-from dataclasses import dataclass
-
-@dataclass(frozen=True)
-class MappingCaratteristica:
-    caratteristica_dnd: str
-    attributo: str
-    condizione: str | None = None  # es. "non_morto", per il caso Difesa/Destrezza
-
-MAPPING_CORPO = [
-    MappingCaratteristica("Forza", "Attacco"),
-    MappingCaratteristica("Destrezza", "Velocità"),
-    MappingCaratteristica("Costituzione", "Difesa"),
-    MappingCaratteristica("Destrezza", "Difesa", condizione="non_morto"),
-]
-
-MAPPING_SPIRITO = [
-    MappingCaratteristica("Intelligenza", "Potere"),
-    MappingCaratteristica("Saggezza", "Tangenza"),
-    MappingCaratteristica("Carisma", "Spin"),
-]
-
-def calcola_attributo(mod_caratteristica: int) -> int:
-    return max(0, mod_caratteristica)  # modificatori negativi valgono 0
-
-def calcola_corpo_spirito(mappings: list[MappingCaratteristica], caratteristiche: dict[str, int], is_non_morto: bool = False) -> dict[str, int]:
-    risultato = {}
-    for m in mappings:
-        if m.condizione == "non_morto" and not is_non_morto:
-            continue
-        if m.condizione is None and is_non_morto and any(x.condizione == "non_morto" and x.attributo == m.attributo for x in mappings):
-            continue  # la variante non morto sostituisce quella base
-        risultato[m.attributo] = calcola_attributo(caratteristiche[m.caratteristica_dnd])
-    return risultato
-```
-
-Interpretazione — stessa idea, con un gruppo invece di un singolo mapping:
-```python 
-@dataclass(frozen=True)
-class GruppoInterpretazione:
-    nome: str
-    caratteristica_riferimento: str
-    abilita: list[str]
-
-GRUPPI_INTERPRETAZIONE = [
-    GruppoInterpretazione("Atletica", "Forza", ["Acrobazia", "Nuotare", "Scalare", ...]),
-    GruppoInterpretazione("Empatia", "Carisma", ["Diplomazia", "Intimidire", ...]),
-    GruppoInterpretazione("Percezione", "Saggezza", ["Ascoltare", "Cercare", "Osservare"]),
-    # ...
-]
-
-def calcola_interpretazione(gruppo: GruppoInterpretazione, valori_abilita: dict[str, int], mod_caratteristiche: dict[str, int]) -> int:
-    mod_rif = mod_caratteristiche[gruppo.caratteristica_riferimento]
-    if mod_rif < 0:
-        return 0
-
-    mod_car = max(0, mod_rif)
-    valori_calcolati = []
-    for nome_abilita in gruppo.abilita:
-        val = valori_abilita.get(nome_abilita, 0)
-        risultato = mod_car if val == 0 else val - mod_car - 3
-        if risultato != 0:
-            valori_calcolati.append(risultato)
-
-    if not valori_calcolati:
-        return 0
-    return math.floor(sum(valori_calcolati) / len(valori_calcolati))
-```
-
+## RULESET
+Since the main project is the transformation engine, not the game, for a
+portfolio I'd keep the game as a "target representation" — i.e. the
+final format generated by the engine. The complete ruleset is not
+included, to avoid deviating from the project's focus.
