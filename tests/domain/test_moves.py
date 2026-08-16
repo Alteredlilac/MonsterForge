@@ -8,6 +8,7 @@ Covers:
 - Automatic ID generation
 """
 from monsterforge.domain.enums import DamageType
+from monsterforge.domain.moves import MoveEffect
 
 # =====================
 # MOVE CARD CREATION
@@ -16,8 +17,7 @@ def test_move_card_minimal_creation(make_move):
     """A MoveCard can be created with only the required fields; optional fields default sensibly."""
     bite = make_move()
     assert bite.name == "Bite"
-    assert bite.damage_type is None
-    assert bite.effect_value is None
+    assert bite.move_effects == []
 
 # =====================
 # DEFAULTS
@@ -32,9 +32,8 @@ def test_move_card_optional_lists_default_to_empty(make_move):
 # EFFECTS
 # =====================
 def test_move_card_with_damage_details(make_move):
-    bite = make_move(damage_type=DamageType.PHYSICAL, effect_value=3)
-    assert bite.damage_type == DamageType.PHYSICAL
-    assert bite.effect_value == 3
+    bite = make_move(move_effects=[MoveEffect(damage_type=DamageType.PHYSICAL, effect_value=3)])
+    assert bite.move_effects == [MoveEffect(damage_type=DamageType.PHYSICAL, effect_value=3)]
 
 # =====================
 # ID

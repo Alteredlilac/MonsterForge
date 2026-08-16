@@ -9,7 +9,6 @@ Covers:
 """
 from monsterforge.domain.entity import Entity
 from monsterforge.domain.enums import CreatureType
-import pytest
 
 # =====================
 # ENTITY CREATION
@@ -39,8 +38,9 @@ def test_entity_base_form_is_first_creature_card(make_creature):
     assert entity.base_form is human_form
     assert entity.base_form is not wolf_form
 
-def test_entity_base_form_requires_at_least_one_creature():
+def test_entity_base_form_is_none_without_any_creature():
+    """An Entity with no creature_cards has no base form — base_form
+    returns None rather than raising, matching what domain_to_json.py
+    already relies on when serializing such an Entity."""
     entity = Entity()
-
-    with pytest.raises(IndexError):
-        _ = entity.base_form
+    assert entity.base_form is None
