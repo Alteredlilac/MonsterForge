@@ -114,9 +114,19 @@ così da poterle riconsultare quando si scriverà `parsing/` e `llm/`.
                               |
                               v
 ┌───────────────────────────────────────────────────────────────────┐
-│  9. RENDERING  →  rendering/                                      │
-│     Entity → HTML → immagine stampabile (carta finale)            │
+│  9. SERIALIZATION  →  serialization/                              │
+│     Domain Model → struttura esterna comune (dict JSON-compatible)│
+│     Le carte referenziate (es. MoveCard.cards_to_add) vengono qui │
+│     ridotte a {"name", "id"} — vedi decisione 6 sotto sul perché  │
 └───────────────────────────────────────────────────────────────────┘
+                              |
+              +---------------+---------------+
+              v                               v
+┌───────────────────────────────┐  ┌───────────────────────────────────┐
+│  10a. API  →  api/             │  │  10b. RENDERING  →  rendering/    │
+│      dict → HTTP response      │  │      dict → HTML → immagine       │
+│      (JSON)                    │  │      stampabile (carta finale)    │
+└───────────────────────────────┘  └───────────────────────────────────┘
 ```
 
 ---
@@ -212,6 +222,38 @@ duplicando la stessa cosa, o ho due cose diverse che appartengono alla
 stessa categoria concettuale?"* — nel primo caso un modulo condiviso con
 una classe sola; nel secondo, un modulo condiviso con più classi
 correlate (come `creature_stats.py` o `effect_mechanics.py`).
+
+### 6. Perché le carte referenziate restano ridotte a nome/id anche nel rendering
+
+Con l'introduzione dell'interfaccia HTTP (`api/` + `serialization/`), ci si
+è chiesti se la pipeline dovesse biforcarsi subito dopo `domain/` in due
+conversioni indipendenti (una per `api/`, una per `rendering/`), oppure
+convergere prima su un unico stadio `serialization/` condiviso da
+entrambi. In particolare, se la riduzione delle carte annidate (es.
+`MoveCard.cards_to_add`) a `{"name", "id"}` fosse un compromesso
+specifico del trasporto di rete, da evitare per il rendering (che
+potrebbe sembrare avere bisogno del dettaglio completo per disegnare la
+carta).
+
+**Non lo è.** Il formato fisico delle carte di questo gioco è a
+dimensione standard (stile Magic, circa 63×88mm) — non c'è spazio per
+riportare per intero i campi di più carte referenziate dentro la carta
+che le referenzia; anche una sola carta annidata espansa per intero
+renderebbe la carta ingestibile. La carta referenziata (es. "Trip")
+esiste già come carta a sé nel mazzo, con il proprio rendering — la
+carta che la referenzia deve solo poterla nominare, non riprodurne il
+contenuto.
+
+La riduzione a nome/id è quindi la rappresentazione corretta di
+"riferimento a un'altra carta del mazzo" in questo sistema, dettata dal
+formato fisico della carta prima ancora che dall'API — il vincolo di
+spazio stampato è più stringente e più a monte di quello di payload di
+rete, e vale ovunque una carta ne referenzia un'altra, non solo al
+confine HTTP.
+
+**Conseguenza**: `serialization/` resta un unico stadio condiviso da
+`api/` e `rendering/` — la biforcazione avviene dopo quello stadio, non
+prima.
 
 ---
 
