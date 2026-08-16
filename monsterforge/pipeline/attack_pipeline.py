@@ -20,15 +20,22 @@ from monsterforge.parsing.dnd.v3x.structured_conversions.attacks.attacks_convert
 )
 from monsterforge.transformation.dnd.v3x.converters.attacks_converter import attack_converter
 from monsterforge.domain.moves import MoveCard
+from monsterforge.structured_data.dnd.v3x.enums import CreatureSubtype
 
 
-def convert_attack(raw_attack: RawAttack) -> MoveCard:
+def convert_attack(
+        raw_attack: RawAttack,
+        *,
+        additional_description: str | None = None,
+        creature_description: str | None = None,
+        creature_subtype: CreatureSubtype | None = None) -> MoveCard:
     """
     Convert a raw D&D 3.x attack into a domain MoveCard.
 
     Rules:
     - Classify the attack semantically via the LLM (description, move
-      type, range).
+      type, range), using whatever optional context is supplied to
+      sharpen the classification — none of it is required.
     - Combine that result with the deterministic parsing of the raw
       fields into a structured Attack.
     - Convert the structured Attack into a MoveCard.
@@ -37,7 +44,12 @@ def convert_attack(raw_attack: RawAttack) -> MoveCard:
     performed here — every call re-invokes the LLM classifier and
     produces a MoveCard with a fresh random id.
     """
-    semantic_result = classify_attack(raw_attack=raw_attack)
+    semantic_result = classify_attack(
+        raw_attack=raw_attack,
+        additional_description=additional_description,
+        creature_description=creature_description,
+        creature_subtype=creature_subtype,
+    )
     structured_attack = raw_to_structured_attack(raw_attack, semantic_result)
 
     return attack_converter(structured_attack)
