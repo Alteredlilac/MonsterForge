@@ -36,8 +36,17 @@ def test_size_hp_table_values_increase_with_size():
     assert values == sorted(values)
 
 
-def test_dice_average_hp_has_all_dice_types():
-    for dice_type in DiceType:
+def test_dice_average_hp_has_all_valid_hit_die_types():
+    """Every hit die type listed in DESIGN.md's LIFE table must have an
+    entry. DiceType.D3 is deliberately excluded: it's a valid DiceType
+    (used for generic damage dice), but not a valid creature hit die per
+    DESIGN.md.
+    """
+    valid_hit_die_types = [
+        DiceType.D2, DiceType.D4, DiceType.D6,
+        DiceType.D8, DiceType.D10, DiceType.D12,
+    ]
+    for dice_type in valid_hit_die_types:
         assert dice_type in DICE_AVERAGE_HP
 
 
@@ -47,6 +56,7 @@ def test_dice_average_hp_values_are_positive():
 def test_dice_average_hp_values_are_ordered():
     """Higher hit dice should have higher average HP values."""
     ordered_dice = [
+        DiceType.D2,
         DiceType.D4,
         DiceType.D6,
         DiceType.D8,

@@ -41,7 +41,12 @@ SIZE_HP_TABLE: Mapping[Size, int] = MappingProxyType({
 })
 
 # Average HP value per hit die type
+# NOTE:
+# DiceType.D3 is intentionally absent: it exists in the enum for use as a
+# generic damage die (see DICE_AVERAGE_VALUES in dice_rules.py), but is not
+# a valid creature hit die type per DESIGN.md's LIFE table.
 DICE_AVERAGE_HP: Mapping[DiceType, int] = MappingProxyType({
+    DiceType.D2: 1,
     DiceType.D4: 2,
     DiceType.D6: 3,
     DiceType.D8: 4,
