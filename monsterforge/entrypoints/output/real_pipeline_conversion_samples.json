@@ -1,0 +1,2571 @@
+{
+  "metadata": {
+    "generated_at": "2026-08-15T23:55:52.828426+00:00",
+    "model": "gemini-flash-lite-latest",
+    "sample_count": 65
+  },
+  "samples": [
+    {
+      "case": {
+        "name": "Tentacle",
+        "modifier": "+12",
+        "attack_type": "melee",
+        "attack_effect": "1d6+8 plus slime"
+      },
+      "raw_response": "{\n    \"description\": \"A powerful tentacle strike that coats the target in viscous slime.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a standard melee natural attack dealing bludgeoning or physical damage plus a secondary physical effect (slime).\"\n}",
+      "confidence": 0.95,
+      "rationale": "The attack is a standard melee natural attack dealing bludgeoning or physical damage plus a secondary physical effect (slime).",
+      "move_card": {
+        "id": "e3575cd1-ca9a-4b69-9e97-56bf7895710b",
+        "name": "Tentacle",
+        "description": "A powerful tentacle strike that coats the target in viscous slime.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 11
+          }
+        ],
+        "entity_effect": [
+          "moves"
+        ],
+        "cards_to_add": [
+          {
+            "name": "Slime",
+            "id": "497f3b8a-1948-47a3-933e-cb9846d9bf9b"
+          }
+        ],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Claw",
+        "modifier": "+9",
+        "attack_type": "melee",
+        "attack_effect": "2d6+4"
+      },
+      "raw_response": "{\n    \"description\": \"A savage swipe with a sharp claw.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee natural attack delivering blunt or slashing damage without any magical or supernatural properties.\"\n}",
+      "confidence": 0.95,
+      "rationale": "The attack is a melee natural attack delivering blunt or slashing damage without any magical or supernatural properties.",
+      "move_card": {
+        "id": "9f2a1bbd-ac27-4f94-a106-db09aa0a5c2f",
+        "name": "Claw",
+        "description": "A savage swipe with a sharp claw.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 10
+          }
+        ],
+        "entity_effect": [],
+        "cards_to_add": [],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Incorporeal touch",
+        "modifier": "+3",
+        "attack_type": "melee",
+        "attack_effect": "1d4 Wisdom drain"
+      },
+      "raw_response": "{\n    \"description\": \"A ghostly touch that drains the target's mental faculties.\",\n    \"move_type\": \"magical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"Incorporeal touch attacks are supernatural in nature and deal ability drain.\"\n}",
+      "confidence": 0.95,
+      "rationale": "Incorporeal touch attacks are supernatural in nature and deal ability drain.",
+      "move_card": {
+        "id": "ca700ebd-6254-4bd7-a559-0887b11d4d0a",
+        "name": "Incorporeal touch",
+        "description": "A ghostly touch that drains the target's mental faculties.",
+        "image_uri": null,
+        "move_type": "magical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "negative_energy",
+            "effect_unit": "ward",
+            "effect_value": 1
+          }
+        ],
+        "entity_effect": [],
+        "cards_to_add": [],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "mana",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Bite",
+        "modifier": "+5",
+        "attack_type": "melee",
+        "attack_effect": "1d6 plus poison"
+      },
+      "raw_response": "{\n    \"description\": \"A vicious bite that delivers a dose of venom.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee natural attack (bite) that deals physical damage and poison, characteristic of standard creature anatomy in D&D 3.x.\"\n}",
+      "confidence": 0.95,
+      "rationale": "The attack is a melee natural attack (bite) that deals physical damage and poison, characteristic of standard creature anatomy in D&D 3.x.",
+      "move_card": {
+        "id": "041432c2-08de-40ce-a690-bc31f7c1f014",
+        "name": "Bite",
+        "description": "A vicious bite that delivers a dose of venom.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 3
+          }
+        ],
+        "entity_effect": [
+          "moves"
+        ],
+        "cards_to_add": [
+          {
+            "name": "Poison",
+            "id": "69f139fd-2c4b-4ba9-8ee4-c5481cb5b505"
+          }
+        ],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Web",
+        "modifier": "+5",
+        "attack_type": "ranged",
+        "attack_effect": ""
+      },
+      "raw_response": null,
+      "confidence": null,
+      "rationale": null,
+      "move_card": null,
+      "error": "Attack 'Web' is not mapped; manual input required."
+    },
+    {
+      "case": {
+        "name": "Light ray",
+        "modifier": "+2",
+        "attack_type": "ranged touch",
+        "attack_effect": "1d6"
+      },
+      "raw_response": null,
+      "confidence": null,
+      "rationale": null,
+      "move_card": null,
+      "error": "Attack 'Light ray' is not mapped; manual input required."
+    },
+    {
+      "case": {
+        "name": "Electricity ray",
+        "modifier": "+9",
+        "attack_type": "ranged touch",
+        "attack_effect": "2d6"
+      },
+      "raw_response": null,
+      "confidence": null,
+      "rationale": null,
+      "move_card": null,
+      "error": "Attack 'Electricity ray' is not mapped; manual input required."
+    },
+    {
+      "case": {
+        "name": "Bite",
+        "modifier": "+9",
+        "attack_type": "melee",
+        "attack_effect": "1d6+1"
+      },
+      "raw_response": "{\n    \"description\": \"A vicious bite with natural jaws.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a standard melee natural attack (bite) dealing standard physical damage without any magical or supernatural properties.\"\n}",
+      "confidence": 0.95,
+      "rationale": "The attack is a standard melee natural attack (bite) dealing standard physical damage without any magical or supernatural properties.",
+      "move_card": {
+        "id": "243dc243-0e29-44cd-97c2-95f7c9eaf847",
+        "name": "Bite",
+        "description": "A vicious bite with natural jaws.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 4
+          }
+        ],
+        "entity_effect": [],
+        "cards_to_add": [],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Morningstar",
+        "modifier": "+16",
+        "attack_type": "melee",
+        "attack_effect": "3d6+8"
+      },
+      "raw_response": "{\n    \"description\": \"A heavy strike with a spiked morningstar.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The morningstar is a standard melee weapon attack dealing physical bludgeoning and piercing damage.\"\n}",
+      "confidence": 0.95,
+      "rationale": "The morningstar is a standard melee weapon attack dealing physical bludgeoning and piercing damage.",
+      "move_card": {
+        "id": "daaf1ceb-279a-431a-92b2-7df47bc58461",
+        "name": "Morningstar",
+        "description": "A heavy strike with a spiked morningstar.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 17
+          }
+        ],
+        "entity_effect": [],
+        "cards_to_add": [],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Rock",
+        "modifier": "+9",
+        "attack_type": "ranged",
+        "attack_effect": "2d6+8"
+      },
+      "raw_response": null,
+      "confidence": null,
+      "rationale": null,
+      "move_card": null,
+      "error": "Attack 'Rock' is not mapped; manual input required."
+    },
+    {
+      "case": {
+        "name": "Warhammer",
+        "modifier": "+3",
+        "attack_type": "melee",
+        "attack_effect": "1d8+1/\u00d73 plus 1 fire"
+      },
+      "raw_response": "{\n    \"description\": \"A powerful strike with a warhammer that deals bludgeoning damage and burns the target with fire.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a standard melee weapon attack using a warhammer, supplemented by elemental fire damage.\"\n}",
+      "confidence": 0.95,
+      "rationale": "The attack is a standard melee weapon attack using a warhammer, supplemented by elemental fire damage.",
+      "move_card": {
+        "id": "b2f7766c-02c7-4c0b-8e7a-bac36b955c3a",
+        "name": "Warhammer",
+        "description": "A powerful strike with a warhammer that deals bludgeoning damage and burns the target with fire.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 5
+          },
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 1
+          }
+        ],
+        "entity_effect": [],
+        "cards_to_add": [],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Shortspear",
+        "modifier": "+3",
+        "attack_type": "ranged",
+        "attack_effect": "1d6+1 plus 1 fire"
+      },
+      "raw_response": "{\n    \"description\": \"A thrown shortspear wreathed in flames strikes the target.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 20,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.85,\n    \"rationale\": \"The attack uses a physical weapon (shortspear) thrown as a ranged attack, with a standard increment for a thrown shortspear in D&D 3.x, augmented by fire damage.\"\n}",
+      "confidence": 0.85,
+      "rationale": "The attack uses a physical weapon (shortspear) thrown as a ranged attack, with a standard increment for a thrown shortspear in D&D 3.x, augmented by fire damage.",
+      "move_card": {
+        "id": "b19a55a8-e7bb-4241-9b20-bf6a65ce86c7",
+        "name": "Shortspear",
+        "description": "A thrown shortspear wreathed in flames strikes the target.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 4
+          },
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 1
+          }
+        ],
+        "entity_effect": [],
+        "cards_to_add": [],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": "ranged",
+        "range_value": 6.0,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Slam",
+        "modifier": "+6",
+        "attack_type": "melee",
+        "attack_effect": "1d8+1"
+      },
+      "raw_response": "{\n    \"description\": \"A heavy physical slam with a limb or body.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee natural attack dealing standard bludgeoning damage typical of a physical creature.\"\n}",
+      "confidence": 0.95,
+      "rationale": "The attack is a melee natural attack dealing standard bludgeoning damage typical of a physical creature.",
+      "move_card": {
+        "id": "26d5b941-6e06-47d9-aa57-2e01eb552271",
+        "name": "Slam",
+        "description": "A heavy physical slam with a limb or body.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 5
+          }
+        ],
+        "entity_effect": [],
+        "cards_to_add": [],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Claw",
+        "modifier": "+10",
+        "attack_type": "melee",
+        "attack_effect": "1d3+2 plus corporeal instability"
+      },
+      "raw_response": "{\n    \"description\": \"A vicious claw strike that induces corporeal instability in the target.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee natural attack (claw) that inflicts physical damage alongside a special condition, characteristic of standard physical creature attacks in D&D 3.x with a standard reach of 5 feet.\"\n}",
+      "confidence": 0.95,
+      "rationale": "The attack is a melee natural attack (claw) that inflicts physical damage alongside a special condition, characteristic of standard physical creature attacks in D&D 3.x with a standard reach of 5 feet.",
+      "move_card": {
+        "id": "7f638b13-b18d-45a8-8aac-369704818a29",
+        "name": "Claw",
+        "description": "A vicious claw strike that induces corporeal instability in the target.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 3
+          }
+        ],
+        "entity_effect": [
+          "moves"
+        ],
+        "cards_to_add": [
+          {
+            "name": "Corporeal Instability",
+            "id": "ba3b61ef-6f5f-4326-9e8d-aeb4d5bcc5f2"
+          }
+        ],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Tentacle",
+        "modifier": "+6",
+        "attack_type": "melee",
+        "attack_effect": "1d3+3"
+      },
+      "raw_response": "{\n    \"description\": \"A powerful strike with a fleshy appendage.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee natural attack involving a physical tentacle, dealing standard bludgeoning or physical damage.\"\n}",
+      "confidence": 0.95,
+      "rationale": "The attack is a melee natural attack involving a physical tentacle, dealing standard bludgeoning or physical damage.",
+      "move_card": {
+        "id": "7f85b8ff-2fba-4a73-8752-c57c8e891676",
+        "name": "Tentacle",
+        "description": "A powerful strike with a fleshy appendage.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 4
+          }
+        ],
+        "entity_effect": [],
+        "cards_to_add": [],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Bite",
+        "modifier": "+9",
+        "attack_type": "melee",
+        "attack_effect": "1d4-2 plus petrification"
+      },
+      "raw_response": "{\n    \"description\": \"A vicious bite that turns the target to stone.\",\n    \"move_type\": \"magical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"Although the attack is a melee natural attack (bite), the inclusion of petrification as an effect indicates a supernatural or magical special ability in D&D 3.x.\"\n}",
+      "confidence": 0.95,
+      "rationale": "Although the attack is a melee natural attack (bite), the inclusion of petrification as an effect indicates a supernatural or magical special ability in D&D 3.x.",
+      "move_card": {
+        "id": "4d981d9c-ff4f-4476-b6d7-41ed2d2fa097",
+        "name": "Bite",
+        "description": "A vicious bite that turns the target to stone.",
+        "image_uri": null,
+        "move_type": "magical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 0
+          }
+        ],
+        "entity_effect": [
+          "moves"
+        ],
+        "cards_to_add": [
+          {
+            "name": "Petrification",
+            "id": "fa2a2fe4-d08e-44b4-87e3-eb38e5f4f299"
+          }
+        ],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "mana",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Bite",
+        "modifier": "+19",
+        "attack_type": "melee",
+        "attack_effect": "2d6+9 plus poison"
+      },
+      "raw_response": "{\n    \"description\": \"A vicious bite delivering both crushing force and toxic venom.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a standard natural melee attack (bite) dealing physical damage and poison, consistent with standard D&D 3.x reach rules for melee natural attacks.\"\n}",
+      "confidence": 0.95,
+      "rationale": "The attack is a standard natural melee attack (bite) dealing physical damage and poison, consistent with standard D&D 3.x reach rules for melee natural attacks.",
+      "move_card": {
+        "id": "05250e9c-212a-4c03-82da-baf1709f70c6",
+        "name": "Bite",
+        "description": "A vicious bite delivering both crushing force and toxic venom.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 15
+          }
+        ],
+        "entity_effect": [
+          "moves"
+        ],
+        "cards_to_add": [
+          {
+            "name": "Poison",
+            "id": "cd7a9d76-0e9d-4e1b-8139-453cbd0f111d"
+          }
+        ],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Web",
+        "modifier": "+11",
+        "attack_type": "ranged",
+        "attack_effect": ""
+      },
+      "raw_response": null,
+      "confidence": null,
+      "rationale": null,
+      "move_card": null,
+      "error": "Attack 'Web' is not mapped; manual input required."
+    },
+    {
+      "case": {
+        "name": "Claw",
+        "modifier": "+9",
+        "attack_type": "melee",
+        "attack_effect": "1d6+4"
+      },
+      "raw_response": "{\n    \"description\": \"A savage swipe with a sharp claw.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a standard melee natural attack dealing physical bludgeoning or slashing damage typical of a creature's claw.\"\n}",
+      "confidence": 0.95,
+      "rationale": "The attack is a standard melee natural attack dealing physical bludgeoning or slashing damage typical of a creature's claw.",
+      "move_card": {
+        "id": "9d43490a-ca4c-49df-8dc0-9f9c8ad3eef3",
+        "name": "Claw",
+        "description": "A savage swipe with a sharp claw.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 7
+          }
+        ],
+        "entity_effect": [],
+        "cards_to_add": [],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Claw",
+        "modifier": "+18",
+        "attack_type": "melee",
+        "attack_effect": "2d8+6 plus fear"
+      },
+      "raw_response": "{\n    \"description\": \"A savage claw strike that instills sudden terror.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee natural attack (claw) dealing physical damage and standard reach for a melee attack in D&D 3.x is 5 feet.\"\n}",
+      "confidence": 0.95,
+      "rationale": "The attack is a melee natural attack (claw) dealing physical damage and standard reach for a melee attack in D&D 3.x is 5 feet.",
+      "move_card": {
+        "id": "c01d8e53-91ba-4be9-86d8-69a89d9f4eef",
+        "name": "Claw",
+        "description": "A savage claw strike that instills sudden terror.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 14
+          }
+        ],
+        "entity_effect": [
+          "moves"
+        ],
+        "cards_to_add": [
+          {
+            "name": "Fear",
+            "id": "4a365317-b60d-496d-9f27-c28bc7d70758"
+          }
+        ],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Slam",
+        "modifier": "+6",
+        "attack_type": "melee",
+        "attack_effect": "1d6+1 plus 1d6 fire"
+      },
+      "raw_response": "{\n    \"description\": \"A heavy slam that burns with searing flames upon impact.\",\n    \"move_type\": \"magical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.9,\n    \"rationale\": \"Although it is a melee natural attack (slam), the added 1d6 fire damage introduces a significant elemental and supernatural effect.\"\n}",
+      "confidence": 0.9,
+      "rationale": "Although it is a melee natural attack (slam), the added 1d6 fire damage introduces a significant elemental and supernatural effect.",
+      "move_card": {
+        "id": "815519d9-6e0c-428d-937e-1b2d99004a5a",
+        "name": "Slam",
+        "description": "A heavy slam that burns with searing flames upon impact.",
+        "image_uri": null,
+        "move_type": "magical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 4
+          },
+          {
+            "damage_type": "fire",
+            "effect_unit": null,
+            "effect_value": 3
+          }
+        ],
+        "entity_effect": [],
+        "cards_to_add": [],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "mana",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Slam",
+        "modifier": "+8",
+        "attack_type": "melee",
+        "attack_effect": "1d8+7"
+      },
+      "raw_response": "{\n    \"description\": \"A heavy physical blow delivered with a powerful limb.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a standard melee natural attack (slam) dealing physical bludgeoning damage.\"\n}",
+      "confidence": 0.95,
+      "rationale": "The attack is a standard melee natural attack (slam) dealing physical bludgeoning damage.",
+      "move_card": {
+        "id": "16526278-56d0-48e0-a3c9-76c183d1804a",
+        "name": "Slam",
+        "description": "A heavy physical blow delivered with a powerful limb.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 11
+          }
+        ],
+        "entity_effect": [],
+        "cards_to_add": [],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Morningstar",
+        "modifier": "+12",
+        "attack_type": "melee",
+        "attack_effect": "2d6+6"
+      },
+      "raw_response": "{\n    \"description\": \"A heavy strike with a spiked morningstar.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The morningstar is a standard melee weapon attack dealing physical bludgeoning and piercing damage.\"\n}",
+      "confidence": 0.95,
+      "rationale": "The morningstar is a standard melee weapon attack dealing physical bludgeoning and piercing damage.",
+      "move_card": {
+        "id": "9d1560bf-6e7f-4e61-bd73-5e7c33338c9f",
+        "name": "Morningstar",
+        "description": "A heavy strike with a spiked morningstar.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 12
+          }
+        ],
+        "entity_effect": [],
+        "cards_to_add": [],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Javelin",
+        "modifier": "+5",
+        "attack_type": "ranged",
+        "attack_effect": "1d8+6"
+      },
+      "raw_response": "{\n    \"description\": \"A hurled javelin strikes the target from a distance.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 30,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.9,\n    \"rationale\": \"A javelin is a standard physical ranged weapon in D&D 3.x with a standard increment of 30 feet, dealing ordinary physical damage.\"\n}",
+      "confidence": 0.9,
+      "rationale": "A javelin is a standard physical ranged weapon in D&D 3.x with a standard increment of 30 feet, dealing ordinary physical damage.",
+      "move_card": {
+        "id": "f71ea2b8-c2ec-4865-903b-a4a0b66073f2",
+        "name": "Javelin",
+        "description": "A hurled javelin strikes the target from a distance.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 10
+          }
+        ],
+        "entity_effect": [],
+        "cards_to_add": [],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": "ranged",
+        "range_value": 9.0,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "",
+        "modifier": "",
+        "attack_type": "",
+        "attack_effect": ""
+      },
+      "raw_response": null,
+      "confidence": null,
+      "rationale": null,
+      "move_card": null,
+      "error": "Attack '' is not mapped; manual input required."
+    },
+    {
+      "case": {
+        "name": "Bite",
+        "modifier": "+2",
+        "attack_type": "melee",
+        "attack_effect": "1d6+1 plus paralysis"
+      },
+      "raw_response": "{\n    \"description\": \"A vicious bite that leaves the target paralyzed.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee natural weapon attack (bite), which standardly has a reach of 5 feet and deals physical damage alongside a secondary effect.\"\n}",
+      "confidence": 0.95,
+      "rationale": "The attack is a melee natural weapon attack (bite), which standardly has a reach of 5 feet and deals physical damage alongside a secondary effect.",
+      "move_card": {
+        "id": "7672caf8-e47b-4028-87bd-4a1b675e9995",
+        "name": "Bite",
+        "description": "A vicious bite that leaves the target paralyzed.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 4
+          }
+        ],
+        "entity_effect": [
+          "moves"
+        ],
+        "cards_to_add": [
+          {
+            "name": "Paralysis",
+            "id": "61b8d920-9fad-44fb-8ecf-30d6648d28c2"
+          }
+        ],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Greatclub",
+        "modifier": "+17",
+        "attack_type": "melee",
+        "attack_effect": "2d8+12"
+      },
+      "raw_response": "{\n    \"description\": \"A heavy strike with a massive wooden club.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a standard melee weapon attack using a greatclub, dealing blunt physical damage.\"\n}",
+      "confidence": 0.95,
+      "rationale": "The attack is a standard melee weapon attack using a greatclub, dealing blunt physical damage.",
+      "move_card": {
+        "id": "fef32039-aff3-470d-ba47-12d3186d70e6",
+        "name": "Greatclub",
+        "description": "A heavy strike with a massive wooden club.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 20
+          }
+        ],
+        "entity_effect": [],
+        "cards_to_add": [],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Slam",
+        "modifier": "+17",
+        "attack_type": "melee",
+        "attack_effect": "1d4+8"
+      },
+      "raw_response": "{\n    \"description\": \"A heavy physical blow delivered with a powerful limb.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a standard melee natural attack dealing bludgeoning damage typical of a physical slam.\"\n}",
+      "confidence": 0.95,
+      "rationale": "The attack is a standard melee natural attack dealing bludgeoning damage typical of a physical slam.",
+      "move_card": {
+        "id": "dcd35f1a-63f2-4f73-99be-86790d30b5a3",
+        "name": "Slam",
+        "description": "A heavy physical blow delivered with a powerful limb.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 10
+          }
+        ],
+        "entity_effect": [],
+        "cards_to_add": [],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Rock",
+        "modifier": "+11",
+        "attack_type": "ranged",
+        "attack_effect": "2d8+12"
+      },
+      "raw_response": null,
+      "confidence": null,
+      "rationale": null,
+      "move_card": null,
+      "error": "Attack 'Rock' is not mapped; manual input required."
+    },
+    {
+      "case": {
+        "name": "Bite",
+        "modifier": "+6",
+        "attack_type": "melee",
+        "attack_effect": "1d10+3"
+      },
+      "raw_response": "{\n    \"description\": \"A vicious bite with snapping jaws.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee natural attack dealing physical damage typical of a creature's bite.\"\n}",
+      "confidence": 0.95,
+      "rationale": "The attack is a melee natural attack dealing physical damage typical of a creature's bite.",
+      "move_card": {
+        "id": "35d80c08-33e6-40d8-bcc6-a5b01555e36b",
+        "name": "Bite",
+        "description": "A vicious bite with snapping jaws.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 8
+          }
+        ],
+        "entity_effect": [],
+        "cards_to_add": [],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Tentacle",
+        "modifier": "+28",
+        "attack_type": "melee",
+        "attack_effect": "2d8+12/19-20"
+      },
+      "raw_response": "{\n    \"description\": \"A powerful lash with a heavy tentacle.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee natural attack involving a physical appendage (tentacle) dealing bludgeoning or slashing damage with standard threat range.\"\n}",
+      "confidence": 0.95,
+      "rationale": "The attack is a melee natural attack involving a physical appendage (tentacle) dealing bludgeoning or slashing damage with standard threat range.",
+      "move_card": {
+        "id": "b398c16a-b1ce-4a02-98d9-2972362ed121",
+        "name": "Tentacle",
+        "description": "A powerful lash with a heavy tentacle.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 20
+          }
+        ],
+        "entity_effect": [],
+        "cards_to_add": [],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Touch",
+        "modifier": "+12",
+        "attack_type": "melee",
+        "attack_effect": "1d4 Wisdom drain"
+      },
+      "raw_response": "{\n    \"description\": \"A draining touch that erodes the target's mental faculties.\",\n    \"move_type\": \"magical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"Ability drain effects, particularly affecting mental attributes like Wisdom via a touch attack, are inherently supernatural and magical in nature within the D&D 3.x ruleset.\"\n}",
+      "confidence": 0.95,
+      "rationale": "Ability drain effects, particularly affecting mental attributes like Wisdom via a touch attack, are inherently supernatural and magical in nature within the D&D 3.x ruleset.",
+      "move_card": {
+        "id": "567926cd-2d61-4123-8a53-3dad3eb6f7e7",
+        "name": "Touch",
+        "description": "A draining touch that erodes the target's mental faculties.",
+        "image_uri": null,
+        "move_type": "magical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "negative_energy",
+            "effect_unit": "ward",
+            "effect_value": 1
+          }
+        ],
+        "entity_effect": [],
+        "cards_to_add": [],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "mana",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Dagger",
+        "modifier": "+12",
+        "attack_type": "melee",
+        "attack_effect": "1d6+4/19-20"
+      },
+      "raw_response": "{\n    \"description\": \"A swift strike with a sharp dagger.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack uses a standard melee weapon (dagger) dealing physical damage without magical or supernatural properties.\"\n}",
+      "confidence": 0.95,
+      "rationale": "The attack uses a standard melee weapon (dagger) dealing physical damage without magical or supernatural properties.",
+      "move_card": {
+        "id": "3bac44c6-aa53-47d8-86d8-e004523b5109",
+        "name": "Dagger",
+        "description": "A swift strike with a sharp dagger.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 7
+          }
+        ],
+        "entity_effect": [],
+        "cards_to_add": [],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Claw",
+        "modifier": "+12",
+        "attack_type": "melee",
+        "attack_effect": "1d4+4"
+      },
+      "raw_response": "{\n    \"description\": \"A vicious slash with a sharp claw.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee natural attack dealing physical damage typical of a creature's claw.\"\n}",
+      "confidence": 0.95,
+      "rationale": "The attack is a melee natural attack dealing physical damage typical of a creature's claw.",
+      "move_card": {
+        "id": "ab411441-88ae-46d1-a91a-8ce690c08714",
+        "name": "Claw",
+        "description": "A vicious slash with a sharp claw.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 6
+          }
+        ],
+        "entity_effect": [],
+        "cards_to_add": [],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Burning touch",
+        "modifier": "+4",
+        "attack_type": "melee touch",
+        "attack_effect": "1d8 fire plus combustion"
+      },
+      "raw_response": "{\n    \"description\": \"A searing touch that burns the target with intense fire.\",\n    \"move_type\": \"magical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee touch attack that deals elemental fire damage and combustion effects.\"\n}",
+      "confidence": 0.95,
+      "rationale": "The attack is a melee touch attack that deals elemental fire damage and combustion effects.",
+      "move_card": {
+        "id": "36d6a281-fb92-43cd-b41d-77586331aa6e",
+        "name": "Burning touch",
+        "description": "A searing touch that burns the target with intense fire. This attack grants a +2 attack-roll bonus when used.",
+        "image_uri": null,
+        "move_type": "magical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "fire",
+            "effect_unit": null,
+            "effect_value": 4
+          }
+        ],
+        "entity_effect": [
+          "moves"
+        ],
+        "cards_to_add": [
+          {
+            "name": "Combustion",
+            "id": "dedd3679-d722-48a2-8d94-29c6b7b3c86f"
+          }
+        ],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "mana",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Slam",
+        "modifier": "+4",
+        "attack_type": "melee",
+        "attack_effect": "1d3+3 plus combustion"
+      },
+      "raw_response": "{\n    \"description\": \"A heavy physical blow accompanied by sudden combustion.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee slam, which is a standard natural physical attack, supplemented by an elemental effect.\"\n}",
+      "confidence": 0.95,
+      "rationale": "The attack is a melee slam, which is a standard natural physical attack, supplemented by an elemental effect.",
+      "move_card": {
+        "id": "8a1f69f3-aea3-4403-a5b0-c25c27580594",
+        "name": "Slam",
+        "description": "A heavy physical blow accompanied by sudden combustion.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 4
+          }
+        ],
+        "entity_effect": [
+          "moves"
+        ],
+        "cards_to_add": [
+          {
+            "name": "Combustion",
+            "id": "42f46363-11da-4888-b76e-cff3924011cd"
+          }
+        ],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Slam",
+        "modifier": "+9",
+        "attack_type": "melee",
+        "attack_effect": "1d8+4"
+      },
+      "raw_response": "{\n    \"description\": \"A heavy physical slam with a blunt impact.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee natural attack dealing standard bludgeoning damage typical of physical creature slams in D&D 3.x.\"\n}",
+      "confidence": 0.95,
+      "rationale": "The attack is a melee natural attack dealing standard bludgeoning damage typical of physical creature slams in D&D 3.x.",
+      "move_card": {
+        "id": "4c8a2c23-99d8-4234-82c6-24619d210bb6",
+        "name": "Slam",
+        "description": "A heavy physical slam with a blunt impact.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 8
+          }
+        ],
+        "entity_effect": [],
+        "cards_to_add": [],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Slam",
+        "modifier": "+12",
+        "attack_type": "melee",
+        "attack_effect": "1d6+7"
+      },
+      "raw_response": "{\n    \"description\": \"A heavy physical blow delivered with a powerful slam.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee natural attack dealing standard bludgeoning damage without any magical or elemental descriptors.\"\n}",
+      "confidence": 0.95,
+      "rationale": "The attack is a melee natural attack dealing standard bludgeoning damage without any magical or elemental descriptors.",
+      "move_card": {
+        "id": "bb0a4285-33a9-4fda-9f5b-a302a504eba7",
+        "name": "Slam",
+        "description": "A heavy physical blow delivered with a powerful slam.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 10
+          }
+        ],
+        "entity_effect": [],
+        "cards_to_add": [],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Tongue",
+        "modifier": "+12",
+        "attack_type": "melee touch",
+        "attack_effect": "paralysis"
+      },
+      "raw_response": "{\n    \"description\": \"A sudden lash of a paralyzing tongue.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.85,\n    \"rationale\": \"The attack is a melee touch attack using a natural body part (tongue) to inflict paralysis, typical of physical natural attacks in D&D 3.x.\"\n}",
+      "confidence": 0.85,
+      "rationale": "The attack is a melee touch attack using a natural body part (tongue) to inflict paralysis, typical of physical natural attacks in D&D 3.x.",
+      "move_card": {
+        "id": "408c7ebf-ef42-423a-b5ad-8b1c94c34cdd",
+        "name": "Tongue",
+        "description": "A sudden lash of a paralyzing tongue. This attack grants a +2 attack-roll bonus when used.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [],
+        "entity_effect": [
+          "moves"
+        ],
+        "cards_to_add": [
+          {
+            "name": "Paralysis",
+            "id": "845b78fc-98ca-459b-b402-c9ecae1c49e5"
+          }
+        ],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Bite",
+        "modifier": "+12",
+        "attack_type": "melee",
+        "attack_effect": "2d6+6 plus disease"
+      },
+      "raw_response": "{\n    \"description\": \"A vicious bite that transmits disease.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a standard melee natural attack (bite) dealing physical damage and inflicting a disease, typical of standard D&D 3.x creature combat mechanics.\"\n}",
+      "confidence": 0.95,
+      "rationale": "The attack is a standard melee natural attack (bite) dealing physical damage and inflicting a disease, typical of standard D&D 3.x creature combat mechanics.",
+      "move_card": {
+        "id": "9d6e21b5-2a77-4788-9f3f-2b648969f0d9",
+        "name": "Bite",
+        "description": "A vicious bite that transmits disease.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 12
+          }
+        ],
+        "entity_effect": [
+          "moves"
+        ],
+        "cards_to_add": [
+          {
+            "name": "Disease",
+            "id": "0805c7bf-5b4a-453a-abb5-28d97cffe2c4"
+          }
+        ],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Slam",
+        "modifier": "+8",
+        "attack_type": "melee",
+        "attack_effect": "2d6+4 plus 2d6 acid"
+      },
+      "raw_response": "{\n    \"description\": \"A heavy physical slam that splashes corrosive acid upon the target.\",\n    \"move_type\": \"magical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.85,\n    \"rationale\": \"Although framed as a natural melee slam attack, the inclusion of significant elemental acid damage classifies the attack as magical in nature under D&D 3.x rules.\"\n}",
+      "confidence": 0.85,
+      "rationale": "Although framed as a natural melee slam attack, the inclusion of significant elemental acid damage classifies the attack as magical in nature under D&D 3.x rules.",
+      "move_card": {
+        "id": "aed2ecb9-fc01-4ea1-9862-c8fdd97fe33e",
+        "name": "Slam",
+        "description": "A heavy physical slam that splashes corrosive acid upon the target.",
+        "image_uri": null,
+        "move_type": "magical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 10
+          },
+          {
+            "damage_type": "acid",
+            "effect_unit": null,
+            "effect_value": 6
+          }
+        ],
+        "entity_effect": [],
+        "cards_to_add": [],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "mana",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Bite",
+        "modifier": "+7",
+        "attack_type": "melee",
+        "attack_effect": "1d6+4 plus poison"
+      },
+      "raw_response": "{\n    \"description\": \"A vicious bite that delivers a dose of venom.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee natural attack (bite) dealing physical damage and poison, consistent with standard creature anatomy rather than spellcasting or supernatural energy.\"\n}",
+      "confidence": 0.95,
+      "rationale": "The attack is a melee natural attack (bite) dealing physical damage and poison, consistent with standard creature anatomy rather than spellcasting or supernatural energy.",
+      "move_card": {
+        "id": "ef4b4d34-9605-42b9-9c5c-499e171f05f6",
+        "name": "Bite",
+        "description": "A vicious bite that delivers a dose of venom.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 7
+          }
+        ],
+        "entity_effect": [
+          "moves"
+        ],
+        "cards_to_add": [
+          {
+            "name": "Poison",
+            "id": "e624085a-0819-4d64-b6bd-035d8fa16553"
+          }
+        ],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Tail slap",
+        "modifier": "+4",
+        "attack_type": "melee",
+        "attack_effect": "1d6+1 plus positive energy"
+      },
+      "raw_response": "{\n    \"description\": \"A powerful tail strike infused with positive energy.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee natural attack (tail slap), which is standard physical combat, even though it deals additional positive energy damage.\"\n}",
+      "confidence": 0.95,
+      "rationale": "The attack is a melee natural attack (tail slap), which is standard physical combat, even though it deals additional positive energy damage.",
+      "move_card": {
+        "id": "66e09ba9-4a18-4167-be40-fead8579f4a0",
+        "name": "Tail slap",
+        "description": "A powerful tail strike infused with positive energy.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 4
+          }
+        ],
+        "entity_effect": [
+          "moves"
+        ],
+        "cards_to_add": [
+          {
+            "name": "Positive Energy",
+            "id": "e1de73cd-527d-4f28-b11a-4d6cb00f22b1"
+          }
+        ],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Tail touch",
+        "modifier": "+4",
+        "attack_type": "melee touch",
+        "attack_effect": "positive energy"
+      },
+      "raw_response": "{\n    \"description\": \"A deliberate touch channeling positive energy.\",\n    \"move_type\": \"magical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack uses a touch attack type and delivers positive energy, which is inherently magical in nature.\"\n}",
+      "confidence": 0.95,
+      "rationale": "The attack uses a touch attack type and delivers positive energy, which is inherently magical in nature.",
+      "move_card": {
+        "id": "0eedd6f4-431d-4a6b-b412-91131f283f3e",
+        "name": "Tail touch",
+        "description": "A deliberate touch channeling positive energy. This attack grants a +2 attack-roll bonus when used.",
+        "image_uri": null,
+        "move_type": "magical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [],
+        "entity_effect": [
+          "moves"
+        ],
+        "cards_to_add": [
+          {
+            "name": "Positive Energy",
+            "id": "b5de7dc0-2f57-4610-9b85-ebf2c4286b30"
+          }
+        ],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "mana",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Antennae touch",
+        "modifier": "+3",
+        "attack_type": "melee",
+        "attack_effect": "rust"
+      },
+      "raw_response": "{\n    \"description\": \"The creature brushes against its target with its antennae, causing metal to rapidly rust.\",\n    \"move_type\": \"magical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.85,\n    \"rationale\": \"The attack is a melee touch-style natural attack with a supernatural rusting effect, typical of creatures like rust monsters.\"\n}",
+      "confidence": 0.85,
+      "rationale": "The attack is a melee touch-style natural attack with a supernatural rusting effect, typical of creatures like rust monsters.",
+      "move_card": {
+        "id": "02fb5922-e612-4a2d-96e2-7a8f0f4d86fc",
+        "name": "Antennae touch",
+        "description": "The creature brushes against its target with its antennae, causing metal to rapidly rust.",
+        "image_uri": null,
+        "move_type": "magical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [],
+        "entity_effect": [
+          "moves"
+        ],
+        "cards_to_add": [
+          {
+            "name": "Rust",
+            "id": "9fb9c642-bfb4-4d09-8970-fb274683c014"
+          }
+        ],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "mana",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Incorporeal touch",
+        "modifier": "+3",
+        "attack_type": "melee",
+        "attack_effect": "1d6 Str"
+      },
+      "raw_response": "{\n    \"description\": \"A ghostly touch that drains the target's strength.\",\n    \"move_type\": \"magical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee touch attack dealing ability damage (Strength), characteristic of incorporeal undead or supernatural entities in D&D 3.x.\"\n}",
+      "confidence": 0.95,
+      "rationale": "The attack is a melee touch attack dealing ability damage (Strength), characteristic of incorporeal undead or supernatural entities in D&D 3.x.",
+      "move_card": {
+        "id": "e616c0f6-c424-4e23-80cb-af0bb026b453",
+        "name": "Incorporeal touch",
+        "description": "A ghostly touch that drains the target's strength.",
+        "image_uri": null,
+        "move_type": "magical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "negative_energy",
+            "effect_unit": "attack",
+            "effect_value": 1
+          }
+        ],
+        "entity_effect": [],
+        "cards_to_add": [],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "mana",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Incorporeal touch",
+        "modifier": "+6",
+        "attack_type": "melee",
+        "attack_effect": "1d8 plus energy drain"
+      },
+      "raw_response": "{\n    \"description\": \"A ghostly touch that drains the target's life force.\",\n    \"move_type\": \"magical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is an incorporeal touch that inflicts energy drain, and melee touch attacks operate within standard melee reach (5 feet).\"\n}",
+      "confidence": 0.95,
+      "rationale": "The attack is an incorporeal touch that inflicts energy drain, and melee touch attacks operate within standard melee reach (5 feet).",
+      "move_card": {
+        "id": "be103bbc-0b4c-490d-933b-91b4299c0580",
+        "name": "Incorporeal touch",
+        "description": "A ghostly touch that drains the target's life force.",
+        "image_uri": null,
+        "move_type": "magical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 4
+          }
+        ],
+        "entity_effect": [
+          "moves"
+        ],
+        "cards_to_add": [
+          {
+            "name": "Energy Drain",
+            "id": "15af61c6-dd6c-4468-a8d3-aa2a814008bb"
+          }
+        ],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "mana",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Short sword",
+        "modifier": "+4",
+        "attack_type": "melee",
+        "attack_effect": "1d4-2/19-20"
+      },
+      "raw_response": "{\n    \"description\": \"A quick thrust with a short sword.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack uses a standard handheld weapon (short sword) in a melee attack, which is inherently physical.\"\n}",
+      "confidence": 0.95,
+      "rationale": "The attack uses a standard handheld weapon (short sword) in a melee attack, which is inherently physical.",
+      "move_card": {
+        "id": "19105323-ae3f-4a9b-96a2-4fb6e233a069",
+        "name": "Short sword",
+        "description": "A quick thrust with a short sword.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 0
+          }
+        ],
+        "entity_effect": [],
+        "cards_to_add": [],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Light crossbow",
+        "modifier": "+4",
+        "attack_type": "ranged",
+        "attack_effect": "1d6/19-20"
+      },
+      "raw_response": "{\n    \"description\": \"A bolt fired from a light crossbow.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 80,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a standard light crossbow, which is an ordinary physical ranged weapon with a well-established 80-foot increment in D&D 3.5.\"\n}",
+      "confidence": 0.95,
+      "rationale": "The attack is a standard light crossbow, which is an ordinary physical ranged weapon with a well-established 80-foot increment in D&D 3.5.",
+      "move_card": {
+        "id": "a68feadf-dad3-4277-b730-c0fdd623ce02",
+        "name": "Light crossbow",
+        "description": "A bolt fired from a light crossbow.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 3
+          }
+        ],
+        "entity_effect": [],
+        "cards_to_add": [],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": "ranged",
+        "range_value": 24.0,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Swarm",
+        "modifier": "",
+        "attack_type": "",
+        "attack_effect": "2d6"
+      },
+      "raw_response": null,
+      "confidence": null,
+      "rationale": null,
+      "move_card": null,
+      "error": "Attack 'Swarm' is not mapped; manual input required."
+    },
+    {
+      "case": {
+        "name": "Bite",
+        "modifier": "+57",
+        "attack_type": "melee",
+        "attack_effect": "4d8+17/18-20/\u00d73"
+      },
+      "raw_response": "{\n    \"description\": \"A devastating bite with immense force.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee natural attack (Bite) dealing physical damage with standard melee reach.\"\n}",
+      "confidence": 0.95,
+      "rationale": "The attack is a melee natural attack (Bite) dealing physical damage with standard melee reach.",
+      "move_card": {
+        "id": "b493057e-6926-42db-9658-22ce97b14a10",
+        "name": "Bite",
+        "description": "A devastating bite with immense force.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 33
+          }
+        ],
+        "entity_effect": [],
+        "cards_to_add": [],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Slam",
+        "modifier": "+12",
+        "attack_type": "melee",
+        "attack_effect": "2d6+9"
+      },
+      "raw_response": "{\n    \"description\": \"A powerful physical slam delivered with crushing force.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee slam, which is a standard physical natural attack with standard reach in D&D 3.x.\"\n}",
+      "confidence": 0.95,
+      "rationale": "The attack is a melee slam, which is a standard physical natural attack with standard reach in D&D 3.x.",
+      "move_card": {
+        "id": "1e9f87f3-adae-4fd2-b85c-2a6d9312c995",
+        "name": "Slam",
+        "description": "A powerful physical slam delivered with crushing force.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 15
+          }
+        ],
+        "entity_effect": [],
+        "cards_to_add": [],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Bite",
+        "modifier": "+7",
+        "attack_type": "melee",
+        "attack_effect": "1d6+4"
+      },
+      "raw_response": "{\n    \"description\": \"A vicious bite with jaws snapping shut on the target.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee natural attack (bite) dealing standard physical damage without any magical or elemental properties.\"\n}",
+      "confidence": 0.95,
+      "rationale": "The attack is a melee natural attack (bite) dealing standard physical damage without any magical or elemental properties.",
+      "move_card": {
+        "id": "569187b0-1b93-4332-b8cb-c2530be1faf6",
+        "name": "Bite",
+        "description": "A vicious bite with jaws snapping shut on the target.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 7
+          }
+        ],
+        "entity_effect": [],
+        "cards_to_add": [],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Short sword",
+        "modifier": "+7",
+        "attack_type": "melee",
+        "attack_effect": "1d6+2/19-20"
+      },
+      "raw_response": "{\n    \"description\": \"A precise thrust with a short sword.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack uses a standard melee weapon (short sword) and relies on physical damage without any magical or supernatural indicators.\"\n}",
+      "confidence": 0.95,
+      "rationale": "The attack uses a standard melee weapon (short sword) and relies on physical damage without any magical or supernatural indicators.",
+      "move_card": {
+        "id": "8fb14a12-c19f-4a7d-9ac4-cdd0a980d61d",
+        "name": "Short sword",
+        "description": "A precise thrust with a short sword.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 5
+          }
+        ],
+        "entity_effect": [],
+        "cards_to_add": [],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Claw",
+        "modifier": "+7",
+        "attack_type": "melee",
+        "attack_effect": "1d4+2"
+      },
+      "raw_response": "{\n    \"description\": \"A savage swipe with a sharp claw.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee natural attack dealing standard physical damage.\"\n}",
+      "confidence": 0.95,
+      "rationale": "The attack is a melee natural attack dealing standard physical damage.",
+      "move_card": {
+        "id": "719da0d7-538f-43c5-8731-d53935124a99",
+        "name": "Claw",
+        "description": "A savage swipe with a sharp claw.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 4
+          }
+        ],
+        "entity_effect": [],
+        "cards_to_add": [],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Longbow",
+        "modifier": "+8",
+        "attack_type": "ranged",
+        "attack_effect": "1d8/\u00d73"
+      },
+      "raw_response": "{\n    \"description\": \"A powerful shot fired from a longbow.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 100,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack uses a standard physical weapon (longbow) with piercing damage and no magical properties indicated.\"\n}",
+      "confidence": 0.95,
+      "rationale": "The attack uses a standard physical weapon (longbow) with piercing damage and no magical properties indicated.",
+      "move_card": {
+        "id": "b880be90-2db5-4ac4-96c7-5f635a825de1",
+        "name": "Longbow",
+        "description": "A powerful shot fired from a longbow.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 4
+          }
+        ],
+        "entity_effect": [],
+        "cards_to_add": [],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": "ranged",
+        "range_value": 30.0,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Slam",
+        "modifier": "+2",
+        "attack_type": "melee",
+        "attack_effect": "1d6+1"
+      },
+      "raw_response": "{\n    \"description\": \"A heavy physical blow delivered with a limb.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee natural attack named 'Slam' dealing standard bludgeoning damage without any magical or supernatural indicators.\"\n}",
+      "confidence": 0.95,
+      "rationale": "The attack is a melee natural attack named 'Slam' dealing standard bludgeoning damage without any magical or supernatural indicators.",
+      "move_card": {
+        "id": "99dd51b3-443a-4369-9ca3-7b081a8ea5c0",
+        "name": "Slam",
+        "description": "A heavy physical blow delivered with a limb.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 4
+          }
+        ],
+        "entity_effect": [],
+        "cards_to_add": [],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Club",
+        "modifier": "+2",
+        "attack_type": "melee",
+        "attack_effect": "1d6+1"
+      },
+      "raw_response": "{\n    \"description\": \"A swift strike with a heavy wooden club.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack uses a standard melee weapon (club) dealing bludgeoning damage, which is a physical attack with standard melee reach.\"\n}",
+      "confidence": 0.95,
+      "rationale": "The attack uses a standard melee weapon (club) dealing bludgeoning damage, which is a physical attack with standard melee reach.",
+      "move_card": {
+        "id": "d99aed6f-9729-46e3-9df7-a6c1234969bd",
+        "name": "Club",
+        "description": "A swift strike with a heavy wooden club.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 4
+          }
+        ],
+        "entity_effect": [],
+        "cards_to_add": [],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Bite",
+        "modifier": "+3",
+        "attack_type": "melee",
+        "attack_effect": "1d6+1"
+      },
+      "raw_response": "{\n    \"description\": \"A vicious bite with jaws.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee natural attack (bite) that deals physical damage without any magical or supernatural properties.\"\n}",
+      "confidence": 0.95,
+      "rationale": "The attack is a melee natural attack (bite) that deals physical damage without any magical or supernatural properties.",
+      "move_card": {
+        "id": "22fa346a-9234-4d54-93ad-e88248ba87ed",
+        "name": "Bite",
+        "description": "A vicious bite with jaws.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 4
+          }
+        ],
+        "entity_effect": [],
+        "cards_to_add": [],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Bite",
+        "modifier": "+7",
+        "attack_type": "melee",
+        "attack_effect": "1d6+3 plus trip"
+      },
+      "raw_response": "{\n    \"description\": \"A vicious bite that can knock the target off balance.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a standard natural melee attack (bite) dealing physical damage and attempting a trip maneuver, consistent with physical combat models in D&D 3.x.\"\n}",
+      "confidence": 0.95,
+      "rationale": "The attack is a standard natural melee attack (bite) dealing physical damage and attempting a trip maneuver, consistent with physical combat models in D&D 3.x.",
+      "move_card": {
+        "id": "ec143626-50d4-4a6b-af1e-db1ca686fe45",
+        "name": "Bite",
+        "description": "A vicious bite that can knock the target off balance.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 6
+          }
+        ],
+        "entity_effect": [
+          "moves"
+        ],
+        "cards_to_add": [
+          {
+            "name": "Trip",
+            "id": "d67cd092-8a51-415e-a871-d94517b5ee5d"
+          }
+        ],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Slam",
+        "modifier": "+9",
+        "attack_type": "melee",
+        "attack_effect": "1d8+5 plus push"
+      },
+      "raw_response": "{\n    \"description\": \"A heavy physical slam that drives the target backward.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee natural attack (slam) dealing blunt physical damage and a push effect, typical of standard D&D 3.x melee reach.\"\n}",
+      "confidence": 0.95,
+      "rationale": "The attack is a melee natural attack (slam) dealing blunt physical damage and a push effect, typical of standard D&D 3.x melee reach.",
+      "move_card": {
+        "id": "d5598314-16ce-4aee-8a79-434907e41097",
+        "name": "Slam",
+        "description": "A heavy physical slam that drives the target backward.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 9
+          }
+        ],
+        "entity_effect": [
+          "moves"
+        ],
+        "cards_to_add": [
+          {
+            "name": "Push",
+            "id": "97bac9d2-176a-4ef6-ade4-41e20cf3ad5c"
+          }
+        ],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Tail sweep",
+        "modifier": "+6",
+        "attack_type": "melee",
+        "attack_effect": "1d6+2 plus unbalance"
+      },
+      "raw_response": "{\n    \"description\": \"A sweeping blow with the tail that unbalances the target.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee natural attack dealing physical damage and causing a physical condition (unbalance).\"\n}",
+      "confidence": 0.95,
+      "rationale": "The attack is a melee natural attack dealing physical damage and causing a physical condition (unbalance).",
+      "move_card": {
+        "id": "4c4e43a1-4dba-46c0-ba88-78471dccbb28",
+        "name": "Tail sweep",
+        "description": "A sweeping blow with the tail that unbalances the target.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 5
+          }
+        ],
+        "entity_effect": [
+          "moves"
+        ],
+        "cards_to_add": [
+          {
+            "name": "Unbalance",
+            "id": "b99135e5-19c8-47f7-9090-58e603f9c3d2"
+          }
+        ],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Pincers",
+        "modifier": "+8",
+        "attack_type": "melee",
+        "attack_effect": "1d4+4 plus grapple"
+      },
+      "raw_response": "{\n    \"description\": \"The creature snaps its powerful pincers, attempting to grab the target.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee natural attack involving pincers that deals physical bludgeoning or piercing damage and initiates a grapple, typical of physical anatomy-based combat in D&D 3.x.\"\n}",
+      "confidence": 0.95,
+      "rationale": "The attack is a melee natural attack involving pincers that deals physical bludgeoning or piercing damage and initiates a grapple, typical of physical anatomy-based combat in D&D 3.x.",
+      "move_card": {
+        "id": "8b84251c-4a91-40b8-9ab6-17d87ce9b313",
+        "name": "Pincers",
+        "description": "The creature snaps its powerful pincers, attempting to grab the target.",
+        "image_uri": null,
+        "move_type": "physical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 6
+          }
+        ],
+        "entity_effect": [
+          "moves"
+        ],
+        "cards_to_add": [
+          {
+            "name": "Grapple",
+            "id": "82032955-e440-4d91-b2e2-e86033bb2f1a"
+          }
+        ],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "stamina",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Psychic lash",
+        "modifier": "+5",
+        "attack_type": "ranged touch",
+        "attack_effect": "1d6 plus stagger"
+      },
+      "raw_response": null,
+      "confidence": null,
+      "rationale": null,
+      "move_card": null,
+      "error": "Attack 'Psychic lash' is not mapped; manual input required."
+    },
+    {
+      "case": {
+        "name": "Arcane slam",
+        "modifier": "+4",
+        "attack_type": "melee touch",
+        "attack_effect": "1d4+2 plus disarm"
+      },
+      "raw_response": "{\n    \"description\": \"A forceful strike imbued with arcane energy that can disarm the opponent.\",\n    \"move_type\": \"magical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.85,\n    \"rationale\": \"The attack is a melee touch attack utilizing arcane power, indicated by its name and attack type.\"\n}",
+      "confidence": 0.85,
+      "rationale": "The attack is a melee touch attack utilizing arcane power, indicated by its name and attack type.",
+      "move_card": {
+        "id": "22cfe48a-76fe-4818-9079-e4ca0f8f2fbf",
+        "name": "Arcane slam",
+        "description": "A forceful strike imbued with arcane energy that can disarm the opponent. This attack grants a +2 attack-roll bonus when used.",
+        "image_uri": null,
+        "move_type": "magical",
+        "category": "attack",
+        "mode": "active",
+        "effect": "damage",
+        "move_effects": [
+          {
+            "damage_type": "physical",
+            "effect_unit": null,
+            "effect_value": 4
+          }
+        ],
+        "entity_effect": [
+          "moves"
+        ],
+        "cards_to_add": [
+          {
+            "name": "Disarm",
+            "id": "90cef752-9240-49bf-b80c-873cd3030ae2"
+          }
+        ],
+        "cards_to_remove": [],
+        "target": "single",
+        "effect_radius": null,
+        "move_range": null,
+        "range_value": null,
+        "resource": "mana",
+        "duration": "instant",
+        "duration_unit": null,
+        "duration_value": null,
+        "usage": "unlimited"
+      },
+      "error": null
+    }
+  ]
+}

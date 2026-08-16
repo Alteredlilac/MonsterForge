@@ -1,0 +1,1282 @@
+{
+  "metadata": {
+    "generated_at": "2026-08-15T23:11:04.996599+00:00",
+    "model": "gemini-flash-lite-latest",
+    "sample_count": 65
+  },
+  "samples": [
+    {
+      "case": {
+        "name": "Tentacle",
+        "modifier": "+12",
+        "attack_type": "melee",
+        "attack_effect": "1d6+8 plus slime"
+      },
+      "raw_response": "{\n    \"description\": \"A powerful tentacle strike that coats the target in viscous slime.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a standard melee natural attack dealing bludgeoning or physical damage plus a secondary physical effect (slime).\"\n}",
+      "parsed_result": {
+        "description": "A powerful tentacle strike that coats the target in viscous slime.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is a standard melee natural attack dealing bludgeoning or physical damage plus a secondary physical effect (slime)."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Claw",
+        "modifier": "+9",
+        "attack_type": "melee",
+        "attack_effect": "2d6+4"
+      },
+      "raw_response": "{\n    \"description\": \"A savage strike delivered with a sharp claw.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is named 'Claw', uses a melee attack type, and deals standard physical damage without any magical or elemental descriptors.\"\n}",
+      "parsed_result": {
+        "description": "A savage strike delivered with a sharp claw.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is named 'Claw', uses a melee attack type, and deals standard physical damage without any magical or elemental descriptors."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Incorporeal touch",
+        "modifier": "+3",
+        "attack_type": "melee",
+        "attack_effect": "1d4 Wisdom drain"
+      },
+      "raw_response": "{\n    \"description\": \"A spectral touch that drains the target's mental faculties.\",\n    \"move_type\": \"magical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee touch attack dealing Wisdom drain, which is characteristic of supernatural incorporeal effects.\"\n}",
+      "parsed_result": {
+        "description": "A spectral touch that drains the target's mental faculties.",
+        "move_type": "magical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is a melee touch attack dealing Wisdom drain, which is characteristic of supernatural incorporeal effects."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Bite",
+        "modifier": "+5",
+        "attack_type": "melee",
+        "attack_effect": "1d6 plus poison"
+      },
+      "raw_response": "{\n    \"description\": \"A vicious bite that delivers venom to the target.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a standard melee natural attack (bite) that deals physical damage and poison, typical of biological creatures in D&D 3.x with a 5-foot reach.\"\n}",
+      "parsed_result": {
+        "description": "A vicious bite that delivers venom to the target.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is a standard melee natural attack (bite) that deals physical damage and poison, typical of biological creatures in D&D 3.x with a 5-foot reach."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Web",
+        "modifier": "+5",
+        "attack_type": "ranged",
+        "attack_effect": ""
+      },
+      "raw_response": "{\n    \"description\": \"A sticky mass of webbing is flung to entangle the target.\",\n    \"move_type\": \"magical\",\n    \"move_range\": null,\n    \"confidence\": 0.85,\n    \"rationale\": \"The attack is named 'Web' and functions as a ranged attack characteristic of spell-like abilities or special supernatural maneuvers in D&D 3.x.\"\n}",
+      "parsed_result": {
+        "description": "A sticky mass of webbing is flung to entangle the target.",
+        "move_type": "magical",
+        "move_range": null,
+        "confidence": 0.85,
+        "rationale": "The attack is named 'Web' and functions as a ranged attack characteristic of spell-like abilities or special supernatural maneuvers in D&D 3.x."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Light ray",
+        "modifier": "+2",
+        "attack_type": "ranged touch",
+        "attack_effect": "1d6"
+      },
+      "raw_response": "{\n    \"description\": \"A beam of glowing light flashes toward the target.\",\n    \"move_type\": \"magical\",\n    \"move_range\": null,\n    \"confidence\": 0.85,\n    \"rationale\": \"The attack is designated as a ranged touch attack using a light ray, which typically indicates a magical spell-like effect or supernatural ability.\"\n}",
+      "parsed_result": {
+        "description": "A beam of glowing light flashes toward the target.",
+        "move_type": "magical",
+        "move_range": null,
+        "confidence": 0.85,
+        "rationale": "The attack is designated as a ranged touch attack using a light ray, which typically indicates a magical spell-like effect or supernatural ability."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Electricity ray",
+        "modifier": "+9",
+        "attack_type": "ranged touch",
+        "attack_effect": "2d6"
+      },
+      "raw_response": "{\n    \"description\": \"A crackling ray of electricity leaps toward the target.\",\n    \"move_type\": \"magical\",\n    \"move_range\": null,\n    \"confidence\": 0.9,\n    \"rationale\": \"The attack is a ranged touch attack dealing elemental electricity damage, which is characteristic of magical or supernatural effects.\"\n}",
+      "parsed_result": {
+        "description": "A crackling ray of electricity leaps toward the target.",
+        "move_type": "magical",
+        "move_range": null,
+        "confidence": 0.9,
+        "rationale": "The attack is a ranged touch attack dealing elemental electricity damage, which is characteristic of magical or supernatural effects."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Bite",
+        "modifier": "+9",
+        "attack_type": "melee",
+        "attack_effect": "1d6+1"
+      },
+      "raw_response": "{\n    \"description\": \"A vicious bite with jaws.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a standard melee natural attack dealing piercing or slashing damage typical of a physical bite.\"\n}",
+      "parsed_result": {
+        "description": "A vicious bite with jaws.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is a standard melee natural attack dealing piercing or slashing damage typical of a physical bite."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Morningstar",
+        "modifier": "+16",
+        "attack_type": "melee",
+        "attack_effect": "3d6+8"
+      },
+      "raw_response": "{\n    \"description\": \"A heavy strike with a spiked morningstar.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The morningstar is a standard melee weapon attack dealing physical bludgeoning and piercing damage.\"\n}",
+      "parsed_result": {
+        "description": "A heavy strike with a spiked morningstar.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The morningstar is a standard melee weapon attack dealing physical bludgeoning and piercing damage."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Rock",
+        "modifier": "+9",
+        "attack_type": "ranged",
+        "attack_effect": "2d6+8"
+      },
+      "raw_response": "{\n    \"description\": \"The creature hurls a heavy rock at the target.\",\n    \"move_type\": \"physical\",\n    \"move_range\": null,\n    \"confidence\": 0.9,\n    \"rationale\": \"The attack involves throwing a physical rock, dealing standard bludgeoning damage without any magical or supernatural properties.\"\n}",
+      "parsed_result": {
+        "description": "The creature hurls a heavy rock at the target.",
+        "move_type": "physical",
+        "move_range": null,
+        "confidence": 0.9,
+        "rationale": "The attack involves throwing a physical rock, dealing standard bludgeoning damage without any magical or supernatural properties."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Warhammer",
+        "modifier": "+3",
+        "attack_type": "melee",
+        "attack_effect": "1d8+1/\u00d73 plus 1 fire"
+      },
+      "raw_response": "{\n    \"description\": \"A heavy warhammer strike accompanied by burning flames.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee weapon attack with a standard reach, utilizing a physical warhammer supplemented by fire damage.\"\n}",
+      "parsed_result": {
+        "description": "A heavy warhammer strike accompanied by burning flames.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is a melee weapon attack with a standard reach, utilizing a physical warhammer supplemented by fire damage."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Shortspear",
+        "modifier": "+3",
+        "attack_type": "ranged",
+        "attack_effect": "1d6+1 plus 1 fire"
+      },
+      "raw_response": "{\n    \"description\": \"A thrown shortspear wreathed in flames strikes the target.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 20,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.85,\n    \"rationale\": \"The attack uses a standard physical weapon (shortspear) with a standard thrown range increment in D&D 3.x, augmented by fire damage.\"\n}",
+      "parsed_result": {
+        "description": "A thrown shortspear wreathed in flames strikes the target.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 20,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.85,
+        "rationale": "The attack uses a standard physical weapon (shortspear) with a standard thrown range increment in D&D 3.x, augmented by fire damage."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Slam",
+        "modifier": "+6",
+        "attack_type": "melee",
+        "attack_effect": "1d8+1"
+      },
+      "raw_response": "{\n    \"description\": \"A heavy physical slam with a limb or body.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee natural attack dealing standard physical bludgeoning damage.\"\n}",
+      "parsed_result": {
+        "description": "A heavy physical slam with a limb or body.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is a melee natural attack dealing standard physical bludgeoning damage."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Claw",
+        "modifier": "+10",
+        "attack_type": "melee",
+        "attack_effect": "1d3+2 plus corporeal instability"
+      },
+      "raw_response": "{\n    \"description\": \"A vicious claw strike that induces corporeal instability in the target.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee natural attack (claw) that inflicts physical damage alongside a special condition, standard for corporeal natural weapons in D&D 3.x.\"\n}",
+      "parsed_result": {
+        "description": "A vicious claw strike that induces corporeal instability in the target.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is a melee natural attack (claw) that inflicts physical damage alongside a special condition, standard for corporeal natural weapons in D&D 3.x."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Tentacle",
+        "modifier": "+6",
+        "attack_type": "melee",
+        "attack_effect": "1d3+3"
+      },
+      "raw_response": "{\n    \"description\": \"A powerful lash with a muscular tentacle.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee natural attack involving a physical appendage (tentacle) dealing standard bludgeoning or physical damage.\"\n}",
+      "parsed_result": {
+        "description": "A powerful lash with a muscular tentacle.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is a melee natural attack involving a physical appendage (tentacle) dealing standard bludgeoning or physical damage."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Bite",
+        "modifier": "+9",
+        "attack_type": "melee",
+        "attack_effect": "1d4-2 plus petrification"
+      },
+      "raw_response": "{\n    \"description\": \"A vicious bite that turns the target to stone.\",\n    \"move_type\": \"magical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.9,\n    \"rationale\": \"While the attack is a melee natural weapon (bite), the inclusion of petrification elevates the effect to a supernatural or magical nature typical of monsters like basilisks or medusas in D&D 3.x.\"\n}",
+      "parsed_result": {
+        "description": "A vicious bite that turns the target to stone.",
+        "move_type": "magical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.9,
+        "rationale": "While the attack is a melee natural weapon (bite), the inclusion of petrification elevates the effect to a supernatural or magical nature typical of monsters like basilisks or medusas in D&D 3.x."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Bite",
+        "modifier": "+19",
+        "attack_type": "melee",
+        "attack_effect": "2d6+9 plus poison"
+      },
+      "raw_response": "{\n    \"description\": \"A vicious bite that delivers a toxic venom.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee natural attack (bite) that deals physical damage and poison, consistent with standard physical creature attacks in D&D 3.x with a standard melee reach of 5 feet.\"\n}",
+      "parsed_result": {
+        "description": "A vicious bite that delivers a toxic venom.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is a melee natural attack (bite) that deals physical damage and poison, consistent with standard physical creature attacks in D&D 3.x with a standard melee reach of 5 feet."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Web",
+        "modifier": "+11",
+        "attack_type": "ranged",
+        "attack_effect": ""
+      },
+      "raw_response": "{\n    \"description\": \"A glob of sticky webbing launched at the target.\",\n    \"move_type\": \"magical\",\n    \"move_range\": null,\n    \"confidence\": 0.85,\n    \"rationale\": \"In D&D 3.x, the Web attack (commonly associated with spiders or spell-like abilities) is treated as a supernatural or spell-like ranged effect rather than an ordinary physical weapon.\"\n}",
+      "parsed_result": {
+        "description": "A glob of sticky webbing launched at the target.",
+        "move_type": "magical",
+        "move_range": null,
+        "confidence": 0.85,
+        "rationale": "In D&D 3.x, the Web attack (commonly associated with spiders or spell-like abilities) is treated as a supernatural or spell-like ranged effect rather than an ordinary physical weapon."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Claw",
+        "modifier": "+9",
+        "attack_type": "melee",
+        "attack_effect": "1d6+4"
+      },
+      "raw_response": "{\n    \"description\": \"A savage swipe with a sharp claw.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a standard melee natural attack dealing physical bludgeoning or slashing damage typical of a creature's claw.\"\n}",
+      "parsed_result": {
+        "description": "A savage swipe with a sharp claw.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is a standard melee natural attack dealing physical bludgeoning or slashing damage typical of a creature's claw."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Claw",
+        "modifier": "+18",
+        "attack_type": "melee",
+        "attack_effect": "2d8+6 plus fear"
+      },
+      "raw_response": "{\n    \"description\": \"A vicious claw strike that instills a terrifying presence.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee natural attack (claw) that deals physical damage, standard for creature natural weapons with a standard 5-foot reach.\"\n}",
+      "parsed_result": {
+        "description": "A vicious claw strike that instills a terrifying presence.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is a melee natural attack (claw) that deals physical damage, standard for creature natural weapons with a standard 5-foot reach."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Slam",
+        "modifier": "+6",
+        "attack_type": "melee",
+        "attack_effect": "1d6+1 plus 1d6 fire"
+      },
+      "raw_response": "{\n    \"description\": \"A heavy slam that burns with searing flames upon impact.\",\n    \"move_type\": \"magical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.90,\n    \"rationale\": \"Although it is a melee natural attack (slam), the added elemental fire damage gives the attack a distinct magical/supernatural nature.\"\n}",
+      "parsed_result": {
+        "description": "A heavy slam that burns with searing flames upon impact.",
+        "move_type": "magical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.9,
+        "rationale": "Although it is a melee natural attack (slam), the added elemental fire damage gives the attack a distinct magical/supernatural nature."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Slam",
+        "modifier": "+8",
+        "attack_type": "melee",
+        "attack_effect": "1d8+7"
+      },
+      "raw_response": "{\n    \"description\": \"A heavy physical slam with substantial force.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a standard melee natural attack dealing bludgeoning damage without any magical or energy descriptors.\"\n}",
+      "parsed_result": {
+        "description": "A heavy physical slam with substantial force.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is a standard melee natural attack dealing bludgeoning damage without any magical or energy descriptors."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Morningstar",
+        "modifier": "+12",
+        "attack_type": "melee",
+        "attack_effect": "2d6+6"
+      },
+      "raw_response": "{\n    \"description\": \"A heavy strike with a spiked morningstar.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a standard melee weapon attack using a morningstar, dealing blunt and piercing physical damage.\"\n}",
+      "parsed_result": {
+        "description": "A heavy strike with a spiked morningstar.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is a standard melee weapon attack using a morningstar, dealing blunt and piercing physical damage."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Javelin",
+        "modifier": "+5",
+        "attack_type": "ranged",
+        "attack_effect": "1d8+6"
+      },
+      "raw_response": "{\n    \"description\": \"A hurled javelin strikes the target from a distance.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 30,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.9,\n    \"rationale\": \"A javelin is a standard physical ranged weapon in D&D 3.x with a standard increment of 30 feet, dealing ordinary physical damage.\"\n}",
+      "parsed_result": {
+        "description": "A hurled javelin strikes the target from a distance.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 30,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.9,
+        "rationale": "A javelin is a standard physical ranged weapon in D&D 3.x with a standard increment of 30 feet, dealing ordinary physical damage."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "",
+        "modifier": "",
+        "attack_type": "",
+        "attack_effect": ""
+      },
+      "raw_response": "{\n    \"description\": \"An unspecified attack.\",\n    \"move_type\": \"physical\",\n    \"move_range\": null,\n    \"confidence\": 0.1,\n    \"rationale\": \"No attack information or context was provided to classify the attack.\"\n}",
+      "parsed_result": {
+        "description": "An unspecified attack.",
+        "move_type": "physical",
+        "move_range": null,
+        "confidence": 0.1,
+        "rationale": "No attack information or context was provided to classify the attack."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Bite",
+        "modifier": "+2",
+        "attack_type": "melee",
+        "attack_effect": "1d6+1 plus paralysis"
+      },
+      "raw_response": "{\n    \"description\": \"A vicious bite that leaves the target paralyzed.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee natural attack (bite) typical of physical combat in D&D 3.x, with standard natural reach.\"\n}",
+      "parsed_result": {
+        "description": "A vicious bite that leaves the target paralyzed.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is a melee natural attack (bite) typical of physical combat in D&D 3.x, with standard natural reach."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Greatclub",
+        "modifier": "+17",
+        "attack_type": "melee",
+        "attack_effect": "2d8+12"
+      },
+      "raw_response": "{\n    \"description\": \"A powerful strike delivered with a heavy greatclub.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a standard melee weapon attack using a greatclub, dealing bludgeoning damage without any magical or supernatural indicators.\"\n}",
+      "parsed_result": {
+        "description": "A powerful strike delivered with a heavy greatclub.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is a standard melee weapon attack using a greatclub, dealing bludgeoning damage without any magical or supernatural indicators."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Slam",
+        "modifier": "+17",
+        "attack_type": "melee",
+        "attack_effect": "1d4+8"
+      },
+      "raw_response": "{\n    \"description\": \"A powerful physical slam delivered with heavy force.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a standard melee natural attack dealing bludgeoning damage typical of a physical slam.\"\n}",
+      "parsed_result": {
+        "description": "A powerful physical slam delivered with heavy force.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is a standard melee natural attack dealing bludgeoning damage typical of a physical slam."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Rock",
+        "modifier": "+11",
+        "attack_type": "ranged",
+        "attack_effect": "2d8+12"
+      },
+      "raw_response": "{\n    \"description\": \"A heavy boulder hurled forcefully at the target.\",\n    \"move_type\": \"physical\",\n    \"move_range\": null,\n    \"confidence\": 0.85,\n    \"rationale\": \"The attack involves throwing a physical object (a rock) and deals blunt physical damage without any magical properties.\"\n}",
+      "parsed_result": {
+        "description": "A heavy boulder hurled forcefully at the target.",
+        "move_type": "physical",
+        "move_range": null,
+        "confidence": 0.85,
+        "rationale": "The attack involves throwing a physical object (a rock) and deals blunt physical damage without any magical properties."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Bite",
+        "modifier": "+6",
+        "attack_type": "melee",
+        "attack_effect": "1d10+3"
+      },
+      "raw_response": "{\n    \"description\": \"A vicious snap of the creature's jaws.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a standard melee natural attack (bite) dealing physical damage based on strength.\"\n}",
+      "parsed_result": {
+        "description": "A vicious snap of the creature's jaws.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is a standard melee natural attack (bite) dealing physical damage based on strength."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Tentacle",
+        "modifier": "+28",
+        "attack_type": "melee",
+        "attack_effect": "2d8+12/19-20"
+      },
+      "raw_response": "{\n    \"description\": \"A powerful lash with a heavy tentacle.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee natural attack using a tentacle, dealing standard physical bludgeoning or slashing damage.\"\n}",
+      "parsed_result": {
+        "description": "A powerful lash with a heavy tentacle.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is a melee natural attack using a tentacle, dealing standard physical bludgeoning or slashing damage."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Touch",
+        "modifier": "+12",
+        "attack_type": "melee",
+        "attack_effect": "1d4 Wisdom drain"
+      },
+      "raw_response": "{\n    \"description\": \"A draining touch that erodes the target's mental faculties.\",\n    \"move_type\": \"magical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"Wisdom drain is a supernatural or magical effect, and the attack type is a melee touch attack typical of creatures with special draining abilities.\"\n}",
+      "parsed_result": {
+        "description": "A draining touch that erodes the target's mental faculties.",
+        "move_type": "magical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "Wisdom drain is a supernatural or magical effect, and the attack type is a melee touch attack typical of creatures with special draining abilities."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Dagger",
+        "modifier": "+12",
+        "attack_type": "melee",
+        "attack_effect": "1d6+4/19-20"
+      },
+      "raw_response": "{\n    \"description\": \"A swift strike with a handheld dagger.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee weapon attack using a standard physical weapon (dagger).\"\n}",
+      "parsed_result": {
+        "description": "A swift strike with a handheld dagger.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is a melee weapon attack using a standard physical weapon (dagger)."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Claw",
+        "modifier": "+12",
+        "attack_type": "melee",
+        "attack_effect": "1d4+4"
+      },
+      "raw_response": "{\n    \"description\": \"A vicious swipe with a sharp claw.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee natural weapon attack that deals physical damage without any magical or supernatural properties.\"\n}",
+      "parsed_result": {
+        "description": "A vicious swipe with a sharp claw.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is a melee natural weapon attack that deals physical damage without any magical or supernatural properties."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Burning touch",
+        "modifier": "+4",
+        "attack_type": "melee touch",
+        "attack_effect": "1d8 fire plus combustion"
+      },
+      "raw_response": "{\n    \"description\": \"A searing touch that burns the target with intense fire.\",\n    \"move_type\": \"magical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee touch attack that deals fire damage and causes combustion, indicating a supernatural or magical origin.\"\n}",
+      "parsed_result": {
+        "description": "A searing touch that burns the target with intense fire.",
+        "move_type": "magical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is a melee touch attack that deals fire damage and causes combustion, indicating a supernatural or magical origin."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Slam",
+        "modifier": "+4",
+        "attack_type": "melee",
+        "attack_effect": "1d3+3 plus combustion"
+      },
+      "raw_response": "{\n    \"description\": \"A heavy physical blow accompanied by sudden combustion.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee slam, which is a standard physical natural attack, combined with an elemental effect.\"\n}",
+      "parsed_result": {
+        "description": "A heavy physical blow accompanied by sudden combustion.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is a melee slam, which is a standard physical natural attack, combined with an elemental effect."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Slam",
+        "modifier": "+9",
+        "attack_type": "melee",
+        "attack_effect": "1d8+4"
+      },
+      "raw_response": "{\n    \"description\": \"A heavy physical slam with blunt force.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee natural attack dealing standard physical bludgeoning damage.\"\n}",
+      "parsed_result": {
+        "description": "A heavy physical slam with blunt force.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is a melee natural attack dealing standard physical bludgeoning damage."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Slam",
+        "modifier": "+12",
+        "attack_type": "melee",
+        "attack_effect": "1d6+7"
+      },
+      "raw_response": "{\n    \"description\": \"A heavy physical slam delivered in close combat.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a standard melee natural attack dealing bludgeoning damage without any magical indicators.\"\n}",
+      "parsed_result": {
+        "description": "A heavy physical slam delivered in close combat.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is a standard melee natural attack dealing bludgeoning damage without any magical indicators."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Tongue",
+        "modifier": "+12",
+        "attack_type": "melee touch",
+        "attack_effect": "paralysis"
+      },
+      "raw_response": "{\n    \"description\": \"A swift lash of the tongue paralyzes the target.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.85,\n    \"rationale\": \"The attack is a melee touch attack using a natural physical appendage (tongue) to inflict a debilitating physical condition (paralysis).\"\n}",
+      "parsed_result": {
+        "description": "A swift lash of the tongue paralyzes the target.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.85,
+        "rationale": "The attack is a melee touch attack using a natural physical appendage (tongue) to inflict a debilitating physical condition (paralysis)."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Bite",
+        "modifier": "+12",
+        "attack_type": "melee",
+        "attack_effect": "2d6+6 plus disease"
+      },
+      "raw_response": "{\n    \"description\": \"A vicious bite that delivers a debilitating disease.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee natural attack (bite) that deals physical damage and transmits a disease, typical of standard creature attacks in D&D 3.x with a standard reach of 5 feet.\"\n}",
+      "parsed_result": {
+        "description": "A vicious bite that delivers a debilitating disease.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is a melee natural attack (bite) that deals physical damage and transmits a disease, typical of standard creature attacks in D&D 3.x with a standard reach of 5 feet."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Slam",
+        "modifier": "+8",
+        "attack_type": "melee",
+        "attack_effect": "2d6+4 plus 2d6 acid"
+      },
+      "raw_response": "{\n    \"description\": \"A heavy physical blow that splashes acid upon the target.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee slam natural attack, which is fundamentally physical despite dealing supplemental acid damage.\"\n}",
+      "parsed_result": {
+        "description": "A heavy physical blow that splashes acid upon the target.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is a melee slam natural attack, which is fundamentally physical despite dealing supplemental acid damage."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Bite",
+        "modifier": "+7",
+        "attack_type": "melee",
+        "attack_effect": "1d6+4 plus poison"
+      },
+      "raw_response": "{\n    \"description\": \"A vicious bite that delivers a dose of venom.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a standard melee natural attack (bite) that deals physical damage and poison.\"\n}",
+      "parsed_result": {
+        "description": "A vicious bite that delivers a dose of venom.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is a standard melee natural attack (bite) that deals physical damage and poison."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Tail slap",
+        "modifier": "+4",
+        "attack_type": "melee",
+        "attack_effect": "1d6+1 plus positive energy"
+      },
+      "raw_response": "{\n    \"description\": \"A heavy tail strike infused with positive energy.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee natural attack (tail slap), which is fundamentally physical despite dealing supplemental positive energy damage.\"\n}",
+      "parsed_result": {
+        "description": "A heavy tail strike infused with positive energy.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is a melee natural attack (tail slap), which is fundamentally physical despite dealing supplemental positive energy damage."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Tail touch",
+        "modifier": "+4",
+        "attack_type": "melee touch",
+        "attack_effect": "positive energy"
+      },
+      "raw_response": "{\n    \"description\": \"A gentle brush of the tail infused with positive energy.\",\n    \"move_type\": \"magical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack delivers positive energy via a melee touch attack, which is inherently magical in nature.\"\n}",
+      "parsed_result": {
+        "description": "A gentle brush of the tail infused with positive energy.",
+        "move_type": "magical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack delivers positive energy via a melee touch attack, which is inherently magical in nature."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Antennae touch",
+        "modifier": "+3",
+        "attack_type": "melee",
+        "attack_effect": "rust"
+      },
+      "raw_response": "{\n    \"description\": \"A corroding touch delivered by the creature's antennae.\",\n    \"move_type\": \"magical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.85,\n    \"rationale\": \"The attack is a melee touch attack that causes a rust effect, which is typically supernatural or magical in nature in D&D 3.x.\"\n}",
+      "parsed_result": {
+        "description": "A corroding touch delivered by the creature's antennae.",
+        "move_type": "magical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.85,
+        "rationale": "The attack is a melee touch attack that causes a rust effect, which is typically supernatural or magical in nature in D&D 3.x."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Incorporeal touch",
+        "modifier": "+3",
+        "attack_type": "melee",
+        "attack_effect": "1d6 Str"
+      },
+      "raw_response": "{\n    \"description\": \"A ghostly touch that drains the target's strength.\",\n    \"move_type\": \"magical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee touch attack dealing ability damage, typical of incorporeal creatures in D&D 3.x, which bypass standard physical interactions.\"\n}",
+      "parsed_result": {
+        "description": "A ghostly touch that drains the target's strength.",
+        "move_type": "magical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is a melee touch attack dealing ability damage, typical of incorporeal creatures in D&D 3.x, which bypass standard physical interactions."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Incorporeal touch",
+        "modifier": "+6",
+        "attack_type": "melee",
+        "attack_effect": "1d8 plus energy drain"
+      },
+      "raw_response": "{\n    \"description\": \"A chilling incorporeal touch that drains the target's life force.\",\n    \"move_type\": \"magical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee touch attack involving energy drain, and incorporeal attacks are classified as magical.\"\n}",
+      "parsed_result": {
+        "description": "A chilling incorporeal touch that drains the target's life force.",
+        "move_type": "magical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is a melee touch attack involving energy drain, and incorporeal attacks are classified as magical."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Short sword",
+        "modifier": "+4",
+        "attack_type": "melee",
+        "attack_effect": "1d4-2/19-20"
+      },
+      "raw_response": "{\n    \"description\": \"A quick thrust with a short sword.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack uses a standard handheld melee weapon (short sword) which deals physical piercing or slashing damage in close combat.\"\n}",
+      "parsed_result": {
+        "description": "A quick thrust with a short sword.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack uses a standard handheld melee weapon (short sword) which deals physical piercing or slashing damage in close combat."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Light crossbow",
+        "modifier": "+4",
+        "attack_type": "ranged",
+        "attack_effect": "1d6/19-20"
+      },
+      "raw_response": "{\n    \"description\": \"A bolt is fired from a light crossbow.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 80,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is made with a standard light crossbow, which is an ordinary physical weapon with a known standard range increment in D&D 3.x of 80 feet.\"\n}",
+      "parsed_result": {
+        "description": "A bolt is fired from a light crossbow.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 80,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is made with a standard light crossbow, which is an ordinary physical weapon with a known standard range increment in D&D 3.x of 80 feet."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Swarm",
+        "modifier": "",
+        "attack_type": "",
+        "attack_effect": "2d6"
+      },
+      "raw_response": "{\n    \"description\": \"A swarming mass attacks the target, dealing physical damage.\",\n    \"move_type\": \"physical\",\n    \"move_range\": null,\n    \"confidence\": 0.75,\n    \"rationale\": \"The attack is named 'Swarm' with a standard bodily effect of dice damage and lacks any magical indicators or explicit range.\"\n}",
+      "parsed_result": {
+        "description": "A swarming mass attacks the target, dealing physical damage.",
+        "move_type": "physical",
+        "move_range": null,
+        "confidence": 0.75,
+        "rationale": "The attack is named 'Swarm' with a standard bodily effect of dice damage and lacks any magical indicators or explicit range."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Bite",
+        "modifier": "+57",
+        "attack_type": "melee",
+        "attack_effect": "4d8+17/18-20/\u00d73"
+      },
+      "raw_response": "{\n    \"description\": \"A savage bite with crushing force and exceptional precision.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee natural attack (Bite) dealing physical damage with standard melee reach.\"\n}",
+      "parsed_result": {
+        "description": "A savage bite with crushing force and exceptional precision.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is a melee natural attack (Bite) dealing physical damage with standard melee reach."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Slam",
+        "modifier": "+12",
+        "attack_type": "melee",
+        "attack_effect": "2d6+9"
+      },
+      "raw_response": "{\n    \"description\": \"A heavy physical blow delivered with a massive limb.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee slam, which is a standard natural physical attack in D&D 3.x with standard reach.\"\n}",
+      "parsed_result": {
+        "description": "A heavy physical blow delivered with a massive limb.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is a melee slam, which is a standard natural physical attack in D&D 3.x with standard reach."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Bite",
+        "modifier": "+7",
+        "attack_type": "melee",
+        "attack_effect": "1d6+4"
+      },
+      "raw_response": "{\n    \"description\": \"A vicious bite with jaws snapping shut on the target.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a standard melee natural attack dealing physical piercing or slashing damage typical of a creature's bite, with a default melee reach of 5 feet.\"\n}",
+      "parsed_result": {
+        "description": "A vicious bite with jaws snapping shut on the target.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is a standard melee natural attack dealing physical piercing or slashing damage typical of a creature's bite, with a default melee reach of 5 feet."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Short sword",
+        "modifier": "+7",
+        "attack_type": "melee",
+        "attack_effect": "1d6+2/19-20"
+      },
+      "raw_response": "{\n    \"description\": \"A swift strike with a short sword.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a standard melee weapon attack using a manufactured weapon (short sword).\"\n}",
+      "parsed_result": {
+        "description": "A swift strike with a short sword.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is a standard melee weapon attack using a manufactured weapon (short sword)."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Claw",
+        "modifier": "+7",
+        "attack_type": "melee",
+        "attack_effect": "1d4+2"
+      },
+      "raw_response": "{\n    \"description\": \"A swift strike with a sharp claw.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee natural weapon attack dealing physical damage, standard for a claw strike with a 5-foot reach in D&D 3.x.\"\n}",
+      "parsed_result": {
+        "description": "A swift strike with a sharp claw.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is a melee natural weapon attack dealing physical damage, standard for a claw strike with a 5-foot reach in D&D 3.x."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Longbow",
+        "modifier": "+8",
+        "attack_type": "ranged",
+        "attack_effect": "1d8/\u00d73"
+      },
+      "raw_response": "{\n    \"description\": \"A powerful shot delivered with a longbow.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 100,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is made with a standard longbow, which is a conventional physical ranged weapon in D&D 3.x with a standard 100-foot increment.\"\n}",
+      "parsed_result": {
+        "description": "A powerful shot delivered with a longbow.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 100,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is made with a standard longbow, which is a conventional physical ranged weapon in D&D 3.x with a standard 100-foot increment."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Slam",
+        "modifier": "+2",
+        "attack_type": "melee",
+        "attack_effect": "1d6+1"
+      },
+      "raw_response": "{\n    \"description\": \"A heavy physical blow delivered with a limb or body.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee natural attack named Slam that deals standard physical bludgeoning damage without any magical or supernatural indicators.\"\n}",
+      "parsed_result": {
+        "description": "A heavy physical blow delivered with a limb or body.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is a melee natural attack named Slam that deals standard physical bludgeoning damage without any magical or supernatural indicators."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Club",
+        "modifier": "+2",
+        "attack_type": "melee",
+        "attack_effect": "1d6+1"
+      },
+      "raw_response": "{\n    \"description\": \"A heavy strike delivered with a wooden club.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack uses a standard melee weapon (Club) dealing bludgeoning damage without any magical properties.\"\n}",
+      "parsed_result": {
+        "description": "A heavy strike delivered with a wooden club.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack uses a standard melee weapon (Club) dealing bludgeoning damage without any magical properties."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Bite",
+        "modifier": "+3",
+        "attack_type": "melee",
+        "attack_effect": "1d6+1"
+      },
+      "raw_response": "{\n    \"description\": \"A vicious bite with snapping jaws.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a standard melee natural attack (bite) dealing physical damage without any magical or supernatural properties.\"\n}",
+      "parsed_result": {
+        "description": "A vicious bite with snapping jaws.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is a standard melee natural attack (bite) dealing physical damage without any magical or supernatural properties."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Bite",
+        "modifier": "+7",
+        "attack_type": "melee",
+        "attack_effect": "1d6+3 plus trip"
+      },
+      "raw_response": "{\n    \"description\": \"A vicious bite that can knock the target off balance.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a standard natural melee attack (bite) dealing physical damage and standard physical trip mechanics typical of D&D 3.x creatures.\"\n}",
+      "parsed_result": {
+        "description": "A vicious bite that can knock the target off balance.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is a standard natural melee attack (bite) dealing physical damage and standard physical trip mechanics typical of D&D 3.x creatures."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Slam",
+        "modifier": "+9",
+        "attack_type": "melee",
+        "attack_effect": "1d8+5 plus push"
+      },
+      "raw_response": "{\n    \"description\": \"A heavy physical slam that drives the target backward.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee natural attack (Slam) dealing bludgeoning damage with a physical push effect, standard for a creature's reach.\"\n}",
+      "parsed_result": {
+        "description": "A heavy physical slam that drives the target backward.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is a melee natural attack (Slam) dealing bludgeoning damage with a physical push effect, standard for a creature's reach."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Tail sweep",
+        "modifier": "+6",
+        "attack_type": "melee",
+        "attack_effect": "1d6+2 plus unbalance"
+      },
+      "raw_response": "{\n    \"description\": \"A sweeping blow with the tail that unbalances the target.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee natural attack dealing physical damage and status alteration typical of creature physical maneuvers in D&D 3.x.\"\n}",
+      "parsed_result": {
+        "description": "A sweeping blow with the tail that unbalances the target.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is a melee natural attack dealing physical damage and status alteration typical of creature physical maneuvers in D&D 3.x."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Pincers",
+        "modifier": "+8",
+        "attack_type": "melee",
+        "attack_effect": "1d4+4 plus grapple"
+      },
+      "raw_response": "{\n    \"description\": \"The creature snaps its powerful pincers, attempting to grab the target.\",\n    \"move_type\": \"physical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is a melee natural attack involving pincers that inflicts physical damage and initiates a grapple, typical of creature anatomy rather than magical effects.\"\n}",
+      "parsed_result": {
+        "description": "The creature snaps its powerful pincers, attempting to grab the target.",
+        "move_type": "physical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is a melee natural attack involving pincers that inflicts physical damage and initiates a grapple, typical of creature anatomy rather than magical effects."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Psychic lash",
+        "modifier": "+5",
+        "attack_type": "ranged touch",
+        "attack_effect": "1d6 plus stagger"
+      },
+      "raw_response": "{\n    \"description\": \"A sharp mental lash that overwhelms the target's senses.\",\n    \"move_type\": \"magical\",\n    \"move_range\": null,\n    \"confidence\": 0.9,\n    \"rationale\": \"The attack uses a ranged touch attack and inflicts a psychic effect with staggering, indicating a supernatural or spell-like origin.\"\n}",
+      "parsed_result": {
+        "description": "A sharp mental lash that overwhelms the target's senses.",
+        "move_type": "magical",
+        "move_range": null,
+        "confidence": 0.9,
+        "rationale": "The attack uses a ranged touch attack and inflicts a psychic effect with staggering, indicating a supernatural or spell-like origin."
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "name": "Arcane slam",
+        "modifier": "+4",
+        "attack_type": "melee touch",
+        "attack_effect": "1d4+2 plus disarm"
+      },
+      "raw_response": "{\n    \"description\": \"A forceful strike imbued with arcane energy that can knock weapons from the target's grasp.\",\n    \"move_type\": \"magical\",\n    \"move_range\": {\n        \"value\": 5,\n        \"unit\": \"feet\"\n    },\n    \"confidence\": 0.95,\n    \"rationale\": \"The attack is designated as a touch attack with an arcane theme, placing it in the magical category, and operates at standard melee reach.\"\n}",
+      "parsed_result": {
+        "description": "A forceful strike imbued with arcane energy that can knock weapons from the target's grasp.",
+        "move_type": "magical",
+        "move_range": {
+          "effect_range": 5,
+          "range_unit_system": "imperial"
+        },
+        "confidence": 0.95,
+        "rationale": "The attack is designated as a touch attack with an arcane theme, placing it in the magical category, and operates at standard melee reach."
+      },
+      "error": null
+    }
+  ]
+}
