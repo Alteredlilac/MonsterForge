@@ -1,279 +1,296 @@
 # MonsterForge — Pipeline Architecture
 
-Questo documento fissa la pipeline completa di conversione, dal testo grezzo
-scrapato fino alla carta renderizzata, e le decisioni architetturali prese
-per arrivarci. Integra e rende esplicito quanto già descritto in `DESIGN.md`,
-aggiungendo il livello di dettaglio emerso durante lo sviluppo di
-`structured_data/`.
+This document fixes the complete conversion pipeline, from raw scraped
+text to the rendered card, and the architectural decisions made to get
+there. It builds on and makes explicit what's already described in
+`DESIGN.md`, adding the level of detail that emerged during the
+development of `structured_data/`.
 
-## Perché questo documento
+## Why this document
 
-Durante lo sviluppo di `structured_data/dnd/v3x/` sono emerse alcune domande
-su dove collocare esattamente la classificazione LLM rispetto al parsing
-deterministico, e se servisse un ulteriore livello di dati grezzi tra
-l'HTML e `structured_data/`. Questo documento fissa le risposte raggiunte,
-così da poterle riconsultare quando si scriverà `parsing/` e `llm/`.
+During the development of `structured_data/dnd/v3x/`, a few questions
+came up about exactly where to place LLM classification relative to
+deterministic parsing, and whether an additional raw-data layer was
+needed between HTML and `structured_data/`. This document fixes the
+answers reached, so they can be consulted again when writing `parsing/`
+and `llm/`.
 
 ---
 
-## Schema completo della pipeline
+## Complete pipeline schema
 
 ```
-┌───────────────────────────────────────────────────────────────────┐
-│  1. RAW HTML                                                      │
-│     Scaricato da scraping/, salvato as-is in db/ (RECORD DB)      │
-│     Tabella generica unica: id, url, tipo, contenuto grezzo       │
-└───────────────────────────────────────────────────────────────────┘
-                              |
-                              v
 ┌──────────────────────────────────────────────────────────────────────────┐
-│  2a. HTML EXTRACTION  →  parsing/<sistema>/<versione>/html_extraction.py │
-│      Regex / BeautifulSoup, deterministico, per-fonte se serve           │
-│                                                                          │
-│      Estrae i campi così come appaiono nella tabella del manuale,        │
-│      quasi letteralmente, in una dataclass "raw fields" dedicata:        │
-│                                                                          │
-│      RawArmorFields(name="...", cost="30 gp", armor_bonus="2", ...)      │
+│  1. RAW HTML                                                             │
+│     Downloaded by scraping/, saved as-is in db/ (RECORD DB)              │
+│     Single generic table: id, url, type, raw content                    │
 └──────────────────────────────────────────────────────────────────────────┘
                               |
                               v
 ┌──────────────────────────────────────────────────────────────────────────┐
-│  2b. RAW FIELDS  →  parsing/<sistema>/<versione>/raw_fields.py           │
-│      Dataclass "aderenti al dominio di provenienza": rispecchiano        │
-│      le colonne esatte delle tabelle di gioco (Armor, Weapons, ecc.)     │
-│      Campi ancora in gran parte stringhe, non ancora tipizzati/enum      │
+│  2a. HTML EXTRACTION  →  parsing/<system>/<version>/html_extraction.py  │
+│      Regex / BeautifulSoup, deterministic, per-source if needed          │
 │                                                                          │
-│      Punto di convergenza multi-fonte: fonti HTML diverse (siti diversi) │
-│      o input umano manuale (CLI/form) producono la STESSA RawFields      │
-│      Punto di bypass: se serve solo testare la pipeline, si costruisce   │
-│      un RawFields a mano, senza scraping né rete                         │
+│      Extracts fields as they appear in the rulebook table, almost       │
+│      verbatim, into a dedicated "raw fields" dataclass:                 │
+│                                                                          │
+│      RawArmorFields(name="...", cost="30 gp", armor_bonus="2", ...)     │
 └──────────────────────────────────────────────────────────────────────────┘
                               |
                               v
-┌─────────────────────────────────────────────────────────────────────────────────────┐
-│  3. STRUCTURED CONVERSION  →  parsing/<sistema>/<versione>/structured_conversion.py │
-│     Cast di tipo (stringa → int/enum/dataclass) + decisione:                        │
-│     "serve classificazione semantica o l'oggetto è già completo?"                   │
-│                                                                                     │
-│     ├─► Campi/oggetti semplici (solo numeri/enum, nessun testo libero)              │
-│     │   → direttamente in structured_data, nessuna chiamata LLM                     │
-│     │                                                                               │
-│     └─► Campi con testo libero da interpretare (abilità, talenti, incantesimi)      │
-│         → passano allo stadio 4 prima di poter essere costruiti                     │
-└─────────────────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│  2b. RAW FIELDS  →  parsing/<system>/<version>/raw_fields.py            │
+│      Dataclasses that mirror the source domain: they reflect the exact  │
+│      columns of the game tables (Armor, Weapons, etc.)                  │
+│      Fields are still mostly strings, not yet typed/enum                │
+│                                                                          │
+│      Multi-source convergence point: different HTML sources (different │
+│      sites) or manual human input (CLI/form) all produce the SAME       │
+│      RawFields                                                          │
+│      Bypass point: if only testing the pipeline is needed, a RawFields  │
+│      can be built by hand, with no scraping or network at all           │
+└──────────────────────────────────────────────────────────────────────────┘
                               |
                               v
-┌────────────────────────────────────────────────────────────────────────────────────┐
-│  4. LLM CLASSIFICATION  →  llm/                                                    │
-│     SOLO per blocchi di testo libero (special qualities, special                   │
-│     attacks, feats, spells) che non sono riducibili a regex                        │
-│                                                                                    │
-│     Una singola chiamata per blocco di testo, con schema di output fisso           │
-│     (Pydantic/dataclass): categoria, bersaglio, durata, utilizzo, E i              │
-│     valori numerici già classificati nel campo semanticamente corretto             │
-│     (es. "1d4" va in Damage se è danno, in EffectGrant se è una quantità           │
-│     evocata — la distinzione avviene nella stessa chiamata, non in due)            │
-│                                                                                    │
-│     Output include un campo "confidence" (transitorio, non finisce mai nel domain) │
-└────────────────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│  3. STRUCTURED CONVERSION  →  parsing/<system>/<version>/               │
+│     structured_conversion.py                                            │
+│     Type casting (string → int/enum/dataclass) + decision:              │
+│     "does this need semantic classification, or is the object already  │
+│     complete?"                                                          │
+│                                                                          │
+│     ├─► Simple fields/objects (numbers/enums only, no free text)        │
+│     │   → go straight into structured_data, no LLM call                 │
+│     │                                                                   │
+│     └─► Fields with free text to interpret (abilities, talents, spells) │
+│         → pass through stage 4 before they can be built                 │
+└──────────────────────────────────────────────────────────────────────────┘
                               |
                               v
-┌───────────────────────────────────────────────────────────────────────┐
-│  5. VALIDATION  →  validation/                                        │
-│     confidence >= soglia (0.7) → auto-approvato                       │
-│     confidence <  soglia       → coda per revisione umana (ui/)       │
-│                                                                       │
-│     Storicizza correzioni; l'output finale non porta più "confidence" │
-└───────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│  4. LLM CLASSIFICATION  →  llm/                                         │
+│     ONLY for free-text blocks (special qualities, special attacks,      │
+│     feats, spells) that can't be reduced to regex                       │
+│                                                                          │
+│     A single call per text block, with a fixed output schema            │
+│     (Pydantic/dataclass): category, target, duration, usage, AND the    │
+│     numeric values already classified into the semantically correct     │
+│     field (e.g. "1d4" goes into Damage if it's damage, into EffectGrant │
+│     if it's a summoned quantity — the distinction happens in the same   │
+│     call, not in two)                                                   │
+│                                                                          │
+│     Output includes a "confidence" field (transient, never reaches      │
+│     domain)                                                             │
+└──────────────────────────────────────────────────────────────────────────┘
                               |
                               v
-┌───────────────────────────────────────────────────────────────────────┐
-│  6. STRUCTURED_DATA  →  structured_data/<sistema>/<versione>/         │
-│     Ora il Creature/Item/CharacterClass è completo: alcuni campi      │
-│     costruiti in stadio 3 (regex diretta), altri in stadio 4+5 (LLM + │
-│     validazione). Tipizzato, enum-based, zero stringhe grezze residue │
-└───────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│  5. VALIDATION  →  validation/                                          │
+│     confidence >= threshold (0.7) → auto-approved                       │
+│     confidence <  threshold       → queued for human review (ui/)       │
+│                                                                          │
+│     Keeps a history of corrections; the final output no longer carries  │
+│     "confidence"                                                        │
+└──────────────────────────────────────────────────────────────────────────┘
                               |
                               v
-┌────────────────────────────────────────────────────────────────────────────────┐
-│  7. TRANSFORMATION  →  transformation/ + rules/                                │
-│     Calcoli deterministici, zero LLM, zero ambiguità:                          │
-│     calcola_vita(), calcola_corpo_spirito(), calcola_interpretazione(),        │
-│     calcola_armatura_talismano(), calcola_fiato_magia()                        │
-│                                                                                │
-│     Il contenuto già classificato (stadio 4/5) viene qui mappato 1:1 nei       │
-│     campi/enum del domain (MoveCard, ItemCard) — nessuna nuova interpretazione │
-└────────────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│  6. STRUCTURED_DATA  →  structured_data/<system>/<version>/             │
+│     Now the Creature/Item/CharacterClass is complete: some fields built │
+│     in stage 3 (direct regex), others in stage 4+5 (LLM + validation).  │
+│     Typed, enum-based, zero leftover raw strings                        │
+└──────────────────────────────────────────────────────────────────────────┘
                               |
                               v
-┌─────────────────────────────────────────────────────────────────────────┐
+┌──────────────────────────────────────────────────────────────────────────┐
+│  7. TRANSFORMATION  →  transformation/ + rules/                         │
+│     Deterministic calculations, zero LLM, zero ambiguity:               │
+│     calculate_life_value(), calculate_body_spirit(),                    │
+│     calculate_interpretation(), calculate_armor_talisman(),             │
+│     calculate_stamina_mana()                                            │
+│                                                                          │
+│     Content already classified (stage 4/5) is mapped here 1:1 into the  │
+│     domain's fields/enums (MoveCard, ItemCard) — no new interpretation  │
+└──────────────────────────────────────────────────────────────────────────┘
+                              |
+                              v
+┌──────────────────────────────────────────────────────────────────────────┐
 │  8. DOMAIN MODEL  →  domain/                                            │
 │     Entity(creature_cards, move_cards, item_cards)                      │
-│     Rappresentazione finale, indipendente dalla fonte (D&D o Pathfinder)│
-└─────────────────────────────────────────────────────────────────────────┘
+│     Final representation, source-independent (D&D or Pathfinder)        │
+└──────────────────────────────────────────────────────────────────────────┘
                               |
                               v
-┌───────────────────────────────────────────────────────────────────┐
-│  9. SERIALIZATION  →  serialization/                              │
-│     Domain Model → struttura esterna comune (dict JSON-compatible)│
-│     Le carte referenziate (es. MoveCard.cards_to_add) vengono qui │
-│     ridotte a {"name", "id"} — vedi decisione 6 sotto sul perché  │
-└───────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│  9. SERIALIZATION  →  serialization/                                    │
+│     Domain Model → common external structure (JSON-compatible dict)     │
+│     Referenced cards (e.g. MoveCard.cards_to_add) are reduced here to   │
+│     {"name", "id"} — see decision 6 below for why                       │
+└──────────────────────────────────────────────────────────────────────────┘
                               |
               +---------------+---------------+
               v                               v
 ┌───────────────────────────────┐  ┌───────────────────────────────────┐
 │  10a. API  →  api/             │  │  10b. RENDERING  →  rendering/    │
-│      dict → HTTP response      │  │      dict → HTML → immagine       │
-│      (JSON)                    │  │      stampabile (carta finale)    │
+│      dict → HTTP response      │  │      dict → HTML → printable      │
+│      (JSON)                    │  │      image (final card)           │
 └───────────────────────────────┘  └───────────────────────────────────┘
 ```
 
----
-
-## Decisioni chiave e motivazioni
-
-### 1. Perché serve un livello "raw fields" tra HTML e structured_data
-
-**Problema**: convertire direttamente da HTML a `structured_data` accoppia
-la logica di interpretazione/calcolo alla fragilità del formato sorgente
-(HTML che cambia da sito a sito, o nel tempo).
-
-**Soluzione**: un livello intermedio di dataclass ("raw fields"), che
-rispecchia fedelmente le tabelle del manuale (es. le colonne esatte della
-tabella Armature: nome, costo, bonus, penalità...), con campi ancora in
-gran parte stringhe.
-
-**Vantaggi ottenuti**:
-- **Multi-fonte**: fonti HTML diverse convergono sulla stessa `RawFields`
-  prima di ogni interpretazione — basta scrivere un `html_extraction.py`
-  diverso per fonte, il resto della pipeline non cambia.
-- **Input manuale**: un utente può compilare a mano (CLI o form futuro)
-  la stessa struttura `RawFields`, bypassando lo scraping e ottenendo
-  comunque una carta.
-- **Testing senza rete**: l'intera pipeline (structured_data →
-  transformation → domain → rendering) è testabile con `RawFields`
-  scritti a mano, senza scraping reale né dipendenza da BeautifulSoup.
-- **Skip LLM quando possibile**: oggetti semplici (solo campi numerici,
-  nessun testo libero da interpretare) passano da `RawFields` a
-  `structured_data` con solo cast di tipo, senza mai passare per `llm/`.
-
-**Dove vive**: dentro `parsing/`, non come pacchetto a sé stante. Non è un
-nuovo stadio architetturale visibile dall'esterno — è un dettaglio di
-*come* `parsing/` fa il proprio lavoro in due passi invece di uno.
-
-**Perché non è una tabella di database**: valutata e scartata l'idea di
-persistere questo stadio come tabella SQL. Motivi: (1) richiederebbe
-comunque una rappresentazione tipizzata in Python per essere letta/scritta
-— il DB non "evita" le dataclass, sposta solo la stessa complessità sopra
-una persistenza in più; (2) introdurrebbe tabelle diverse per tipo di stat
-block, contraddicendo la scelta già presa per `RECORD DB` di usare una
-tabella generica unica con un campo "tipo"; (3) questo stadio è economico
-da rigenerare (pura CPU, nessuna rete) ogni volta che serve, ripartendo
-dall'HTML già in cache in `db/` — non c'è un vero bisogno di persisterlo.
-
-### 2. Perché non un "JSON intermedio" come stadio a sé
-
-Durante la discussione iniziale era emerso uno schema con un passaggio
-`HTML → JSON → structured_data`. Questo JSON non rappresenta un vero
-stadio architetturale con le sue regole: è solo il modo interno in cui una
-libreria di parsing (es. BeautifulSoup) restituisce dati prima che
-vengano tipizzati. Non ha bisogno di essere un modulo a sé, né di essere
-persistito: è variabile locale di lavoro dentro `html_extraction.py`.
-
-### 3. Dove si inserisce l'LLM, esattamente
-
-L'LLM entra in gioco **solo** per blocchi di testo libero che descrivono
-abilità (special qualities, special attacks, feats, spells) — mai per
-campi con formato fisso e prevedibile (Hit Dice, Armor Class, Saves,
-Abilities), che restano risolti con regex deterministica.
-
-Un punto importante emerso in discussione: la classificazione della
-categoria semantica (es. "è un attacco" vs "è una cura") e l'estrazione
-dei valori numerici presenti nello stesso testo (es. "1d4") avvengono
-**nella stessa chiamata LLM**, non in due passaggi separati. Il motivo:
-capire *cosa rappresenta* un numero nel contesto (danno? quantità
-evocata? bonus?) richiede la stessa comprensione semantica necessaria per
-classificare l'abilità nel suo complesso — separarle in due passaggi
-distinti non avrebbe portato benefici, solo una chiamata in più.
-
-### 4. Perché `CreatureModifier` (e concetti simili) usano composizione, non ereditarietà
-
-Non tutte le "varianti" di un concetto meritano una sottoclasse. Il
-criterio adottato in tutto `structured_data/`: se una categoria rappresenta
-un **delta/modificatore** applicato sopra un oggetto base (es. un
-archetipo come Licantropia applicato a una Creature), si usa composizione
-(campi separati per override/additive/modifier), non ereditarietà — perché
-l'oggetto non è realmente un caso speciale del genitore, non ne condivide
-l'intera identità strutturale.
-
-Quando invece la relazione è una vera specializzazione (es.
-`PrestigeClass(CharacterClass)`, che è a tutti gli effetti una classe
-completa con in più dei prerequisiti), l'ereditarietà resta la scelta
-corretta.
-
-### 5. Quando estrarre un modulo condiviso vs tenere i campi locali
-
-Criterio adottato ogniqualvolta la stessa struttura dati (es. `Damage`,
-componenti di `effect_mechanics.py`) serve a più moduli indipendenti
-(attacchi, qualità speciali, incantesimi, oggetti, talenti): si estrae in
-un modulo condiviso, non si duplica. Il test pratico usato: *"sto
-duplicando la stessa cosa, o ho due cose diverse che appartengono alla
-stessa categoria concettuale?"* — nel primo caso un modulo condiviso con
-una classe sola; nel secondo, un modulo condiviso con più classi
-correlate (come `creature_stats.py` o `effect_mechanics.py`).
-
-### 6. Perché le carte referenziate restano ridotte a nome/id anche nel rendering
-
-Con l'introduzione dell'interfaccia HTTP (`api/` + `serialization/`), ci si
-è chiesti se la pipeline dovesse biforcarsi subito dopo `domain/` in due
-conversioni indipendenti (una per `api/`, una per `rendering/`), oppure
-convergere prima su un unico stadio `serialization/` condiviso da
-entrambi. In particolare, se la riduzione delle carte annidate (es.
-`MoveCard.cards_to_add`) a `{"name", "id"}` fosse un compromesso
-specifico del trasporto di rete, da evitare per il rendering (che
-potrebbe sembrare avere bisogno del dettaglio completo per disegnare la
-carta).
-
-**Non lo è.** Il formato fisico delle carte di questo gioco è a
-dimensione standard (stile Magic, circa 63×88mm) — non c'è spazio per
-riportare per intero i campi di più carte referenziate dentro la carta
-che le referenzia; anche una sola carta annidata espansa per intero
-renderebbe la carta ingestibile. La carta referenziata (es. "Trip")
-esiste già come carta a sé nel mazzo, con il proprio rendering — la
-carta che la referenzia deve solo poterla nominare, non riprodurne il
-contenuto.
-
-La riduzione a nome/id è quindi la rappresentazione corretta di
-"riferimento a un'altra carta del mazzo" in questo sistema, dettata dal
-formato fisico della carta prima ancora che dall'API — il vincolo di
-spazio stampato è più stringente e più a monte di quello di payload di
-rete, e vale ovunque una carta ne referenzia un'altra, non solo al
-confine HTTP.
-
-**Conseguenza**: `serialization/` resta un unico stadio condiviso da
-`api/` e `rendering/` — la biforcazione avviene dopo quello stadio, non
-prima.
+> **Status note.** Stage 5 above diagrams low-confidence classifications
+> as routed to `ui/`. The validation design actually settled on later (see
+> `.claude/future_plans/EXPANDED_MVP_PLAN.md` §10) is a blocking CLI form
+> in `validation/cli_form.py`, not a `ui/` interface — consistent with
+> `DESIGN.md`'s "simplest tool" philosophy, and with the fact that the
+> original PyQt5 desktop-tool vision was itself superseded (see
+> `EXPANDED_MVP_PLAN.md` §2). `ui/` remains an empty, unplanned stub. The
+> diagram is left as originally drawn here rather than silently rewritten,
+> since it predates that decision; see `PROJECT_STATUS.md` for what's
+> actually implemented today — as of this writing, neither `validation/`
+> nor `ui/` exist yet.
 
 ---
 
-## Cosa NON cambia rispetto a `DESIGN.md`
+## Key decisions and rationale
 
-Questo documento aggiunge dettaglio, non sostituisce le decisioni fondanti
-già fissate in `DESIGN.md`:
-- La separazione deterministico (`rules/`+`transformation/`) vs
-  probabilistico (`llm/`) resta invariata.
-- Il principio "dataclass ovunque, non JSON/Pydantic esterno per la
-  configurazione" resta invariato.
-- Il flusso generale `RPG Data → Entity Model → Cards` resta invariato;
-  questo documento ne dettaglia solo gli stadi interni di `parsing/`.
+### 1. Why a "raw fields" layer is needed between HTML and structured_data
+
+**Problem**: converting directly from HTML to `structured_data` couples
+the interpretation/calculation logic to the fragility of the source
+format (HTML that changes from site to site, or over time).
+
+**Solution**: an intermediate dataclass layer ("raw fields") that
+faithfully mirrors the rulebook's tables (e.g. the exact columns of the
+Armor table: name, cost, bonus, penalty...), with fields still mostly
+strings.
+
+**Benefits gained**:
+- **Multi-source**: different HTML sources converge on the same
+  `RawFields` before any interpretation — writing a different
+  `html_extraction.py` per source is enough, the rest of the pipeline
+  doesn't change.
+- **Manual input**: a user can fill in the same `RawFields` structure by
+  hand (CLI, or a future form), bypassing scraping and still getting a
+  card.
+- **Testing without a network**: the entire pipeline (structured_data →
+  transformation → domain → rendering) is testable with hand-written
+  `RawFields`, with no real scraping and no dependency on BeautifulSoup.
+- **Skip LLM when possible**: simple objects (numeric fields only, no
+  free text to interpret) go from `RawFields` to `structured_data` with
+  only a type cast, never passing through `llm/`.
+
+**Where it lives**: inside `parsing/`, not as a standalone package. It's
+not a new architectural stage visible from the outside — it's a detail of
+*how* `parsing/` does its job in two steps instead of one.
+
+**Why it isn't a database table**: the idea of persisting this stage as a
+SQL table was considered and rejected. Reasons: (1) it would still need a
+typed Python representation to be read/written — a DB doesn't "avoid"
+dataclasses, it just moves the same complexity onto one more persistence
+layer; (2) it would introduce different tables per stat-block type,
+contradicting the choice already made for `RECORD DB` to use a single
+generic table with a "type" field; (3) this stage is cheap to regenerate
+(pure CPU, no network) any time it's needed, starting again from the HTML
+already cached in `db/` — there's no real need to persist it.
+
+### 2. Why not an "intermediate JSON" as its own stage
+
+During the initial discussion, a schema came up with an
+`HTML → JSON → structured_data` step. This JSON doesn't represent a real
+architectural stage with its own rules: it's just the internal way a
+parsing library (e.g. BeautifulSoup) returns data before it gets typed.
+It doesn't need to be its own module, nor to be persisted: it's a local
+working variable inside `html_extraction.py`.
+
+### 3. Where exactly the LLM fits in
+
+The LLM comes into play **only** for free-text blocks that describe
+abilities (special qualities, special attacks, feats, spells) — never for
+fields with a fixed, predictable format (Hit Dice, Armor Class, Saves,
+Abilities), which stay resolved with deterministic regex.
+
+An important point that came up in discussion: classifying the semantic
+category (e.g. "is this an attack" vs. "is this healing") and extracting
+the numeric values present in the same text (e.g. "1d4") happen **in the
+same LLM call**, not in two separate passes. The reason: understanding
+*what a number represents* in context (damage? a summoned quantity? a
+bonus?) requires the same semantic understanding needed to classify the
+ability as a whole — splitting them into two distinct passes wouldn't
+have brought any benefit, just one more call.
+
+### 4. Why `CreatureModifier` (and similar concepts) use composition, not inheritance
+
+Not every "variant" of a concept deserves a subclass. The criterion
+adopted throughout `structured_data/`: if a category represents a
+**delta/modifier** applied on top of a base object (e.g. an archetype
+like Lycanthropy applied to a Creature), composition is used (separate
+override/additive/modifier fields), not inheritance — because the object
+isn't really a special case of the parent, it doesn't share its entire
+structural identity.
+
+When, instead, the relationship is a true specialization (e.g.
+`PrestigeClass(CharacterClass)`, which is for all purposes a complete
+class plus some prerequisites), inheritance remains the correct choice.
+
+### 5. When to extract a shared module vs. keeping fields local
+
+The criterion adopted whenever the same data structure (e.g. `Damage`,
+the components of `effect_mechanics.py`) serves several independent
+modules (attacks, special qualities, spells, items, talents): extract it
+into a shared module, don't duplicate it. The practical test used: *"am I
+duplicating the same thing, or do I have two different things that
+belong to the same conceptual category?"* — in the first case, a shared
+module with a single class; in the second, a shared module with several
+related classes (like `creature_stats.py` or `effect_mechanics.py`).
+
+### 6. Why referenced cards stay reduced to name/id in rendering too
+
+With the introduction of the HTTP interface (`api/` + `serialization/`),
+the question came up of whether the pipeline should fork right after
+`domain/` into two independent conversions (one for `api/`, one for
+`rendering/`), or converge first on a single `serialization/` stage
+shared by both. Specifically, whether reducing nested cards (e.g.
+`MoveCard.cards_to_add`) to `{"name", "id"}` was a compromise specific to
+network transport, to be avoided for rendering (which might seem to need
+the full detail to draw the card).
+
+**It isn't.** This game's physical card format is a standard size
+(Magic-style, about 63×88mm) — there's no room to print the full fields
+of several referenced cards inside the card that references them; even a
+single nested card expanded in full would make the card unmanageable. The
+referenced card (e.g. "Trip") already exists as its own card in the deck,
+with its own rendering — the card that references it only needs to be
+able to name it, not reproduce its contents.
+
+The reduction to name/id is therefore the correct representation of "a
+reference to another card in the deck" in this system, dictated by the
+card's physical format even before the API — the printed-space constraint
+is tighter, and further upstream, than the network-payload one, and it
+holds everywhere one card references another, not only at the HTTP
+boundary.
+
+**Consequence**: `serialization/` stays a single stage shared by `api/`
+and `rendering/` — the fork happens after that stage, not before.
 
 ---
 
-### Nota: StatBlock/CreatureBuild aggregator (non implementato)
+## What does NOT change relative to `DESIGN.md`
 
-Valutata la necessità di un aggregatore per personaggi multiclasse con
-archetipi (es. "bugbear, thief 5, wizard 2, half-fiend"). Rimandato:
-il contenuto scrapabile dai tre manuali base è quasi interamente
-rappresentato da Creature singola. Da rivalutare solo se il progetto
-si estende a NPC/moduli avventura con costruzioni multiclasse.
+This document adds detail, it doesn't replace the founding decisions
+already fixed in `DESIGN.md`:
+- The deterministic (`rules/`+`transformation/`) vs. probabilistic
+  (`llm/`) separation stays unchanged.
+- The "dataclasses everywhere, no external JSON/Pydantic for
+  configuration" principle stays unchanged.
+- The general `RPG Data → Entity Model → Cards` flow stays unchanged;
+  this document only details the internal stages of `parsing/`.
+
+---
+
+### Note: StatBlock/CreatureBuild aggregator (not implemented)
+
+The need for an aggregator for multiclass characters with archetypes
+(e.g. "bugbear, thief 5, wizard 2, half-fiend") was evaluated. Deferred:
+the content scrapable from the three core rulebooks is almost entirely
+represented by a single Creature. Revisit only if the project extends to
+adventure-module NPCs with multiclass builds.
