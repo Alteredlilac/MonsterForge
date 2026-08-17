@@ -1,10 +1,10 @@
 """
-Standalone entry point: run every case in SAMPLE_ATTACKS through the
-complete conversion pipeline (classify_attack -> raw_to_structured_attack
--> attack_converter, actual Gemini API calls, not mocked) and save the
-raw LLM response, the classification metadata that doesn't survive into
-the final MoveCard (confidence, rationale), and the resulting MoveCard
-for human review.
+Standalone entry point: run every case in SAMPLE_ATTACKS_WITH_CONTEXT
+through the complete conversion pipeline (classify_attack ->
+raw_to_structured_attack -> attack_converter, actual Gemini API calls,
+not mocked) and save the raw LLM response, the classification metadata
+that doesn't survive into the final MoveCard (confidence, rationale),
+and the resulting MoveCard for human review.
 
 Deliberately a separate script from collect_real_classifications.py,
 not a variant reusing its already-collected data: this one exercises
@@ -15,6 +15,13 @@ results can be diffed against collect_real_classifications.py's output
 to see how much a real classification varies run to run, including
 whether the model's self-reported confidence is at all stable rather
 than just plausible-looking.
+
+Runs with full semantic context (additional_description,
+creature_description, creature_subtype) rather than the bare attack,
+unlike the original run whose output is preserved at
+output/real_pipeline_conversion_samples.json — writing to a
+differently-named output file here keeps that run available as the
+"without context" baseline for comparison, rather than overwriting it.
 
 NOT part of the automated test suite — see collect_real_classifications.py
 for why (real API calls, non-deterministic, several minutes, quota use).
@@ -33,7 +40,8 @@ from monsterforge.parsing.dnd.v3x.structured_conversions.attacks.attacks_convert
 from monsterforge.transformation.dnd.v3x.converters.attacks_converter import attack_converter
 from monsterforge.llm.client import get_llm_client
 from monsterforge.serialization.domain_to_json import card_to_json
-from tests.parsing.dnd.v3x.structured_conversions.sample_attacks import SAMPLE_ATTACKS
+from monsterforge.structured_data.dnd.v3x.enums import CreatureSubtype
+from .sample_attacks_with_context import SAMPLE_ATTACKS_WITH_CONTEXT
 from ._llm_model_selection import ensure_model_available, call_llm_with_model_fallback
 from ._llm_response_capture import classify_with_raw_response
 
@@ -48,13 +56,19 @@ from ._llm_response_capture import classify_with_raw_response
 DELAY_SECONDS = 5
 
 OUTPUT_DIR = Path(__file__).parent / "output"
-OUTPUT_PATH = OUTPUT_DIR / "real_pipeline_conversion_samples.json"
+OUTPUT_PATH = OUTPUT_DIR / "real_pipeline_conversion_samples_with_context.json"
 
 
 # =====================
 # CONVERT WITH CAPTURE
 # =====================
-def _convert_with_capture(raw_attack: RawAttack) -> dict:
+def _convert_with_capture(
+        raw_attack: RawAttack,
+        *,
+        additional_description: str | None,
+        creature_description: str | None,
+        creature_subtype: CreatureSubtype | None,
+        ) -> dict:
     """
     Run raw_attack through the full conversion pipeline, capturing the
     raw LLM response and the classification metadata (confidence,
@@ -68,7 +82,12 @@ def _convert_with_capture(raw_attack: RawAttack) -> dict:
     logic already covered by its own tests, not something this
     LLM-focused review needs to re-inspect every case.
     """
-    semantic_result, raw_response = classify_with_raw_response(raw_attack)
+    semantic_result, raw_response = classify_with_raw_response(
+        raw_attack,
+        additional_description=additional_description,
+        creature_description=creature_description,
+        creature_subtype=creature_subtype,
+    )
     structured_attack = raw_to_structured_attack(raw_attack, semantic_result)
     move_card = attack_converter(structured_attack)
 
@@ -87,17 +106,27 @@ def main() -> None:
     ensure_model_available()
 
     samples = []
+    total = len(SAMPLE_ATTACKS_WITH_CONTEXT)
 
-    for index, case in enumerate(SAMPLE_ATTACKS):
+    for index, entry in enumerate(SAMPLE_ATTACKS_WITH_CONTEXT):
+        case = entry["raw_attack"]
+        context = entry["context"]
         raw_attack = RawAttack(**case)
+        subtype_text = context["creature_subtype"]
+        creature_subtype = CreatureSubtype(subtype_text) if subtype_text else None
         label = case.get("name") or "(blank case)"
-        print(f"[{index + 1}/{len(SAMPLE_ATTACKS)}] {label}...")
+        print(f"[{index + 1}/{total}] {label}...")
 
         try:
             captured = call_llm_with_model_fallback(
-                lambda: _convert_with_capture(raw_attack)
+                lambda: _convert_with_capture(
+                    raw_attack,
+                    additional_description=context["additional_description"],
+                    creature_description=context["creature_description"],
+                    creature_subtype=creature_subtype,
+                )
             )
-            samples.append({"case": case, **captured, "error": None})
+            samples.append({"case": case, "context": context, **captured, "error": None})
         except Exception as exc:
             # NOTE:
             # Deliberately broad, same reasoning as
@@ -109,6 +138,7 @@ def main() -> None:
             # several-minute batch run.
             samples.append({
                 "case": case,
+                "context": context,
                 "raw_response": None,
                 "confidence": None,
                 "rationale": None,
@@ -116,7 +146,7 @@ def main() -> None:
                 "error": str(exc),
             })
 
-        if index < len(SAMPLE_ATTACKS) - 1:
+        if index < total - 1:
             time.sleep(DELAY_SECONDS)
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)

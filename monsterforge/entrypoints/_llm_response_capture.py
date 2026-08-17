@@ -13,10 +13,16 @@ from monsterforge.llm.semantic_classification.attacks import (
     classify_attack,
     AttackSemanticResult,
 )
+from monsterforge.structured_data.dnd.v3x.enums import CreatureSubtype
 
 
 def classify_with_raw_response(
-        raw_attack: RawAttack) -> tuple[AttackSemanticResult, str | None]:
+        raw_attack: RawAttack,
+        *,
+        additional_description: str | None = None,
+        creature_description: str | None = None,
+        creature_subtype: CreatureSubtype | None = None,
+        ) -> tuple[AttackSemanticResult, str | None]:
     """
     Call classify_attack() while also capturing the raw LLM response
     text alongside the parsed AttackSemanticResult it returns.
@@ -28,6 +34,10 @@ def classify_with_raw_response(
     module. Instead, GeminiClient.generate_text() — an already-public
     seam — is temporarily wrapped for the duration of this one call,
     then restored, regardless of outcome.
+
+    The optional context parameters mirror classify_attack()'s own and
+    are forwarded unchanged; all three default to None so existing
+    callers that only pass raw_attack are unaffected.
 
     Returns:
         (AttackSemanticResult, raw_response_text)
@@ -43,7 +53,12 @@ def classify_with_raw_response(
 
     client.generate_text = capturing_generate_text
     try:
-        result = classify_attack(raw_attack=raw_attack)
+        result = classify_attack(
+            raw_attack=raw_attack,
+            additional_description=additional_description,
+            creature_description=creature_description,
+            creature_subtype=creature_subtype,
+        )
     finally:
         client.generate_text = original_generate_text
 
