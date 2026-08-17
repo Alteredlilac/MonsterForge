@@ -1,6 +1,6 @@
 # Project Status
 
-Snapshot of where MonsterForge stands as of August 16, 2026.
+Snapshot of where MonsterForge stands as of August 17, 2026.
 For the system's design and long-term architecture, see [PIPELINE_ARCHITECTURE.md](./PIPELINE_ARCHITECTURE.md)
 and [DESIGN.md](../../DESIGN.md). For how the LLM layer specifically is
 structured, see [LLM_ARCHITECTURE.md](./LLM_ARCHITECTURE.md).
@@ -14,7 +14,7 @@ domain `MoveCard` and comes out as JSON.
 It has been exercised against the real Gemini API repeatedly, not just mocked —
 including two independent full-dataset runs (65 real attacks each) kept for
 review, one classification-only and one through the complete pipeline.
-The current test suite contains 446 passing tests.
+The current test suite contains 455 passing tests, 0 failing.
 
 Persistence, an HTTP API, and a human-validation workflow are designed
 in detail but not yet built — see [Limitations](#limitations--not-yet-built)
@@ -72,12 +72,15 @@ below.
 
 ## Test coverage
 
-**446 passing, 9 failing.** The 9 failures are pre-existing (not
-introduced by this session's work — confirmed by re-running the suite
-against the unmodified codebase via `git stash`) and fall outside the
-scope of the attack pipeline: `tests/domain/`, `tests/rules/dnd/v3x/`,
-and `tests/structured_data/dnd/v3x/test_attacks.py`. They're left for a
-separate pass rather than folded into unrelated work.
+**455 passing, 0 failing.** A set of 9 pre-existing failures (unrelated
+to the attack pipeline itself — stale tests in `tests/domain/`,
+`tests/rules/dnd/v3x/`, and `tests/structured_data/dnd/v3x/`, left over
+from earlier field/behavior changes elsewhere in the codebase that the
+tests hadn't caught up with) has since been fixed in a dedicated pass,
+along with one real bug found in the process: `rules/dnd/v3x/
+vitality_tables.py`'s hit-die table was missing an entry for D2, present
+in `DESIGN.md`'s own LIFE table but absent from the code — a creature
+with `hit_dice_type=D2` would have raised `KeyError`.
 
 ## Limitations / not yet built
 
@@ -102,11 +105,12 @@ ship:
   (`transformation/dnd/v3x/converters/move_converter.py` remains an
   intentional stub for when a second source exists).
 
-The next phase — "MVP espanso" — designs all of the above in detail,
-including a two-level content fingerprint for stable card identity, a
-SQLAlchemy schema, and a CLI validation form. See
-[`.claude/future_plans/EXPANDED_MVP_PLAN.md`](../../.claude/future_plans/EXPANDED_MVP_PLAN.md)
-(not yet implemented).
+The next phase — "MVP espanso" — has all of the above designed in
+detail but not yet built: persistence with stable card identity derived
+from a content fingerprint (so the same attack always resolves to the
+same card, even across separate runs), a FastAPI HTTP layer, and a
+confidence-gated human validation step for low-confidence LLM
+classifications.
 
 ## Open TODOs
 

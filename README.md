@@ -431,6 +431,7 @@ This project is designed to demonstrate real-world software engineering patterns
 
 - **[DESIGN.md](./DESIGN.md)** — original technical vision: architecture, transformation algorithms, intermediate data model, and LLM classification workflow
 - **[monsterforge/docs/PROJECT_STATUS.md](./monsterforge/docs/PROJECT_STATUS.md)** — current state: what's built, test coverage, known limitations
+- **[monsterforge/docs/MVP_ZERO.md](./monsterforge/docs/MVP_ZERO.md)** — case study: what the first working vertical slice (Attack → MoveCard) demonstrates about the project's engineering approach
 - **[monsterforge/docs/PIPELINE_ARCHITECTURE.md](./monsterforge/docs/PIPELINE_ARCHITECTURE.md)** — full pipeline schema and architectural decisions
 - **[monsterforge/docs/LLM_ARCHITECTURE.md](./monsterforge/docs/LLM_ARCHITECTURE.md)** — how the LLM client layer is structured
 
