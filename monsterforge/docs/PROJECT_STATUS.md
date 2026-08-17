@@ -112,21 +112,6 @@ same card, even across separate runs), a FastAPI HTTP layer, and a
 confidence-gated human validation step for low-confidence LLM
 classifications.
 
-## Open TODOs
-
-- **`SAMPLE_ATTACKS` only carries the four bare raw fields** (name,
-  modifier, attack_type, attack_effect) — no `additional_description`,
-  `creature_description`, or `creature_subtype` per case. This means
-  the two real-API collection scripts, and any regression test built on
-  top of them, currently only ever exercise `classify_attack()` with
-  that context defaulted to `None`, even though the code path for
-  supplying it is built and verified (see "What works today" above).
-  Plan: a separate, richer sample file (not a rewrite of
-  `SAMPLE_ATTACKS`, which several existing deterministic parser tests
-  already depend on) carrying full context per case, to run through
-  both collection scripts and compare classification quality with vs.
-  without context.
-
 ## Notable fixes and findings
 
 A few things worth calling out about how this slice got built, not as a
@@ -159,6 +144,19 @@ full changelog:
   but it's a real, now-quantified gap in range-fallback coverage worth
   addressing later (expand `KNOWN_ATTACKS`, tighten the prompt, or add
   an explicit "range undetermined" domain outcome).
+
+  **Follow-up**: a second sample file
+  (`entrypoints/sample_attacks_with_context.py`) pairs the same 65
+  cases with real semantic context — creature description, subtype,
+  and, for the attacks known to need it, the actual source text stating
+  their range — and a fresh full-pipeline run against the real API
+  cleared 10 of the 11 errors that run produced (the one remaining
+  error is the intentional blank placeholder case, not a real attack).
+  This reframes the finding above: the gap wasn't primarily a
+  `KNOWN_ATTACKS` coverage problem, it was a missing-context problem —
+  the LLM resolves a range correctly once the source material actually
+  states one. `KNOWN_ATTACKS` as a fallback for genuinely
+  context-free lookups remains worth keeping, just not the main fix.
 - [PIPELINE_ARCHITECTURE.md](./PIPELINE_ARCHITECTURE.md) was revised to settle
   an open question about the not-yet-built `rendering/` stage: whether it
   should share the same `serialization/` output as `api/`, or convert from
@@ -180,3 +178,10 @@ and no longer mentions the PyQt5 desktop tool from the original plan (see
 serving both `api/` and a future `rendering/` stage). The original README is
 kept for reference at
 [monsterforge/docs/archive/README_v1.md](./archive/README_v1.md).
+
+The full commit history was also audited against this project's own
+commit-message and documentation conventions and corrected where it
+fell short (a handful of early commits predating those conventions,
+plus a few written by an AI collaborator that didn't fully follow them)
+— consistency in `git log` was treated as worth the one-time rewrite,
+since this repository was still private and unshared at the time.
