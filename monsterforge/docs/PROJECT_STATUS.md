@@ -14,7 +14,7 @@ domain `MoveCard` and comes out as JSON.
 It has been exercised against the real Gemini API repeatedly, not just mocked —
 including two independent full-dataset runs (65 real attacks each) kept for
 review, one classification-only and one through the complete pipeline.
-The current test suite contains 455 passing tests, 0 failing.
+The current test suite contains 479 passing tests, 0 failing.
 
 Persistence, an HTTP API, and a human-validation workflow are designed
 in detail but not yet built — see [Limitations](#limitations--not-yet-built)
@@ -72,7 +72,7 @@ below.
 
 ## Test coverage
 
-**455 passing, 0 failing.** A set of 9 pre-existing failures (unrelated
+**479 passing, 0 failing.** A set of 9 pre-existing failures (unrelated
 to the attack pipeline itself — stale tests in `tests/domain/`,
 `tests/rules/dnd/v3x/`, and `tests/structured_data/dnd/v3x/`, left over
 from earlier field/behavior changes elsewhere in the codebase that the
@@ -80,7 +80,11 @@ tests hadn't caught up with) has since been fixed in a dedicated pass,
 along with one real bug found in the process: `rules/dnd/v3x/
 vitality_tables.py`'s hit-die table was missing an entry for D2, present
 in `DESIGN.md`'s own LIFE table but absent from the code — a creature
-with `hit_dice_type=D2` would have raised `KeyError`.
+with `hit_dice_type=D2` would have raised `KeyError`. A second bug found
+later the same day, in `damages_converter.py` (a bonus-only typed damage
+component silently defaulting to PHYSICAL), came with its own dedicated
+test file — previously zero coverage on that file, now covering all 8
+damage-classification branches and every resolver.
 
 ## Limitations / not yet built
 
