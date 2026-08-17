@@ -2,9 +2,8 @@
 > reference. The pipeline stages and decisions 1-6 here are still accurate
 > and match the current implementation, with one exception: stage 5
 > (VALIDATION) diagrams human review as routed to `ui/`; the design that
-> was later settled on instead (see
-> `.claude/future_plans/EXPANDED_MVP_PLAN.md` §10) is a CLI form under
-> `validation/`, not a `ui/` interface — see the current
+> was later settled on instead is a CLI form under `validation/`, not a
+> `ui/` interface — see the current
 > [PIPELINE_ARCHITECTURE.md](../PIPELINE_ARCHITECTURE.md) (English) for the
 > up-to-date version and its status note on this point. For current
 > project state see [../PROJECT_STATUS.md](../PROJECT_STATUS.md).

@@ -100,9 +100,11 @@ def test_recognized_damage_type_after_plus_with_no_dice_is_also_a_special_attack
 
 
 def test_get_attack_effects_matches_the_validated_golden_fixture():
-    """Regression test anchored to expected_attack_effects.py, generated
-    by generate_expected_attack_effects.py and hand-reviewed against
-    SAMPLE_ATTACKS. See MVP_zero.md §9.2 for the validation procedure."""
+    """Regression test anchored to expected_attack_effects.py: the
+    parser's actual output over SAMPLE_ATTACKS, generated once by
+    generate_expected_attack_effects.py and hand-reviewed, then
+    committed as a golden fixture. A future parser change that no
+    longer matches this file fails here."""
     for case, expected in zip(SAMPLE_ATTACKS, EXPECTED_ATTACK_EFFECTS):
         raw_attack = RawAttack(**case)
         actual = to_plain(get_attack_effects(raw_attack))

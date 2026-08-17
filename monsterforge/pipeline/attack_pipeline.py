@@ -8,10 +8,8 @@ the CLI entry points and, later, the API layer.
 
 This is the MVP zero version: a pure, linear composition with no
 persistence, deduplication, or human-validation branching. It is the
-intentional seam where those features will be added later — see
-.claude/project-context/MVP_zero.md §12 and
-.claude/future_plans/EXPANDED_MVP_PLAN.md — without changing the three
-stages it composes.
+intentional seam where those features get added later, by wrapping this
+same function, without changing the three stages it composes.
 """
 from monsterforge.parsing.dnd.v3x.raw_fields.attacks import Attack as RawAttack
 from monsterforge.llm.semantic_classification.attacks import classify_attack

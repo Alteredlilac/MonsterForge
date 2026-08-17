@@ -138,14 +138,14 @@ and `llm/`.
 ```
 
 > **Status note.** Stage 5 above diagrams low-confidence classifications
-> as routed to `ui/`. The validation design actually settled on later (see
-> `.claude/future_plans/EXPANDED_MVP_PLAN.md` §10) is a blocking CLI form
-> in `validation/cli_form.py`, not a `ui/` interface — consistent with
-> `DESIGN.md`'s "simplest tool" philosophy, and with the fact that the
-> original PyQt5 desktop-tool vision was itself superseded (see
-> `EXPANDED_MVP_PLAN.md` §2). `ui/` remains an empty, unplanned stub. The
-> diagram is left as originally drawn here rather than silently rewritten,
-> since it predates that decision; see `PROJECT_STATUS.md` for what's
+> as routed to `ui/`. The validation design actually settled on later is
+> a blocking CLI form in `validation/cli_form.py`, not a `ui/` interface
+> — consistent with `DESIGN.md`'s "simplest tool" philosophy, and with
+> the original PyQt5 desktop-tool vision itself having been superseded by
+> a FastAPI JSON API (see [PROJECT_STATUS.md](./PROJECT_STATUS.md)).
+> `ui/` remains an empty, unplanned stub. The diagram is left as
+> originally drawn here rather than silently rewritten, since it predates
+> that decision; see [PROJECT_STATUS.md](./PROJECT_STATUS.md) for what's
 > actually implemented today — as of this writing, neither `validation/`
 > nor `ui/` exist yet.
 
