@@ -18,7 +18,7 @@ from monsterforge.parsing.dnd.v3x.structured_conversions.attacks.attacks_convert
 from monsterforge.llm.semantic_classification.attacks import AttackSemanticResult
 from monsterforge.structured_data.dnd.v3x.enums import MoveType, UnitSystem
 from monsterforge.structured_data.dnd.v3x.effect_mechanics import EffectRange
-from tests.parsing.dnd.v3x.structured_conversions.sample_attacks import SAMPLE_ATTACKS
+from monsterforge.entrypoints.sample_attacks import SAMPLE_ATTACKS
 
 
 def make_semantic_result(**overrides):

@@ -13,7 +13,7 @@ from monsterforge.parsing.dnd.v3x.raw_fields.attacks import Attack as RawAttack
 from monsterforge.parsing.dnd.v3x.structured_conversions.attacks.attacks_effects_parser import (
     get_attack_effects,
 )
-from tests.parsing.dnd.v3x.structured_conversions.sample_attacks import SAMPLE_ATTACKS
+from monsterforge.entrypoints.sample_attacks import SAMPLE_ATTACKS
 from tests.tools.generate_expected_outputs import generate_expected_outputs
 
 OUTPUT_PATH = Path(__file__).parent / "expected_attack_effects.py"

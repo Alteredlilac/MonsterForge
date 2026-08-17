@@ -16,7 +16,7 @@ from monsterforge.parsing.dnd.v3x.structured_conversions.attacks.attacks_effects
     get_attack_effects,
 )
 from monsterforge.structured_data.dnd.v3x.enums import TargetType
-from tests.parsing.dnd.v3x.structured_conversions.sample_attacks import SAMPLE_ATTACKS
+from monsterforge.entrypoints.sample_attacks import SAMPLE_ATTACKS
 from tests.tools.generate_expected_outputs import to_plain
 from .expected_attack_effects import EXPECTED_ATTACK_EFFECTS
 

@@ -25,7 +25,7 @@ from pathlib import Path
 from monsterforge.parsing.dnd.v3x.raw_fields.attacks import Attack as RawAttack
 from monsterforge.llm.client import get_llm_client
 from monsterforge.serialization.plain_data import to_plain
-from tests.parsing.dnd.v3x.structured_conversions.sample_attacks import SAMPLE_ATTACKS
+from .sample_attacks import SAMPLE_ATTACKS
 from ._llm_model_selection import ensure_model_available, call_llm_with_model_fallback
 from ._llm_response_capture import classify_with_raw_response
 
