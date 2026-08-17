@@ -115,7 +115,13 @@ def resolve_dice_drain_modifier(d: Damage)-> list[MoveEffect]:
     type_of_damage_modifier= d.damage_bonus_type or DamageType.ENERGY_DRAIN
     # NOTE:
     # If the damage type is not specified, it is considered
-    # ENERGY_DRAIN for ability damage resolution.     
+    # ENERGY_DRAIN for ability damage resolution.
+    # NOTE:
+    # Same caveat as resolve_dice_modifier(): damage_bonus_type is never
+    # populated by the current parser, so Case 2/3 below (dice and
+    # modifier resolving to genuinely different types) are currently
+    # unreachable with real parser output. Left as-is pending a decision
+    # on whether the parser should start populating this field.
 
     dice_value = dice_sum(num_of_dice= num_of_dice, type_of_dice= type_of_dice)
     effect_unit = ABILITY_DAMAGE_MAPPING[drained_ability]
@@ -197,13 +203,17 @@ def resolve_drain_modifier(d: Damage)-> list[MoveEffect]:
     """ 
     drained_ability = d.affected_ability
     # modifier
-    damage_modifier= d.damage_bonus 
-    type_of_damage_modifier= d.damage_bonus_type or DamageType.ENERGY_DRAIN 
+    damage_modifier= d.damage_bonus
+    type_of_damage_modifier= d.damage_type or DamageType.ENERGY_DRAIN
     # NOTE:
     # If the damage type is not specified, it is considered
-    # ENERGY_DRAIN for ability damage resolution.   
+    # ENERGY_DRAIN for ability damage resolution. Reads d.damage_type,
+    # not d.damage_bonus_type — same reasoning as resolve_modifier():
+    # with no dice present there is no separate "dice type" to
+    # distinguish the bonus from, so the parser writes the detected
+    # type into damage_type even for this bonus-only category.
 
-    
+
     damage_type = DAMAGE_TYPE_MAPPING[type_of_damage_modifier]
     effect_unit = ABILITY_DAMAGE_MAPPING[drained_ability]
     effect_value = halve_value(damage_modifier)
@@ -225,10 +235,22 @@ def resolve_dice_modifier(d: Damage)-> list[MoveEffect]:
     type_of_dice= d.dice_type  
     dice_damages_type = d.damage_type or DamageType.PHYSICAL
     # modifier
-    damage_modifier= d.damage_bonus     
+    damage_modifier= d.damage_bonus
     type_of_damage_modifier= d.damage_bonus_type or DamageType.PHYSICAL
     # NOTE:
-    # Missing damage type is interpreted as PHYSICAL damage.  
+    # Missing damage type is interpreted as PHYSICAL damage.
+    # NOTE:
+    # damage_bonus_type is intended for a dice component and a modifier
+    # component that carry two genuinely different types on the SAME
+    # Damage object (e.g. "1d4 bludgeoning +1 acid"). The current parser
+    # (attacks_effects_helpers.py) never populates damage_bonus_type — it
+    # always writes the detected type into damage_type and splits a
+    # differently-typed dice+bonus combination into two separate Damage
+    # objects instead. This means Case 2 below is currently unreachable
+    # with real parser output; left as-is (not fixed to read damage_type
+    # for both, which would silently break the "two types on one Damage"
+    # capability this field exists for) pending a decision on whether the
+    # parser should start populating it or the field should be removed.
 
     dice_value = dice_sum(num_of_dice= num_of_dice, type_of_dice= type_of_dice)
 
@@ -281,10 +303,16 @@ def resolve_modifier(d: Damage)-> list[MoveEffect]:
 
     Missing damage types default to PHYSICAL damage.
     """   
-    damage_modifier= d.damage_bonus 
-    type_of_damage_modifier= d.damage_bonus_type or DamageType.PHYSICAL
+    damage_modifier= d.damage_bonus
+    type_of_damage_modifier= d.damage_type or DamageType.PHYSICAL
     # NOTE:
-    # Missing damage type is interpreted as PHYSICAL damage.
+    # Missing damage type is interpreted as PHYSICAL damage. This reads
+    # d.damage_type, not d.damage_bonus_type: with no dice present, there
+    # is no separate "dice type" to distinguish the bonus from, so the
+    # parser always writes the detected type into damage_type, even for
+    # a bonus-only component (e.g. "plus 1 fire") — damage_bonus_type
+    # stays None. Reading damage_bonus_type here silently discarded the
+    # real type and defaulted every bonus-only damage to PHYSICAL.
 
     # MoveEffect
     damage_type = type_of_damage_modifier
