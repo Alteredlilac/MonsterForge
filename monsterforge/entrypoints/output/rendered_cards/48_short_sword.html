@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SHORT SWORD</title>
+<style>
+  body {
+    background: #2b2b2b;
+    font-family: Georgia, "Times New Roman", serif;
+    display: flex;
+    justify-content: center;
+    padding: 2rem;
+    color: #2a2015;
+  }
+  .card {
+    width: 420px;
+    background: #e8ddc4;
+    border: 10px solid #111;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 0 24px rgba(0, 0, 0, 0.6);
+  }
+  .card-header {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+    padding: 10px;
+    background: #c9bd9e;
+    border-bottom: 6px solid #c17f68;
+  }
+  .name-box, .category-box {
+    flex: 1;
+    background: #d8cdae;
+    border: 2px solid #333;
+    border-radius: 4px;
+    text-align: center;
+    padding: 6px;
+  }
+  .type-badge {
+    width: 76px;
+    flex-shrink: 0;
+    background: #c17f68;
+    color: #fff;
+    border: 2px solid #333;
+    border-radius: 4px;
+    text-align: center;
+    padding: 6px 4px;
+  }
+  .field-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    opacity: 0.8;
+  }
+  .field-value {
+    font-size: 18px;
+    font-weight: bold;
+  }
+  .type-badge .field-value {
+    font-size: 13px;
+  }
+  .art {
+    position: relative;
+    min-height: 320px;
+    background: #ded2b0;
+    
+    border-top: 4px solid #333;
+    border-bottom: 4px solid #333;
+  }
+  .art .image-label {
+    text-align: center;
+    padding: 10px;
+    font-weight: bold;
+    letter-spacing: 3px;
+  }
+  .active-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #c17f68;
+    color: #fff;
+    padding: 6px 12px;
+    border: 2px solid #333;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 12px;
+  }
+  .resource-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 14px;
+  }
+  .resource-box, .range-box {
+    background: #c17f68;
+    color: #fff;
+    border: 2px solid #333;
+    border-radius: 4px;
+    padding: 6px 14px;
+    text-align: center;
+  }
+  .resource-box .field-value, .range-box .field-value {
+    font-size: 22px;
+  }
+  .body-section {
+    display: flex;
+    padding: 14px;
+    gap: 14px;
+  }
+  .effect-col {
+    flex: 2;
+  }
+  .bonus-col {
+    flex: 1;
+    border-left: 2px solid #333;
+    padding-left: 14px;
+  }
+  .section-label {
+    text-align: center;
+    font-weight: bold;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    border-bottom: 3px double #333;
+    padding-bottom: 4px;
+    margin-bottom: 10px;
+    font-size: 13px;
+  }
+  .effect-text {
+    text-align: center;
+    font-weight: bold;
+    font-size: 15px;
+  }
+  .bonus-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-size: 13px;
+  }
+  .bonus-list li {
+    margin-bottom: 8px;
+  }
+  .bonus-name {
+    font-weight: bold;
+  }
+  .bonus-id {
+    font-size: 10px;
+    opacity: 0.75;
+    margin-top: 2px;
+  }
+  .description-section {
+    padding: 0 14px 14px 14px;
+  }
+  .description-section p {
+    margin: 0;
+    font-size: 14px;
+    text-align: center;
+  }
+  .footer {
+    text-align: center;
+    padding: 8px;
+    border-top: 4px solid #333;
+    font-size: 11px;
+    letter-spacing: 1px;
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="card-header">
+      <div class="name-box">
+        <div class="field-label">NAME</div>
+        <div class="field-value">SHORT SWORD</div>
+      </div>
+      <div class="category-box">
+        <div class="field-label">CATEGORY</div>
+        <div class="field-value">ATTACK</div>
+      </div>
+      <div class="type-badge">
+        <div class="field-label">TYPE</div>
+        <div class="field-value">PHYSICAL</div>
+      </div>
+    </div>
+    <div class="art">
+      
+      <div class="image-label">IMAGE</div>
+      
+      <div class="active-badge">ACTIVE</div>
+    </div>
+    <div class="resource-row">
+      <div class="resource-box">
+        <div class="field-label">STAMINA</div>
+        <div class="field-value">1</div>
+      </div>
+      
+    </div>
+    <div class="body-section">
+      <div class="effect-col">
+        <div class="section-label">EFFECT</div>
+        <div class="effect-text">0 PHYSICAL DAMAGE</div>
+      </div>
+      
+    </div>
+    <div class="description-section">
+      <div class="section-label">DESCRIPTION</div>
+      <p>A quick, precise strike with a short sword.</p>
+    </div>
+    <div class="footer">ID: 93547ab0-adda-4bc6-80c7-a525f11a5608</div>
+  </div>
+</body>
+</html>
