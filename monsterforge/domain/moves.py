@@ -59,6 +59,7 @@ class MoveCard(Card):
     move_range: MoveRange | None = None# Gittata
     range_value: int | None = None   # Gittata in metri 
     resource: Resource         # Risorsa esempio("Fiato")
+    resource_value: int = 1    # costo di utilizzo della mossa
     duration: Duration         # Durata esempio("Istantaneo")
     duration_unit: TimeUnit | None = None # Unità di misura della durata esempio("Round", "Minuti")
     duration_value: int | None = None # Valore numerico della duration_unit dell'effetto 

@@ -6,8 +6,11 @@ and the HTTP/API layer.
 
 Domain objects remain the canonical internal representation of MonsterForge.
 They are converted to JSON only when data must cross the API boundary.
-The rendering pipeline does not depend on this serialization layer and continues
-to consume domain objects directly.
+The rendering pipeline shares this same serialization stage rather than
+converting from domain objects independently: nested card references
+(e.g. MoveCard.cards_to_add) must reduce to {name, id} in rendering too,
+since a printed card has no room for another card's full contents, so
+the fork into api/ and rendering/ happens after this stage, not before.
 
 The encoder handles:
 
