@@ -91,6 +91,21 @@ def test_format_bonus_cards_uses_uppercase_name_and_short_id():
     assert result == [{"name": "TRIP", "short_id": "IDdef8aedc"}]
 
 
+def test_format_bonus_cards_caps_at_three_entries():
+    """.body-section has a fixed height sized for at most 3 bonus card
+    entries (see move_card_style.html.jinja2) — a 4th is dropped, not
+    overflowed onto the card."""
+    cards = [
+        {"name": "Trip", "id": "aaaaaaaa-0000-0000-0000-000000000000"},
+        {"name": "Confusion", "id": "bbbbbbbb-0000-0000-0000-000000000000"},
+        {"name": "Daze", "id": "cccccccc-0000-0000-0000-000000000000"},
+        {"name": "Push", "id": "dddddddd-0000-0000-0000-000000000000"},
+    ]
+    result = format_bonus_cards(cards)
+    assert len(result) == 3
+    assert "PUSH" not in [entry["name"] for entry in result]
+
+
 # =====================
 # render_move_card_html — binary branches
 # =====================

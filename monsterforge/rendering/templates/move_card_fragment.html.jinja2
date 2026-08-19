@@ -1,0 +1,58 @@
+  <div class="card" style="--accent-color: {{ accent_color }};">
+    <div class="card-header">
+      <div class="name-box">
+        <div class="field-label">{{ labels.name }}</div>
+        <div class="field-value">{{ name }}</div>
+      </div>
+      <div class="category-box">
+        <div class="field-label">{{ labels.category }}</div>
+        <div class="field-value">{{ category }}</div>
+      </div>
+      <div class="type-badge">
+        <div class="field-label">{{ labels.type }}</div>
+        <div class="field-value">{{ move_type }}</div>
+      </div>
+    </div>
+    <div class="art"{% if image_uri %} style="background-image: url('{{ image_uri }}');"{% endif %}>
+      {% if not image_uri %}
+      <div class="image-label">{{ labels.image }}</div>
+      {% endif %}
+      <div class="active-badge">{{ mode }}</div>
+    </div>
+    <div class="resource-row">
+      <div class="resource-box">
+        <div class="field-label">{{ resource }}</div>
+        <div class="field-value">{{ resource_value }}</div>
+      </div>
+      {% if move_range %}
+      <div class="range-box">
+        <div class="field-label">{{ labels.range }}</div>
+        <div class="field-value">{{ range_value }}</div>
+      </div>
+      {% endif %}
+    </div>
+    <div class="body-section{% if bonus_cards %} has-bonus{% endif %}">
+      <div class="effect-col">
+        <div class="section-label">{{ labels.effect }}</div>
+        <div class="effect-text">{{ effect_line }}</div>
+      </div>
+      {% if bonus_cards %}
+      <div class="bonus-col">
+        <div class="section-label">{{ labels.bonus_cards }}</div>
+        <ul class="bonus-list">
+          {% for entry in bonus_cards %}
+          <li>
+            <div class="bonus-name">- {{ entry.name }}</div>
+            <div class="bonus-id">{{ entry.short_id }}</div>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+    </div>
+    <div class="description-section">
+      <div class="section-label">{{ labels.description }}</div>
+      <p>{{ description }}</p>
+    </div>
+    <div class="footer">{{ labels.id }}: {{ card_id }}</div>
+  </div>

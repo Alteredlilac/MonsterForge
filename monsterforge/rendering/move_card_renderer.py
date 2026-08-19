@@ -17,8 +17,9 @@ from monsterforge.rendering.labels import FIELD_LABELS, MOVE_TYPE_TO_COLOR_MAPPI
 
 TEMPLATE_DIR = Path(__file__).parent / "templates"
 MAX_EFFECT_ENTRIES = 3
+MAX_BONUS_CARDS = 3
 
-_environment = jinja2.Environment(
+environment = jinja2.Environment(
     loader=jinja2.FileSystemLoader(str(TEMPLATE_DIR)),
     autoescape=jinja2.select_autoescape(["html"]),
 )
@@ -53,23 +54,29 @@ def format_bonus_cards(cards_to_add: list[dict]) -> list[dict]:
     Format each cards_to_add reference into a name/short-id pair for the
     BONUS CARDS list — rendered as the name in bold with its id in a
     smaller line beneath it, not on the same line.
+
+    Entries beyond MAX_BONUS_CARDS are dropped, not overflowed onto the
+    card — same reasoning as MAX_EFFECT_ENTRIES: .body-section has a
+    fixed height (see move_card_style.html.jinja2) sized for at most 3
+    bonus card entries, so every card has the same total height
+    regardless of content instead of growing/shrinking per card.
     """
     return [
         {"name": card["name"].upper(), "short_id": f"ID{card['id'][:8]}"}
-        for card in cards_to_add
+        for card in cards_to_add[:MAX_BONUS_CARDS]
     ]
 
 
-def render_move_card_html(card_data: dict) -> str:
+def build_card_context(card_data: dict) -> dict:
     """
-    Render a MoveCard's serialized dict into a static HTML page.
+    Build the template context for a single MoveCard's serialized dict.
 
-    card_data is the dict already produced by
-    serialization.domain_to_json.card_to_json() (parsed back with
-    json.loads), not a raw domain MoveCard.
+    Shared by render_move_card_html() (the standalone page) and
+    rendering/gallery_renderer.py (many cards on one page) so both
+    produce the exact same card fragment from the same input shape —
+    see move_card_fragment.html.jinja2, which both templates include.
     """
-    template = _environment.get_template("move_card.html.jinja2")
-    context = {
+    return {
         "labels": FIELD_LABELS,
         "accent_color": MOVE_TYPE_TO_COLOR_MAPPING[card_data["move_type"]],
         "name": card_data["name"].upper(),
@@ -86,4 +93,15 @@ def render_move_card_html(card_data: dict) -> str:
         "description": card_data["description"],
         "card_id": card_data["id"],
     }
-    return template.render(**context)
+
+
+def render_move_card_html(card_data: dict) -> str:
+    """
+    Render a MoveCard's serialized dict into a static HTML page.
+
+    card_data is the dict already produced by
+    serialization.domain_to_json.card_to_json() (parsed back with
+    json.loads), not a raw domain MoveCard.
+    """
+    template = environment.get_template("move_card.html.jinja2")
+    return template.render(**build_card_context(card_data))
