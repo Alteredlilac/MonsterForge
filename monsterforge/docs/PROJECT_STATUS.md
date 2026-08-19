@@ -1,6 +1,6 @@
 # Project Status
 
-Snapshot of where MonsterForge stands as of August 19, 2026.
+Snapshot of where MonsterForge stands as of August 20, 2026.
 For the system's design and long-term architecture, see [PIPELINE_ARCHITECTURE.md](./PIPELINE_ARCHITECTURE.md)
 and [DESIGN.md](../../DESIGN.md). For how the LLM layer specifically is
 structured, see [LLM_ARCHITECTURE.md](./LLM_ARCHITECTURE.md). For how a
@@ -24,7 +24,8 @@ On top of that vertical slice, the `MoveCard` domain object can now be
 rendered into an actual printable HTML/CSS card, and every card the
 project has produced against the real API can be browsed in a static
 gallery page with a raw-input/classification/JSON drill-down per card —
-see [RENDERING_AND_GALLERY.md](./RENDERING_AND_GALLERY.md) for what that
+live at <https://alteredlilac.github.io/MonsterForge/>, see
+[RENDERING_AND_GALLERY.md](./RENDERING_AND_GALLERY.md) for what that
 demonstrates.
 
 The current test suite contains 497 passing tests, 0 failing.
@@ -232,4 +233,13 @@ commit-message and documentation conventions and corrected where it
 fell short (a handful of early commits predating those conventions,
 plus a few written by an AI collaborator that didn't fully follow them)
 — consistency in `git log` was treated as worth the one-time rewrite,
-since this repository was still private and unshared at the time.
+since this repository was still private and unshared at the time of
+that audit (it has since been made public, with the gallery published
+via GitHub Pages).
+
+All remaining Italian-language inline comments across `structured_data/`
+and `domain/` (left over from the project's early development, before
+an English-only identifiers-and-comments convention was firmly
+established) were translated to English or removed where they only
+restated the field name — full-codebase language consistency, ahead of
+making the repository public.
