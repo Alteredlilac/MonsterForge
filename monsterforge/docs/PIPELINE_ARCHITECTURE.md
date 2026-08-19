@@ -23,117 +23,117 @@ and `llm/`.
 ┌──────────────────────────────────────────────────────────────────────────┐
 │  1. RAW HTML                                                             │
 │     Downloaded by scraping/, saved as-is in db/ (RECORD DB)              │
-│     Single generic table: id, url, type, raw content                    │
+│     Single generic table: id, url, type, raw content                     │
 └──────────────────────────────────────────────────────────────────────────┘
                               |
                               v
 ┌──────────────────────────────────────────────────────────────────────────┐
-│  2a. HTML EXTRACTION  →  parsing/<system>/<version>/html_extraction.py  │
+│  2a. HTML EXTRACTION  →  parsing/<system>/<version>/html_extraction.py   │
 │      Regex / BeautifulSoup, deterministic, per-source if needed          │
 │                                                                          │
-│      Extracts fields as they appear in the rulebook table, almost       │
-│      verbatim, into a dedicated "raw fields" dataclass:                 │
+│      Extracts fields as they appear in the rulebook table, almost        │
+│      verbatim, into a dedicated "raw fields" dataclass:                  │
 │                                                                          │
-│      RawArmorFields(name="...", cost="30 gp", armor_bonus="2", ...)     │
+│      RawArmorFields(name="...", cost="30 gp", armor_bonus="2", ...)      │
 └──────────────────────────────────────────────────────────────────────────┘
                               |
                               v
 ┌──────────────────────────────────────────────────────────────────────────┐
-│  2b. RAW FIELDS  →  parsing/<system>/<version>/raw_fields.py            │
-│      Dataclasses that mirror the source domain: they reflect the exact  │
-│      columns of the game tables (Armor, Weapons, etc.)                  │
-│      Fields are still mostly strings, not yet typed/enum                │
+│  2b. RAW FIELDS  →  parsing/<system>/<version>/raw_fields.py             │
+│      Dataclasses that mirror the source domain: they reflect the exact   │
+│      columns of the game tables (Armor, Weapons, etc.)                   │
+│      Fields are still mostly strings, not yet typed/enum                 │
 │                                                                          │
-│      Multi-source convergence point: different HTML sources (different │
-│      sites) or manual human input (CLI/form) all produce the SAME       │
-│      RawFields                                                          │
-│      Bypass point: if only testing the pipeline is needed, a RawFields  │
-│      can be built by hand, with no scraping or network at all           │
+│      Multi-source convergence point: different HTML sources (different   │
+│      sites) or manual human input (CLI/form) all produce the SAME        │
+│      RawFields                                                           │
+│      Bypass point: if only testing the pipeline is needed, a RawFields   │
+│      can be built by hand, with no scraping or network at all            │
 └──────────────────────────────────────────────────────────────────────────┘
                               |
                               v
 ┌──────────────────────────────────────────────────────────────────────────┐
-│  3. STRUCTURED CONVERSION  →  parsing/<system>/<version>/               │
-│     structured_conversion.py                                            │
-│     Type casting (string → int/enum/dataclass) + decision:              │
-│     "does this need semantic classification, or is the object already  │
-│     complete?"                                                          │
+│  3. STRUCTURED CONVERSION  →  parsing/<system>/<version>/                │
+│     structured_conversion.py                                             │
+│     Type casting (string → int/enum/dataclass) + decision:               │
+│     "does this need semantic classification, or is the object already    │
+│     complete?"                                                           │
 │                                                                          │
-│     ├─► Simple fields/objects (numbers/enums only, no free text)        │
-│     │   → go straight into structured_data, no LLM call                 │
-│     │                                                                   │
-│     └─► Fields with free text to interpret (abilities, talents, spells) │
-│         → pass through stage 4 before they can be built                 │
+│     ├─► Simple fields/objects (numbers/enums only, no free text)         │
+│     │   → go straight into structured_data, no LLM call                  │
+│     │                                                                    │
+│     └─► Fields with free text to interpret (abilities, talents, spells)  │
+│         → pass through stage 4 before they can be built                  │
 └──────────────────────────────────────────────────────────────────────────┘
                               |
                               v
 ┌──────────────────────────────────────────────────────────────────────────┐
-│  4. LLM CLASSIFICATION  →  llm/                                         │
-│     ONLY for free-text blocks (special qualities, special attacks,      │
-│     feats, spells) that can't be reduced to regex                       │
+│  4. LLM CLASSIFICATION  →  llm/                                          │
+│     ONLY for free-text blocks (special qualities, special attacks,       │
+│     feats, spells) that can't be reduced to regex                        │
 │                                                                          │
-│     A single call per text block, with a fixed output schema            │
-│     (Pydantic/dataclass): category, target, duration, usage, AND the    │
-│     numeric values already classified into the semantically correct     │
-│     field (e.g. "1d4" goes into Damage if it's damage, into EffectGrant │
-│     if it's a summoned quantity — the distinction happens in the same   │
-│     call, not in two)                                                   │
+│     A single call per text block, with a fixed output schema             │
+│     (Pydantic/dataclass): category, target, duration, usage, AND the     │
+│     numeric values already classified into the semantically correct      │
+│     field (e.g. "1d4" goes into Damage if it's damage, into EffectGrant  │
+│     if it's a summoned quantity — the distinction happens in the same    │
+│     call, not in two)                                                    │
 │                                                                          │
-│     Output includes a "confidence" field (transient, never reaches      │
-│     domain)                                                             │
+│     Output includes a "confidence" field (transient, never reaches       │
+│     domain)                                                              │
 └──────────────────────────────────────────────────────────────────────────┘
                               |
                               v
 ┌──────────────────────────────────────────────────────────────────────────┐
-│  5. VALIDATION  →  validation/                                          │
-│     confidence >= threshold (0.7) → auto-approved                       │
-│     confidence <  threshold       → queued for human review (ui/)       │
+│  5. VALIDATION  →  validation/                                           │
+│     confidence >= threshold (0.7) → auto-approved                        │
+│     confidence <  threshold       → queued for human review (ui/)        │
 │                                                                          │
-│     Keeps a history of corrections; the final output no longer carries  │
-│     "confidence"                                                        │
+│     Keeps a history of corrections; the final output no longer carries   │
+│     "confidence"                                                         │
 └──────────────────────────────────────────────────────────────────────────┘
                               |
                               v
 ┌──────────────────────────────────────────────────────────────────────────┐
-│  6. STRUCTURED_DATA  →  structured_data/<system>/<version>/             │
-│     Now the Creature/Item/CharacterClass is complete: some fields built │
-│     in stage 3 (direct regex), others in stage 4+5 (LLM + validation).  │
-│     Typed, enum-based, zero leftover raw strings                        │
+│  6. STRUCTURED_DATA  →  structured_data/<system>/<version>/              │
+│     Now the Creature/Item/CharacterClass is complete: some fields built  │
+│     in stage 3 (direct regex), others in stage 4+5 (LLM + validation).   │
+│     Typed, enum-based, zero leftover raw strings                         │
 └──────────────────────────────────────────────────────────────────────────┘
                               |
                               v
 ┌──────────────────────────────────────────────────────────────────────────┐
-│  7. TRANSFORMATION  →  transformation/ + rules/                         │
-│     Deterministic calculations, zero LLM, zero ambiguity:               │
-│     calculate_life_value(), calculate_body_spirit(),                    │
-│     calculate_interpretation(), calculate_armor_talisman(),             │
-│     calculate_stamina_mana()                                            │
+│  7. TRANSFORMATION  →  transformation/ + rules/                          │
+│     Deterministic calculations, zero LLM, zero ambiguity:                │
+│     calculate_life_value(), calculate_body_spirit(),                     │
+│     calculate_interpretation(), calculate_armor_talisman(),              │
+│     calculate_stamina_mana()                                             │
 │                                                                          │
-│     Content already classified (stage 4/5) is mapped here 1:1 into the  │
-│     domain's fields/enums (MoveCard, ItemCard) — no new interpretation  │
+│     Content already classified (stage 4/5) is mapped here 1:1 into the   │
+│     domain's fields/enums (MoveCard, ItemCard) — no new interpretation   │
 └──────────────────────────────────────────────────────────────────────────┘
                               |
                               v
 ┌──────────────────────────────────────────────────────────────────────────┐
-│  8. DOMAIN MODEL  →  domain/                                            │
-│     Entity(creature_cards, move_cards, item_cards)                      │
-│     Final representation, source-independent (D&D or Pathfinder)        │
+│  8. DOMAIN MODEL  →  domain/                                             │
+│     Entity(creature_cards, move_cards, item_cards)                       │
+│     Final representation, source-independent (D&D or Pathfinder)         │
 └──────────────────────────────────────────────────────────────────────────┘
                               |
                               v
 ┌──────────────────────────────────────────────────────────────────────────┐
-│  9. SERIALIZATION  →  serialization/                                    │
-│     Domain Model → common external structure (JSON-compatible dict)     │
-│     Referenced cards (e.g. MoveCard.cards_to_add) are reduced here to   │
-│     {"name", "id"} — see decision 6 below for why                       │
+│  9. SERIALIZATION  →  serialization/                                     │
+│     Domain Model → common external structure (JSON-compatible dict)      │
+│     Referenced cards (e.g. MoveCard.cards_to_add) are reduced here to    │
+│     {"name", "id"} — see decision 6 below for why                        │
 └──────────────────────────────────────────────────────────────────────────┘
                               |
               +---------------+---------------+
               v                               v
 ┌───────────────────────────────┐  ┌───────────────────────────────────┐
-│  10a. API  →  api/             │  │  10b. RENDERING  →  rendering/    │
-│      dict → HTTP response      │  │      dict → HTML → printable      │
-│      (JSON)                    │  │      image (final card)           │
+│  10a. API  →  api/            │  │  10b. RENDERING  →  rendering/    │
+│      dict → HTTP response     │  │      dict → HTML → printable      │
+│      (JSON)                   │  │      image (final card)           │
 └───────────────────────────────┘  └───────────────────────────────────┘
 ```
 
