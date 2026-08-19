@@ -9,8 +9,9 @@ A Python-based pipeline that transforms semi-structured RPG data into normalized
 The project is under active development. A first vertical slice — converting a
 single D&D 3.x attack all the way from raw input to a domain `MoveCard`,
 classified live against the real Gemini API — works end to end today via CLI
-tools. Persistence, the HTTP API, and human validation are designed in detail
-but not yet built.
+tools, and that `MoveCard` can now be rendered into an actual printable
+HTML/CSS card. Persistence, the HTTP API, and human validation are designed
+in detail but not yet built.
 
 For the full, up-to-date picture (what's implemented, test coverage, known
 limitations) see **[monsterforge/docs/PROJECT_STATUS.md](./monsterforge/docs/PROJECT_STATUS.md)**.
@@ -39,11 +40,27 @@ to produce consistent and explainable outputs.
 
 ## Demo
 
-Not available yet — card rendering (`rendering/`) hasn't been built. Once it
-exists, a walkthrough GIF and sample rendered cards will live here.
+**[Browse the MoveCard gallery — TODO: GitHub Pages link]** — every card the
+project has produced against the real Gemini API, browsable in one page, each
+with a drill-down into its raw input, LLM classification, and JSON. See
+**[monsterforge/docs/RENDERING_AND_GALLERY.md](./monsterforge/docs/RENDERING_AND_GALLERY.md)**
+for what it demonstrates.
 
-In the meantime, the CLI entry points (see [Example Usage](#example-usage))
-produce the same data a rendered card would draw from, as JSON.
+A card as the pipeline actually renders it today (left) next to the same
+template with artwork (right) — art sourcing isn't part of the pipeline yet,
+this is a manually-supplied image showing the template supports one:
+
+| Rendered by the pipeline (no artwork) | Same template, with artwork (not pipeline-generated) |
+|---|---|
+| ![A MoveCard as rendered by the pipeline, without artwork](./monsterforge/docs/images/readme/MoveCard_pipeline.png) | ![The same MoveCard template with a manually-supplied artwork image](./monsterforge/docs/images/readme/MoveCard_artwork.png) |
+
+Clicking a card in the gallery opens a drill-down into its raw input, LLM
+classification, JSON, and rendered card:
+
+![Clicking a card in the gallery opens a drill-down into its raw input, LLM classification, JSON, and rendered card](./monsterforge/docs/images/readme/demo.gif)
+
+The CLI entry points (see [Example Usage](#example-usage)) produce the same
+data a rendered card draws from, as JSON.
 
 ---
 
@@ -158,6 +175,7 @@ Built and working today:
 - Semantic classification of attack descriptions via the Gemini API, with explicit handling when the configured model becomes unavailable (no silent fallback — see [LLM_ARCHITECTURE.md](./monsterforge/docs/LLM_ARCHITECTURE.md))
 - Full conversion path from raw attack input to a domain `MoveCard`, including secondary/referenced cards (e.g. a bite granting Trip)
 - CLI entry points for manual input, prompt iteration, and batch data collection against the real API
+- Card rendering pipeline (`MoveCard` → printable HTML/CSS card), plus a static gallery browsing every card produced against the real API with a raw-input/classification/JSON drill-down per card
 
 Planned, not yet built:
 
@@ -165,7 +183,6 @@ Planned, not yet built:
 - SQL persistence of raw and structured data
 - A JSON API (FastAPI) exposing the domain model
 - Confidence-based human validation workflow
-- Card rendering pipeline (HTML → printable format)
 
 ---
 
@@ -222,7 +239,7 @@ A typical pipeline execution is designed to produce traceable logs for each tran
 [2026-07-10 14:32:11] INFO  Generating card templates (1 creature, 2 moves)...
 [2026-07-10 14:32:11] INFO  Export completed: creature_card.html, bite_card.html, keen_scent_card.html
 ```
-Logging makes each transformation stage observable and simplifies debugging, validation, and future rule changes. This illustrates the target end-to-end flow — scraping, validation, and rendering aren't built yet, see [Current Status](#current-status).
+Logging makes each transformation stage observable and simplifies debugging, validation, and future rule changes. This is a mock-up of the target end-to-end flow and its intended log output — no logging system exists yet either, and scraping and validation aren't built, see [Current Status](#current-status).
 
 ---
 
@@ -234,10 +251,12 @@ monsterforge/
 │                       # source-independent representation
 ├── serialization/      # domain model → external representation (JSON-
 │                        # compatible dict), shared by api/ and rendering/
-├── config/             # runtime settings (LLM API key, confidence thresholds, DB config — see .env.example)
-├── db/                  # RECORD DB schema and access (raw scraped content, generic table)
+├── rendering/           # MoveCard → printable HTML/CSS card, and the
+│                          # real-sample gallery page
+├── config/             # runtime settings (LLM API key, confidence thresholds, DB config — see .env.example) (planned)
+├── db/                  # DB schema and access (raw scraped content, generic table) (planned)
 ├── rules/                 # typed conversion tables (dataclasses: size→HP, characteristic→attribute, ...)
-├── scraping/                # HTML acquisition (requests + BeautifulSoup), writes to db/
+├── scraping/                # HTML acquisition (requests + BeautifulSoup), writes to db/ (planned)
 ├── parsing/                   # extraction + conversion, per RPG system and edition
 │   └── dnd/v3x/
 │       ├── raw_fields/          # stage 1: mirrors rulebook tables almost verbatim
@@ -255,7 +274,6 @@ monsterforge/
 │                                          real-API data collection
 ├── validation/                          # human review logic (planned)
 ├── api/                                  # JSON API, FastAPI (planned)
-├── rendering/                             # card generation (HTML/templates, planned)
 └── tests/                                  # unit tests
 ```
 **Two-stage parsing.** Extraction is split into `raw_fields/` (source-format
@@ -360,7 +378,7 @@ The project includes unit tests for:
 - edge cases
 - pipeline consistency
 
-Example:
+Example (target shape, once full creature conversion exists — see below):
 
 ```python
 def test_wolf_conversion():
@@ -370,6 +388,15 @@ def test_wolf_conversion():
     assert card.hp == 23
     assert card.attack == 1
 ```
+
+This illustrates the target testing style for a full creature pipeline,
+which isn't built yet — only the attack-level pipeline is (see
+[Current Status](#current-status)). The `hp == 23` figure isn't
+invented: it's the project's actual "Wolf" worked example from
+[DESIGN.md](./DESIGN.md), already a real regression anchor for the HP
+calculation specifically
+(`tests/transformation/dnd/v3x/calculations/test_vitality.py::test_wolf_vitality_matches_design_doc_example`),
+just not yet wired to a single end-to-end `convert()` call like this.
 
 ---
 
@@ -401,7 +428,8 @@ Currently used:
 
 - Python
 - `google-generativeai` (Gemini API)
-- Jinja2
+- Jinja2 (LLM prompts, and HTML/CSS card + gallery templates)
+- Bootstrap 5 / highlight.js (via CDN, gallery page UI only — not a pip dependency)
 - dataclasses
 - pytest
 
@@ -410,7 +438,6 @@ Planned:
 - requests / BeautifulSoup
 - SQLite / SQLAlchemy
 - FastAPI
-- HTML/CSS templates
 
 ---
 
@@ -432,6 +459,7 @@ This project is designed to demonstrate real-world software engineering patterns
 - **[DESIGN.md](./DESIGN.md)** — original technical vision: architecture, transformation algorithms, intermediate data model, and LLM classification workflow
 - **[monsterforge/docs/PROJECT_STATUS.md](./monsterforge/docs/PROJECT_STATUS.md)** — current state: what's built, test coverage, known limitations
 - **[monsterforge/docs/MVP_ZERO.md](./monsterforge/docs/MVP_ZERO.md)** — case study: what the first working vertical slice (Attack → MoveCard) demonstrates about the project's engineering approach
+- **[monsterforge/docs/RENDERING_AND_GALLERY.md](./monsterforge/docs/RENDERING_AND_GALLERY.md)** — case study: turning a MoveCard into a printable card, and browsing real pipeline output in a gallery
 - **[monsterforge/docs/PIPELINE_ARCHITECTURE.md](./monsterforge/docs/PIPELINE_ARCHITECTURE.md)** — full pipeline schema and architectural decisions
 - **[monsterforge/docs/LLM_ARCHITECTURE.md](./monsterforge/docs/LLM_ARCHITECTURE.md)** — how the LLM client layer is structured
 

@@ -1,9 +1,11 @@
 # Project Status
 
-Snapshot of where MonsterForge stands as of August 17, 2026.
+Snapshot of where MonsterForge stands as of August 19, 2026.
 For the system's design and long-term architecture, see [PIPELINE_ARCHITECTURE.md](./PIPELINE_ARCHITECTURE.md)
 and [DESIGN.md](../../DESIGN.md). For how the LLM layer specifically is
-structured, see [LLM_ARCHITECTURE.md](./LLM_ARCHITECTURE.md).
+structured, see [LLM_ARCHITECTURE.md](./LLM_ARCHITECTURE.md). For how a
+`MoveCard` becomes a printable card and how that's showcased against real
+pipeline output, see [RENDERING_AND_GALLERY.md](./RENDERING_AND_GALLERY.md).
 
 ## In short
 
@@ -12,9 +14,20 @@ a D&D 3.x attack, entered by hand or with optional semantic context
 (creature description, subtype...), converts through the full pipeline into a
 domain `MoveCard` and comes out as JSON.
 It has been exercised against the real Gemini API repeatedly, not just mocked —
-including two independent full-dataset runs (65 real attacks each) kept for
-review, one classification-only and one through the complete pipeline.
-The current test suite contains 479 passing tests, 0 failing.
+including four independent full-dataset runs (65 real attacks each) kept for
+review: classification-only, through the complete pipeline without semantic
+context, through the complete pipeline again with semantic context added, and
+a fourth time after adding a description-length constraint to the
+classification prompt.
+
+On top of that vertical slice, the `MoveCard` domain object can now be
+rendered into an actual printable HTML/CSS card, and every card the
+project has produced against the real API can be browsed in a static
+gallery page with a raw-input/classification/JSON drill-down per card —
+see [RENDERING_AND_GALLERY.md](./RENDERING_AND_GALLERY.md) for what that
+demonstrates.
+
+The current test suite contains 497 passing tests, 0 failing.
 
 Persistence, an HTTP API, and a human-validation workflow are designed
 in detail but not yet built — see [Limitations](#limitations--not-yet-built)
@@ -44,22 +57,28 @@ below.
   classification (e.g. `creature_subtype=incorporeal` correctly forces
   `move_type=magical` per the prompt's own rule).
 
-- **Three CLI entry points** (`python -m monsterforge.entrypoints.<name>`):
+- **CLI entry points** (`python -m monsterforge.entrypoints.<name>`):
   - `convert_attack_cli` — hand-enter an attack (+ optional context), get its
     MoveCard JSON.
   - `test_llm_prompt_cli` — render any Jinja2 prompt template and send it
     to the real LLM client, for iterating on prompts directly.
-  - `collect_real_classifications` / `collect_real_pipeline_conversions` —
-    batch tools that run all 65 samples in `SAMPLE_ATTACKS` through, respectively,
-    just `classify_attack()` or the complete pipeline, against the real API
-    (5s delay between calls, configurable per script), saving raw + parsed
-    results to `entrypoints/output/*.json` for manual review. Deliberately two
-    independent scripts making two independent rounds of real calls, not one
-    reusing the other's data — so results can also be diffed against each
-    other to see how much a live classification varies run to run (including
-    whether the model's self-reported confidence is at all stable). **Not**
-    part of the automated test suite: real API calls, non-deterministic,
-    several minutes, quota use.
+  - `collect_real_classifications` — batch tool running all 65 cases in
+    `SAMPLE_ATTACKS` through just `classify_attack()` against the real API.
+  - `collect_real_pipeline_conversions` — batch tool running all 65 cases
+    in `SAMPLE_ATTACKS_WITH_CONTEXT` (the same attacks, paired with real
+    semantic context) through the complete pipeline against the real API.
+    Both batch tools save raw + parsed results to `entrypoints/output/*.json`
+    for manual review, with a 5s delay between calls (configurable per
+    script). Deliberately two independent scripts making independent rounds
+    of real calls, not one reusing the other's data — so results can also
+    be diffed against each other to see how much a live classification
+    varies run to run (including whether the model's self-reported
+    confidence is at all stable). **Not** part of the automated test suite:
+    real API calls, non-deterministic, several minutes, quota use.
+  - `render_sample_cards` / `render_gallery` — render the existing
+    `collect_real_pipeline_conversions` output into, respectively, one
+    static HTML file per card (a manual QA aid) and the browsable gallery
+    page. Pure rendering over already-collected data, no new API calls.
 
 - **A reusable golden-file validation procedure**
   (`tests/tools/generate_expected_outputs.py`, built on the generic
@@ -70,9 +89,22 @@ below.
   pipelines (feats, spells, special qualities) needing the same
   validate-once-then-pin workflow.
 
+- **`MoveCard` → printable HTML/CSS card** (`rendering/`), sharing the
+  same `serialization/` output the future HTTP API will return rather
+  than converting from the domain model independently. Every card
+  section has a deterministic size regardless of content — free text
+  (the LLM-generated description in particular) is capped rather than
+  letting the card grow, matching a physical card's fixed footprint.
+  See [RENDERING_AND_GALLERY.md](./RENDERING_AND_GALLERY.md).
+
+- **A static gallery of every card produced against the real API**: one
+  page, a clickable entry per sample, each opening a raw-input /
+  classification / JSON / rendered-card drill-down — real pipeline
+  output, not hand-picked examples.
+
 ## Test coverage
 
-**479 passing, 0 failing.** A set of 9 pre-existing failures (unrelated
+**497 passing, 0 failing.** A set of 9 pre-existing failures (unrelated
 to the attack pipeline itself — stale tests in `tests/domain/`,
 `tests/rules/dnd/v3x/`, and `tests/structured_data/dnd/v3x/`, left over
 from earlier field/behavior changes elsewhere in the codebase that the
@@ -109,12 +141,14 @@ ship:
   (`transformation/dnd/v3x/converters/move_converter.py` remains an
   intentional stub for when a second source exists).
 
-The next phase — "MVP espanso" — has all of the above designed in
-detail but not yet built: persistence with stable card identity derived
-from a content fingerprint (so the same attack always resolves to the
-same card, even across separate runs), a FastAPI HTTP layer, and a
-confidence-gated human validation step for low-confidence LLM
-classifications.
+All of the above is designed in detail but not yet built: persistence
+with stable card identity derived from a content fingerprint (so the
+same attack always resolves to the same card, even across separate
+runs), a FastAPI HTTP layer, and a confidence-gated human validation
+step for low-confidence LLM classifications. Rendering a `MoveCard`
+into a printable card — originally part of this same "later" bucket —
+has since moved out of it and is built; see
+[RENDERING_AND_GALLERY.md](./RENDERING_AND_GALLERY.md).
 
 ## Notable fixes and findings
 
@@ -162,15 +196,24 @@ full changelog:
   states one. `KNOWN_ATTACKS` as a fallback for genuinely
   context-free lookups remains worth keeping, just not the main fix.
 - [PIPELINE_ARCHITECTURE.md](./PIPELINE_ARCHITECTURE.md) was revised to settle
-  an open question about the not-yet-built `rendering/` stage: whether it
-  should share the same `serialization/` output as `api/`, or convert from
-  `domain/` independently. Settled on sharing — including the same reduction
-  of referenced cards (e.g. `MoveCard.cards_to_add`) to `{"name", "id"}` —
-  once it became clear that reduction isn't a network-payload optimization
-  but a consequence of the physical card format itself (standard
-  Magic-sized cards, ~63×88mm, can't fit another card's full contents).
-  A superseded dev-note proposing an earlier, less-motivated version of the
-  same fork was removed once its content was folded in.
+  an open question about the (at the time not-yet-built) `rendering/` stage:
+  whether it should share the same `serialization/` output as `api/`, or
+  convert from `domain/` independently. Settled on sharing — including the
+  same reduction of referenced cards (e.g. `MoveCard.cards_to_add`) to
+  `{"name", "id"}` — once it became clear that reduction isn't a
+  network-payload optimization but a consequence of the physical card
+  format itself (standard Magic-sized cards, ~63×88mm, can't fit another
+  card's full contents). A superseded dev-note proposing an earlier,
+  less-motivated version of the same fork was removed once its content
+  was folded in.
+- Once `rendering/` was actually built and used to browse many real
+  cards side by side in the gallery, the card's fixed-height layout
+  surfaced the description field's real character budget (~180-190
+  characters before the card's own line-clamp would truncate it). That
+  number was fed back into the classification prompt as an explicit
+  160-character cap, then verified — not just assumed to work — by
+  running the full 65-case sample set against the real API a third
+  time and comparing description lengths against the two earlier runs.
 
 ## Documentation housekeeping
 
@@ -179,7 +222,8 @@ to `monsterforge/docs/` (it previously pointed to a root-level `docs/` folder
 that never existed), distinguishes current status from the original vision,
 and no longer mentions the PyQt5 desktop tool from the original plan (see
 [Architecture](./PIPELINE_ARCHITECTURE.md), superseded by a FastAPI JSON API
-serving both `api/` and a future `rendering/` stage). The original README is
+serving both `api/` and `rendering/` — the latter still unbuilt at the time
+of that rewrite, since built, see above). The original README is
 kept for reference at
 [monsterforge/docs/archive/README_v1.md](./archive/README_v1.md).
 
