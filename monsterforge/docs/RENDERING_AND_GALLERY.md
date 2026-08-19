@@ -7,7 +7,7 @@ its gallery demonstrate about the project's engineering approach, not
 just that they work — see [PROJECT_STATUS.md](./PROJECT_STATUS.md) for
 current numbers.
 
-**See it live:** _[GitHub Pages link — TODO]_
+**See it live:** <https://alteredlilac.github.io/MonsterForge/>
 
 ## What it is
 

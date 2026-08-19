@@ -40,7 +40,7 @@ to produce consistent and explainable outputs.
 
 ## Demo
 
-**[Browse the MoveCard gallery — TODO: GitHub Pages link]** — every card the
+**[Browse the MoveCard gallery](https://alteredlilac.github.io/MonsterForge/)** — every card the
 project has produced against the real Gemini API, browsable in one page, each
 with a drill-down into its raw input, LLM classification, and JSON. See
 **[monsterforge/docs/RENDERING_AND_GALLERY.md](./monsterforge/docs/RENDERING_AND_GALLERY.md)**
