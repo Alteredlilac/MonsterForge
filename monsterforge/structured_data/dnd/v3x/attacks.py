@@ -21,13 +21,13 @@ class Attack:
     move_type: MoveType
     name: str
     description: str | None = None    
-    attack_bonus: int | None = None    #tiro per colpire
-    melee: bool = True      #mischia / distanza
-    touch: bool = False     # attacco di contatto
+    attack_bonus: int | None = None    # to-hit roll bonus
+    melee: bool = True      # True = melee, False = ranged
+    touch: bool = False     # touch attack
     # Range
     attack_range: EffectRange | None = None
     # Damages
-    damages: list[Damage] = field(default_factory=list) # elenco dei danni dell'attacco
+    damages: list[Damage] = field(default_factory=list)
     # Critical Hit
     critical_hit: CriticalHit | None = None 
     # Effects

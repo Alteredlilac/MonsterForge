@@ -64,11 +64,11 @@ class Creature:
     spell_resistance: int | None = None
     power_resistance: int | None = None
     # Base Attack / Grapple
-    base_attack: int # attacco base
-    grapple: int     # lotta
+    base_attack: int
+    grapple: int
     # Attacks
-    attacks: list[Attack] = field(default_factory=list) 
-    full_attack: FullAttack | None = None # None = scelta di design per robustezza
+    attacks: list[Attack] = field(default_factory=list)
+    full_attack: FullAttack | None = None # None is a deliberate design choice, for robustness
     # Threatened Area  
     space: Space
     reach: Reach
@@ -81,14 +81,14 @@ class Creature:
     spellcasting: list[Spellcasting] = field(default_factory=list)
     # Psionics
     psionics: list[Psionics] = field(default_factory=list)
-    # Saves -> tiri salvezza
+    # Saves
     saves: Saves
-    # Abilities -> caratteristiche
-    abilities: Abilities 
-    # Skills -> abilità 
-    skills: Skills    
-    # Feats -> Talenti
-    feats: list[Feat] = field(default_factory=list)  
+    # Abilities
+    abilities: Abilities
+    # Skills
+    skills: Skills
+    # Feats
+    feats: list[Feat] = field(default_factory=list)
     # Equipment
     equip: list[Item] = field(default_factory=list) 
     # Environment
@@ -102,11 +102,14 @@ class Creature:
     # Organization is intentionally excluded because it describes encounter
     # composition rather than creature data. It is out of scope for this
     # card-based game system.
-    challenge_rating: str # grado sfida esistono 1/2, 1/3, 1/4, eccetera gestito come str
+    challenge_rating: str
+    # NOTE:
+    # Challenge rating is kept as str rather than a numeric type because
+    # fractional values exist (1/2, 1/3, 1/4, etc.), not just integers.
     # NOTE:
     # Treasure is intentionally excluded because it represents loot generation
     # rather than intrinsic creature data, and is out of scope for this project.
-    alignment: Alignment  # allineamento
+    alignment: Alignment
     # NOTE:
     # Advancement and Level Adjustment are intentionally excluded because they
     # describe progression rules rather than intrinsic creature data, and are
@@ -125,33 +128,33 @@ class CreatureModifier:
     only the deltas to apply on top of a base Creature.
     """
     # NOTE:
-    # Overrides (sostituiscono il valore della creatura base, se presenti)
-    # Additive (si sommano a quanto già presente nella creatura base)
-    # Modifiers (bonus/penalità da applicare)
+    # Overrides (replace the base creature's value, if present)
+    # Additive (add to what the base creature already has)
+    # Modifiers (bonus/penalty to apply)
     id: uuid.UUID = field(default_factory=uuid.uuid4)
     # Creature Data
-    name: str                        # "Licantropia", "Vampirismo"
+    name: str                        # e.g. "Lycanthropy", "Vampirism"
     type_override: CreatureType | None = None 
     added_subtypes: list[CreatureSubtype] = field(default_factory=list)
     size_override: Size | None = None
     # Creature Description
-    added_description: str # va aggiunta alla descrizione base
+    added_description: str # to be appended to the base description
     # Life
     added_hit_dice: list[HitDice] = field(default_factory=list)
     added_hit_point_bonus: int | None = None   # additional hit point modifier
     # Initiative
-    initiative_modifier: int | None = None # bonus all'iniziativa
+    initiative_modifier: int | None = None
     # Movements
-    added_speed: list[Movement] = field(default_factory=list)  # nuove modalità di movimento (es. Vampirismo aggiunge "volare 18m")
-    speed_bonus: dict[MovementMode, int] = field(default_factory=dict)  # bonus a modalità già esistenti, es. {LAND: 3}
+    added_speed: list[Movement] = field(default_factory=list)  # e.g. Vampirism adds "fly 18m"
+    speed_bonus: dict[MovementMode, int] = field(default_factory=dict)  # bonus to existing modes, e.g. {LAND: 3}
     # Armor Class
-    armor_class_modifier: ArmorClass | None = None # bonus alla classe armatura
-    armor_class_override: ArmorClass | None = None # nuovi valori da sovrascrivere    
+    armor_class_modifier: ArmorClass | None = None
+    armor_class_override: ArmorClass | None = None
     # Resistances
-    spell_resistance_base: int | None = None  # base esempio 10, 11
-    spell_resistance_per_level: int | None = None # progressione per livello
-    power_resistance_base: int | None = None # base esempio 10, 11
-    power_resistance_per_level: int | None = None # progressione per livello
+    spell_resistance_base: int | None = None  # e.g. 10, 11
+    spell_resistance_per_level: int | None = None
+    power_resistance_base: int | None = None # e.g. 10, 11
+    power_resistance_per_level: int | None = None
     # Base attack bonus
     added_base_attack: int | None = None
     # Attacks
@@ -168,13 +171,13 @@ class CreatureModifier:
     added_spellcasting: Spellcasting  | None = None  
     # Psionics
     added_psionics: Psionics | None = None
-    # Saves -> tiri salvezza
+    # Saves
     saves_modifier: Saves | None = None
-    # Abilities -> caratteristiche
+    # Abilities
     ability_modifiers: dict[str, int] = field(default_factory=dict)
-    # Skills -> abilità 
-    skills_modifiers: Skills  | None = None  
-    # Feats -> Talenti
+    # Skills
+    skills_modifiers: Skills  | None = None
+    # Feats
     added_feats: list[Feat] = field(default_factory=list)
     # Equipment
     # Some CreatureModifiers can add additional equipment to the base creature.

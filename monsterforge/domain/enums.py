@@ -14,24 +14,24 @@ from enum import Enum
 # =====================
 # GENERAL
 # =====================
-class Size(str, Enum):   # usato per creature e Item
-    FINE = "fine"             #Minuta
-    DIMINUTIVE = "diminutive" #Piccolissima
-    TINY = "tiny"             #Minuscola
-    SMALL = "small"           #Piccola
-    MEDIUM = "medium"         #Media
-    LARGE = "large"           #Grande
-    HUGE = "huge"             #Enorme
-    GARGANTUAN = "gargantuan" #Mastodontica
-    COLOSSAL = "colossal"     #Colossale
+class Size(str, Enum):   # used for creatures and items
+    FINE = "fine"
+    DIMINUTIVE = "diminutive"
+    TINY = "tiny"
+    SMALL = "small"
+    MEDIUM = "medium"
+    LARGE = "large"
+    HUGE = "huge"
+    GARGANTUAN = "gargantuan"
+    COLOSSAL = "colossal"
 
-class Usage(str, Enum): # usato per move e Item
-    UNLIMITED = "unlimited"       # Illimitato
-    DAILY = "daily"                # Giornaliero
-    LIMITED = "limited"            # Limitato
-    SITUATIONAL = "situational"    # Situazionale
+class Usage(str, Enum): # used for moves and items
+    UNLIMITED = "unlimited"
+    DAILY = "daily"
+    LIMITED = "limited"
+    SITUATIONAL = "situational"
 
-class TimeUnit(str, Enum):  # usato per move e Item
+class TimeUnit(str, Enum):  # used for moves and items
     ROUND = "round"
     MINUTE = "minute"
     HOUR = "hour"
@@ -40,108 +40,103 @@ class TimeUnit(str, Enum):  # usato per move e Item
     MONTH = "month"
     YEAR = "year"
 
-class DamageType(str, Enum):    # used for damage classification per move e Item
+class DamageType(str, Enum):    # used for damage classification per move and item
     PHYSICAL = "physical"
     FIRE = "fire"
     COLD = "cold"
     ACID = "acid"
-    LIGHTNING = "lightning"    # elettricità
-    THUNDER = "thunder"        # suono
+    LIGHTNING = "lightning"
+    THUNDER = "thunder"
     DISINTEGRATION = "disintegration"
     NEGATIVE_ENERGY = "negative_energy"
     POSITIVE_ENERGY = "positive_energy"
 
-class AffectedAttribute(str, Enum):    # si usa in caso di bonus , malus o cura per move e Item
-    #VITA
-    TOTAL_LIFE = "total_life"         #VITA
-    CURRENT_LIFE  = "current_life"    #VITA_TEMPORANEA
-    #PROTEZIONE
-    ARMOR  = "armor"                  #ARMATURA
-    TALISMAN  = "talisman"            #TALISMANO
-    #PUNTI
-    STAMINA  = "stamina"              #FIATO
-    MANA  = "mana"                    #MAGIA
-    #INTERPRETAZIONE
-    ATHLETICS  = "athletics"          #ATLETICA
-    EMPATHY  = "empathy"              #EMPATIA
-    PERCEPTION  = "perception"        #PERCEZIONE
-    STEALTH  = "stealth"              #FURTIVITA
-    KNOWLEDGE  = "knowledge"          #CULTURA
-    CRAFTING  = "crafting"            #ARTIGIANATO
-    #CORPO
-    ATTACK  = "attack"                #ATTACCO
-    DEFENSE  = "defense"              #DIFESA
-    SPEED  = "speed"                  #VELOCITA
-    #SPIRITO
-    POWER  = "power"                  #POTERE
-    WARD  = "ward"                    #TANGENZA
-    FLOW  = "flow"                    #SPIN
+class AffectedAttribute(str, Enum):    # used for a bonus, malus, or healing on a move or item
+    TOTAL_LIFE = "total_life"
+    CURRENT_LIFE  = "current_life"
+    ARMOR  = "armor"
+    TALISMAN  = "talisman"
+    STAMINA  = "stamina"
+    MANA  = "mana"
+    ATHLETICS  = "athletics"
+    EMPATHY  = "empathy"
+    PERCEPTION  = "perception"
+    STEALTH  = "stealth"
+    KNOWLEDGE  = "knowledge"
+    CRAFTING  = "crafting"
+    ATTACK  = "attack"
+    DEFENSE  = "defense"
+    SPEED  = "speed"
+    POWER  = "power"
+    WARD  = "ward"
+    FLOW  = "flow"
 
 # =====================
 # CREATURE
 # =====================
 class CreatureType(str, Enum):
-    ANIMAL = "animal"               # ANIMALE
-    MONSTER = "monster"             # BESTIA_MAGICA, ABBERRAZIONE
-    CONSTRUCT = "construct"         # COSTRUTTO
-    DRAGON = "dragon"               # DRAGO
-    ELEMENTAL = "elemental"         # ELEMENTALE
-    OUTSIDER = "outsider"           # ESTERNO
-    FEY = "fey"                     # FOLLETTO
-    OOZE = "ooze"                   # MELMA
-    UNDEAD = "undead"               # NON_MORTO
-    VERMIN = "vermin"               # PARASSITA
-    HUMANOID = "humanoid"           # UMANOIDE, UMANOIDE_MOSTRUOSO, GIGANTE
-    PLANT = "plant"                 # VEGETALE
+    ANIMAL = "animal"
+    MONSTER = "monster"             # covers Magical Beast and Aberration
+    CONSTRUCT = "construct"
+    DRAGON = "dragon"
+    ELEMENTAL = "elemental"
+    OUTSIDER = "outsider"
+    FEY = "fey"
+    OOZE = "ooze"
+    UNDEAD = "undead"
+    VERMIN = "vermin"
+    HUMANOID = "humanoid"           # covers Humanoid, Monstrous Humanoid, and Giant
+    PLANT = "plant"
 
 # =====================
 # MOVE
 # =====================
-class MoveType(str, Enum):       # TIPO
-    PHYSICAL = "physical"   # Fisico
-    MAGICAL = "magical"     # Magico
+class MoveType(str, Enum):
+    PHYSICAL = "physical"
+    MAGICAL = "magical"
 
-class MoveCategory(str, Enum):   # Categoria
-    ATTACK = "attack"       # Attacco
-    DEFENSE = "defense"     # Difesa
-    SPECIAL = "special"     # Speciale
+class MoveCategory(str, Enum):
+    ATTACK = "attack"
+    DEFENSE = "defense"
+    SPECIAL = "special"
 
-class MoveMode(str, Enum):       # Modalita
-    ACTIVE = "active"       # Attivo
-    PASSIVE = "passive"     # Passivo
+class MoveMode(str, Enum):
+    ACTIVE = "active"
+    PASSIVE = "passive"
 
-class EffectType(str, Enum):     #"Danno", "Cura", Bonus, malus,  fare enumerabile
+class EffectType(str, Enum):
     DAMAGE = "damage"
     HEALING = "healing"
     BONUS = "bonus"
     MALUS = "malus"
-    ENTITY = "entity"       # influenza l'entità in quanto tale aggiunge o toglie carte al mazzo
-                            # usato anche per effetti tipo spinta o altro che influenzano entità
+    ENTITY = "entity"       # affects the entity itself — adds or removes cards
+                             # from the deck; also used for effects like knockback
+                             # or other things that affect entities directly
 class EntityEffect(str, Enum):
     CREATURES = "creatures"
     MOVES = "moves"
-    ITEMS = "items" 
+    ITEMS = "items"
 
-class Target(str, Enum):         # Bersaglio
-    SINGLE = "single"       # Singolo
-    MULTIPLE = "multiple"   # multiplo
-    AREA = "area"           # Area
-    SELF = "self"           # Se stesso
+class Target(str, Enum):
+    SINGLE = "single"
+    MULTIPLE = "multiple"
+    AREA = "area"
+    SELF = "self"
 
-class MoveRange(str, Enum):     # Gittata
-    MELEE = "melee"        # contatto
-    RANGED = "ranged"      # distanza in metri
+class MoveRange(str, Enum):
+    MELEE = "melee"        # touch range
+    RANGED = "ranged"      # distance in meters
 
-class Resource(str, Enum):       # Risorsa
-    STAMINA = "stamina"     # Fiato
-    MANA = "mana"           # Magia
-    NONE = "none"           # Nessuna
+class Resource(str, Enum):
+    STAMINA = "stamina"
+    MANA = "mana"
+    NONE = "none"
 
-class Duration(str, Enum):                 # Durata
-    INSTANT = "instant"               # Istantaneo
-    CONCENTRATION = "concentration"   # concentrazione
-    TEMPORARY = "temporary"           # Temporaneo
-    PERMANENT = "permanent"           # Permanente
+class Duration(str, Enum):
+    INSTANT = "instant"
+    CONCENTRATION = "concentration"
+    TEMPORARY = "temporary"
+    PERMANENT = "permanent"
 
 
 # =====================
@@ -168,20 +163,19 @@ class RequirementType(str, Enum):
 # They are currently consumed by transformation logic to build
 # domain objects from external systems.
 class BodyStat(str, Enum):
-    ATTACK  = "attack"    #ATTACCO
-    DEFENSE  = "defense"  #DIFESA
-    SPEED  = "speed"      #VELOCITA
+    ATTACK  = "attack"
+    DEFENSE  = "defense"
+    SPEED  = "speed"
 
 class SpiritStat(str, Enum):
-    POWER  = "power"  #POTERE
-    WARD  = "ward"    #TANGENZA
-    FLOW  = "flow"    #SPIN
+    POWER  = "power"
+    WARD  = "ward"
+    FLOW  = "flow"
 
-class Interpretation(str, Enum): #INTERPRETAZIONE
-    ATHLETICS  = "athletics"    #ATLETICA
-    EMPATHY  = "empathy"        #EMPATIA
-    PERCEPTION  = "perception"  #PERCEZIONE
-    STEALTH  = "stealth"        #FURTIVITA
-    KNOWLEDGE  = "knowledge"    #CULTURA
-    CRAFTING  = "crafting"      #ARTIGIANATO
-   
+class Interpretation(str, Enum):
+    ATHLETICS  = "athletics"
+    EMPATHY  = "empathy"
+    PERCEPTION  = "perception"
+    STEALTH  = "stealth"
+    KNOWLEDGE  = "knowledge"
+    CRAFTING  = "crafting"

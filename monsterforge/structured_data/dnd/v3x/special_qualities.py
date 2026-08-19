@@ -36,56 +36,44 @@ from .enums import DamageType, ConditionType
 class SpecialQuality(SpecialAbility):
     # data
     # Activation
-    always_active: bool = True  # l'effetto è sempre attivo?
+    always_active: bool = True  # whether the effect is always active
     requires_action: bool = False  # requires an action to be used?
-    # raggio di azione
-    effect_range: EffectRange | None = None 
-    triggered_by_contact: bool = False   # attivato dal contatto
-    # TS
+    effect_range: EffectRange | None = None
+    triggered_by_contact: bool = False
     saving_throw: SavingThrow | None = None
-    # danni 
     damages: list[Damage] = field(default_factory=list)
-    # cura 
     healing: list[Healing] = field(default_factory=list)
     # delayed effect?
     delayed_effect: bool = False
     delay_time: TimeExpression | None = None
-    # utilizzo situazionale(dopo 1 round di combattimento esempio)
-    situational_usage: bool = False
+    situational_usage: bool = False # e.g. only after 1 round of combat
     usage_condition: str | None = None
-    #durata
     effect_duration: EffectDuration | None = None
     # Target
-    target: EffectTarget | None = None # brasaglio dell'effetto
+    target: EffectTarget | None = None
 
-    applied_conditions: list[ConditionType] = field(default_factory=list) # condizioni applicate esempio paralizzato, pietrificato 
-    
-    # resistenze e immunità
-    # riduzione del danno
+    applied_conditions: list[ConditionType] = field(default_factory=list) # e.g. paralyzed, petrified
+
+    # resistances and immunities
     damage_reduction: DamageReduction | None = None
-    # resistenze 
-    damage_resistances: list[DamageResistance] = field(default_factory=list) # elenco delle resistenze
-    # resistenza scacciare
-    turn_resistance: int | None = None # resistenza allo scacciare non morti 
-    # immunità
-    immunities: list[str] = field(default_factory=list) # per ora lasciato str per scelta enum troppo lungo / limitante
-    
-    # vulnerabilità 
+    damage_resistances: list[DamageResistance] = field(default_factory=list)
+    turn_resistance: int | None = None # resistance to turning undead
+
+    # NOTE:
+    # Left as list[str] for now rather than an enum — the set of possible
+    # immunities is too large/limiting to enumerate cleanly.
+    immunities: list[str] = field(default_factory=list)
+
     vulnerabilities: list[DamageType] = field(default_factory=list)
-    
+
     # bonus / malus
     modifiers: list[EffectModifier] = field(default_factory=list)
 
-    # percezioni 
-    perception: str | None = None # descrizione della percezione (scurovisione)
-    #  comunicazione
-    communication: str | None = None # descrizione (Telepatia)
-    
-    # metodo di movimento (volare) 
-    granted_movement: list[Movement] = field(default_factory=list) 
+    perception: str | None = None # e.g. darkvision
+    communication: str | None = None # e.g. telepathy
 
-    # guarigione rapida / rigenerazione
-    regeneration: Regeneration | None = None
+    granted_movement: list[Movement] = field(default_factory=list) # e.g. granted flight
 
-    # guadagna carte?
-    grants: list[EffectGrant] = field(default_factory=list) # creatura, oggetto, effetto 
+    regeneration: Regeneration | None = None # covers both fast healing and regeneration
+
+    grants: list[EffectGrant] = field(default_factory=list) # creature, item, or effect

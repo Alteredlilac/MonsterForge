@@ -27,81 +27,73 @@ class PowerLevel:
 
 
 # =====================
-# Poteri Psionici
+# Psionic Powers
 # =====================
 @dataclass(kw_only=True)
 class Power:
-    name: str 
+    name: str
     # data
-    discipline: PsionicDiscipline # 6 discipline (telepatia, psicometabolismo)
+    discipline: PsionicDiscipline # 6 disciplines (e.g. telepathy, psychometabolism)
     # NOTE:
     # Power Subdisciplines are intentionally not mapped,
     # as they are not required by this domain model.
-    level: list[PowerLevel] # va passata per forza
+    level: list[PowerLevel] # required — must be provided
     # NOTE:
     # Power display (auditory, material, mental etc.) are intentionally
     # not mapped, as they are not required by this domain model.
 
-    manifesting_time: ManifestingTimeValue  #  standard action.  full-round action  free action 
+    manifesting_time: ManifestingTimeValue  # standard action, full-round action, free action
 
-    power_range: EffectRange | None = None # 30 metri 
+    power_range: EffectRange | None = None # e.g. 30 meters
 
-    range_type: SpellRangeType | None = None # contatto, raggio personale, raggio illimitato
-    
-    # danni 
+    range_type: SpellRangeType | None = None # touch, personal range, unlimited range
+
     damages: list[Damage] = field(default_factory=list)
-    # cura 
     healing: list[Healing] = field(default_factory=list)
     # delayed effect?
     delayed_effect: bool = False
     delay_time: TimeExpression | None = None
 
-    # descrizione
-    effect_description: str # breve descizione dell'incantesimo
-    long_description: str   # descrizione estesa dell'incantesimo
+    effect_description: str # brief description of the power
+    long_description: str   # extended description of the power
 
-    duration: EffectDuration = field(default_factory=EffectDuration) 
-    target: EffectTarget | None = None # brasaglio dell'effetto
-    target_number: int | None = None  # numero di bersagli
-    area_effect: EffectArea | None = None # area di effetto
+    duration: EffectDuration = field(default_factory=EffectDuration)
+    target: EffectTarget | None = None
+    target_number: int | None = None
+    area_effect: EffectArea | None = None
 
-    # resistenze e immunità
-    # riduzione del danno
+    # resistances and immunities
     damage_reduction: DamageReduction | None = None
-    # resistenze 
-    damage_resistances: list[DamageResistance] = field(default_factory=list) # elenco delle resistenze
-    # resistenza scacciare
-    turn_resistance: int | None = None # resistenza allo scacciare non morti , mantenuto per simmetria con Spell
+    damage_resistances: list[DamageResistance] = field(default_factory=list)
+    turn_resistance: int | None = None # resistance to turning undead, kept for symmetry with Spell
 
-    # immunità
-    immunities: list[str] = field(default_factory=list) # per ora lasciato str per scelta enum troppo lungo / limitante
-    
-    # vulnerabilità 
+    # NOTE:
+    # Left as list[str] for now rather than an enum — the set of possible
+    # immunities is too large/limiting to enumerate cleanly.
+    immunities: list[str] = field(default_factory=list)
+
     vulnerabilities: list[DamageType] = field(default_factory=list)
-    
+
     # bonus / malus
     modifiers: list[EffectModifier] = field(default_factory=list)
 
-    # percezioni 
-    perception: str | None = None # descrizione della percezione (scurovisione)
-    #  comunicazione
-    communication: str | None = None # descrizione (Telepatia)
-    
-    # metodo di movimento (volare) 
-    granted_movement: list[Movement] = field(default_factory=list) 
+    perception: str | None = None # e.g. darkvision
+    communication: str | None = None # e.g. telepathy
 
-    # guarigione rapida / rigenerazione
-    regeneration: Regeneration | None = None
+    granted_movement: list[Movement] = field(default_factory=list) # e.g. granted flight
 
-    # guadagna carte?
-    grants: list[EffectGrant] = field(default_factory=list) # esempio evoca 2d4 lupi 
+    regeneration: Regeneration | None = None # covers both fast healing and regeneration
 
-    saving_throw: SavingThrow | None = None # None = nessun tiro salvezza
-    # si calcola con 10+liv+ caratteristica minima di lancio
+    grants: list[EffectGrant] = field(default_factory=list) # e.g. summons 2d4 wolves
 
-    power_resistance: bool = True # permette resistenza ai poteri? 
+    saving_throw: SavingThrow | None = None # None = no saving throw
+    # NOTE:
+    # Saving throw DC is calculated as 10 + power level + the minimum
+    # manifesting ability score.
 
-    power_points: int # i punti poteri necessari a lanciare il potere
+    power_resistance: bool = True # whether power resistance applies
+
+    power_points: int # power points required to manifest the power
     # NOTE:
     # Psionic power augmentation is intentionally not mapped,
     # as additional power point costs and scaling effects are not
@@ -111,11 +103,11 @@ class Power:
     # XP costs, material components, and focus requirements are intentionally
     # not mapped, as they are not required by this domain model.
 
-    applied_conditions: list[ConditionType] = field(default_factory=list)  # condizioni applicate esempio paralizzato, pietrificato 
-   
+    applied_conditions: list[ConditionType] = field(default_factory=list)  # e.g. paralyzed, petrified
+
 
 # =====================
-# Incantatore Psionico
+# Psionic Manifester
 # =====================
 @dataclass(kw_only=True)
 class Manifester:
@@ -128,9 +120,9 @@ class Manifester:
 @dataclass(kw_only=True)
 class Psionics(Manifester):
     """Represents the psionic manifestation data of a creature."""
-    manifester_level: int | None = None # livello di manifestazione
-    powers_known: list[Power] = field(default_factory=list) # poteri psionici
-    power_points: int | None = None  # punti potere
+    manifester_level: int | None = None
+    powers_known: list[Power] = field(default_factory=list)
+    power_points: int | None = None
 
     @property
     def is_psionic(self) -> bool:

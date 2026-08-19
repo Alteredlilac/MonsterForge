@@ -39,22 +39,21 @@ class SpecialAttack(SpecialAbility):
     area_effect: bool = False # area attack (affects an area)
 
     # Range
-    attack_range: EffectRange | None = None   # Gittata / portata 
+    attack_range: EffectRange | None = None
     # Damages
-    damages: list[Damage] = field(default_factory=list) # elenco dei danni dell'attacco
+    damages: list[Damage] = field(default_factory=list)
     # Critical Hit
-    critical_hit: CriticalHit | None = None     
-    # Saving Throw -> tiro salvezza
-    saving_throw: SavingThrow | None = None     
-    # Duration 
+    critical_hit: CriticalHit | None = None
+    # Saving Throw
+    saving_throw: SavingThrow | None = None
+    # Duration
     duration: EffectDuration = field(default_factory=EffectDuration)
-    #utilizzi
-    usage: EffectUsage = field(default_factory=EffectUsage)    
+    usage: EffectUsage = field(default_factory=EffectUsage)
     # Area of Effect
-    area_of_effect: EffectArea | None = None 
+    area_of_effect: EffectArea | None = None
     # Damage over Time
-    damage_over_time: DamageOverTime | None = None 
+    damage_over_time: DamageOverTime | None = None
     # Target
-    target: EffectTarget  # brasaglio dell'effetto
-    applied_conditions: list[ConditionType] = field(default_factory=list) # condizioni applicate esempio paralizzato, pietrificato  
-    
+    target: EffectTarget
+    applied_conditions: list[ConditionType] = field(default_factory=list) # e.g. paralyzed, petrified
+

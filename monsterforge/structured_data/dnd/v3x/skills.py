@@ -1,13 +1,13 @@
 """
-Abilità
+Skills
 """
 from dataclasses import dataclass, field
 
 # =====================
-# Abilità
+# Skills
 # =====================
 @dataclass(kw_only=True)
-class Skills:       # oggetto che rappresenta le abilità di una creatura
+class Skills:
     """Represents the skill values of a creature stat block."""
     # NOTE: # Some skills (e.g. Craft, Knowledge, Perform, and Profession) have
     # open-ended specializations in D&D 3.5. They are intentionally modeled
@@ -15,73 +15,72 @@ class Skills:       # oggetto che rappresenta le abilità di una creatura
     # a predefined list that would not fully represent all possible cases.
 
     # STANDARD SKILLS 3.5
-    appraise: int | None = None              # Valutare    
-    balance: int | None = None               # Equilibrio
-    bluff: int | None = None                 # Raggirare
-    climb: int | None = None                 # Scalare
-    concentration: int | None = None         # Concentrazione
+    appraise: int | None = None
+    balance: int | None = None
+    bluff: int | None = None
+    climb: int | None = None
+    concentration: int | None = None
 
-    craft: dict[str, int] = field(default_factory=dict) # Artigianato 
+    craft: dict[str, int] = field(default_factory=dict)
     ## Craft (alchemy, weaponsmithing, etc.)
 
-    decipher_script: int | None = None       # Decifrare Scritture
-    diplomacy: int | None = None             # Diplomazia
-    disable_device: int | None = None        # Disattivare Congegni
-    disguise: int | None = None              # Camuffare
-    escape_artist: int | None = None         # Artista della Fuga
-    forgery: int | None = None               # Falsificare
-    gather_information: int | None = None    # Raccogliere Informazioni
-    handle_animal: int | None = None         # Addestrare Animali
-    heal: int | None = None                  # Guarire
-    hide: int | None = None                  # Nascondersi
-    intimidate: int | None = None            # Intimidire
-    jump: int | None = None                  # Saltare
+    decipher_script: int | None = None
+    diplomacy: int | None = None
+    disable_device: int | None = None
+    disguise: int | None = None
+    escape_artist: int | None = None
+    forgery: int | None = None
+    gather_information: int | None = None
+    handle_animal: int | None = None
+    heal: int | None = None
+    hide: int | None = None
+    intimidate: int | None = None
+    jump: int | None = None
 
-    knowledge: dict[str, int] = field(default_factory=dict)  # Conoscenze
+    knowledge: dict[str, int] = field(default_factory=dict)
     ## Knowledge (arcana, nature, religion, etc.)
 
-    listen: int | None = None                # Ascoltare
-    move_silently: int | None = None         # Muoversi Silenziosamente
-    open_lock: int | None = None             # Scassinare
+    listen: int | None = None
+    move_silently: int | None = None
+    open_lock: int | None = None
 
-    perform: dict[str, int] = field(default_factory=dict) # Intrattenere
+    perform: dict[str, int] = field(default_factory=dict)
     # # Perform (sing, dance, oratory, etc.)
 
-    profession: dict[str, int] = field(default_factory=dict) # Professione
+    profession: dict[str, int] = field(default_factory=dict)
     #Profession (farmer, sailor, merchant, etc.)
 
-    ride: int | None = None                  # Cavalcare
-    search: int | None = None                # Cercare
-    sense_motive: int | None = None          # Percepire Intenzioni
-    sleight_of_hand: int | None = None       # Rapidità di Mano
+    ride: int | None = None
+    search: int | None = None
+    sense_motive: int | None = None
+    sleight_of_hand: int | None = None
 
     # NOTE: speak_language is intentionally excluded from skill mapping:
     # languages are tracked separately, as known languages rather than numeric skill values
 
-    spellcraft: int | None = None            # Sapienza Magica
-    spot: int | None = None                  # Osservare
-    survival: int | None = None              # Sopravvivenza
-    swim: int | None = None                  # Nuotare
-    tumble: int | None = None                # Acrobazia
-    use_magic_device: int | None = None      # Utilizzare Oggetti Magici
-    use_rope: int | None = None              # Usare Corde
+    spellcraft: int | None = None
+    spot: int | None = None
+    survival: int | None = None
+    swim: int | None = None
+    tumble: int | None = None
+    use_magic_device: int | None = None
+    use_rope: int | None = None
 
     # PSIONIC SKILLS 3.5
-    autohypnosis: int | None = None          # autoipnosi 
-    psicraft: int | None = None              # sapienza psionica 
-    use_psionic_device: int | None = None    # Utilizzare Oggetti Psionici
+    autohypnosis: int | None = None
+    psicraft: int | None = None
+    use_psionic_device: int | None = None
 
     # NOTE: the following skills are specific to version 3.0.
     # STANDARD SKILLS 3.0
-    alchemy: int | None = None              # Alchimia
-    innuendo: int | None = None            # Comunicazione Segreta
-    animal_empathy: int | None = None      # Empatia Animale
-    read_lips: int  | None = None         # Leggere Labbra
-    intuit_direction: int | None = None    # Orientamento
-    scry: int | None = None            # Scrutare
-    pick_pocket: int | None = None        # Svuotare Tasche
+    alchemy: int | None = None
+    innuendo: int | None = None
+    animal_empathy: int | None = None
+    read_lips: int  | None = None
+    intuit_direction: int | None = None
+    scry: int | None = None
+    pick_pocket: int | None = None
 
     # PSIONIC SKILLS 3.0
-    stabilize_self: int | None = None      # Stabilizzarsi
-    remote_view: int | None = None          # Vista Remota
-    
+    stabilize_self: int | None = None
+    remote_view: int | None = None

@@ -14,24 +14,24 @@ from enum import Enum
 # =====================
 # GENERAL
 # =====================
-class MoveType(str, Enum):       # TIPO
-    PHYSICAL = "physical"   # Fisico
-    MAGICAL = "magical"     # Magico
-    
+class MoveType(str, Enum):
+    PHYSICAL = "physical"
+    MAGICAL = "magical"
+
 class UnitSystem(str, Enum):
     METRIC = "metric"
     IMPERIAL = "imperial"
-    
-class Size(str, Enum):   # usato per creature e Item
-    FINE = "fine"             #Minuta
-    DIMINUTIVE = "diminutive" #Piccolissima
-    TINY = "tiny"             #Minuscola
-    SMALL = "small"           #Piccola
-    MEDIUM = "medium"         #Media
-    LARGE = "large"           #Grande
-    HUGE = "huge"             #Enorme
-    GARGANTUAN = "gargantuan" #Mastodontica
-    COLOSSAL = "colossal"     #Colossale
+
+class Size(str, Enum):   # used for creatures and items
+    FINE = "fine"
+    DIMINUTIVE = "diminutive"
+    TINY = "tiny"
+    SMALL = "small"
+    MEDIUM = "medium"
+    LARGE = "large"
+    HUGE = "huge"
+    GARGANTUAN = "gargantuan"
+    COLOSSAL = "colossal"
 
 class DiceType(str, Enum):
     D2 = "d2"
@@ -56,12 +56,12 @@ class SavingThrowType(str, Enum):
     WILL = "will"
 
 class SavingThrowEffect(str, Enum):
-    NEGATES = "negates"       # il tiro salvezza nega completamente l'effetto
-    HALF = "half"             # il tiro salvezza dimezza i danni
-    PARTIAL = "partial"       # il tiro salvezza riduce parzialmente l'effetto
-    DISBELIEF = "disbelief"   # il tiro salvezza permette di dubitare dell'illusione
+    NEGATES = "negates"       # the saving throw completely negates the effect
+    HALF = "half"             # the saving throw halves the damage
+    PARTIAL = "partial"       # the saving throw partially reduces the effect
+    DISBELIEF = "disbelief"   # the saving throw allows disbelief of the illusion
 
-class TimeUnit(str, Enum):  # usato per move e Item
+class TimeUnit(str, Enum):  # used for moves and items
     ROUND = "round"
     MINUTE = "minute"
     HOUR = "hour"
@@ -70,31 +70,31 @@ class TimeUnit(str, Enum):  # usato per move e Item
     MONTH = "month"
     YEAR = "year"
 
-class Usage(str, Enum): # usato per move e Item
-    UNLIMITED = "unlimited"       # Illimitato
-    DAILY = "daily"                # Giornaliero
-    LIMITED = "limited"            # Limitato
-    SITUATIONAL = "situational"    # Situazionale
+class Usage(str, Enum): # used for moves and items
+    UNLIMITED = "unlimited"
+    DAILY = "daily"
+    LIMITED = "limited"
+    SITUATIONAL = "situational"
 
-class Duration(str, Enum):                 # Durata
-    INSTANT = "instant"               # Istantaneo
-    CONCENTRATION = "concentration"   # concentrazione
-    TEMPORARY = "temporary"           # Temporaneo
-    PERMANENT = "permanent"           # Permanente
+class Duration(str, Enum):
+    INSTANT = "instant"
+    CONCENTRATION = "concentration"
+    TEMPORARY = "temporary"
+    PERMANENT = "permanent"
 
-class AreaEffectShape(str, Enum):   # Forma dell'area di effetto
-    BURST = "burst"              # esplosione (si espande da un punto)
-    SPREAD = "spread"            # propagazione (si espande seguendo linee di effetto)
-    EMANATION = "emanation"      # emanazione (si estende da una creatura o punto)
-    LINE = "line"                # linea
-    CONE = "cone"                # cono
-    SQUARE = "square"            # quadrato
-    CUBE = "cube"                # cubo
-    SPHERE = "sphere"            # sfera
-    CYLINDER = "cylinder"        # cilindro
+class AreaEffectShape(str, Enum):
+    BURST = "burst"              # expands outward from a point
+    SPREAD = "spread"            # expands following lines of effect
+    EMANATION = "emanation"      # extends from a creature or point
+    LINE = "line"
+    CONE = "cone"
+    SQUARE = "square"
+    CUBE = "cube"
+    SPHERE = "sphere"
+    CYLINDER = "cylinder"
 
 class DamageType(str, Enum):
-    # FISICI
+    # PHYSICAL
     BLUDGEONING = "bludgeoning"
     SLASHING = "slashing"
     PIERCING = "piercing"
@@ -103,18 +103,18 @@ class DamageType(str, Enum):
     # PHYSICAL is a generic category used when the specific physical damage
     # type is unknown or cannot be mapped to a standard D&D damage type.
     # ENERGY DAMAGE
-    FIRE = "fire"              # fuoco
-    COLD = "cold"              # freddo
-    ACID = "acid"              # acido
-    ELECTRICITY = "electricity" # elettricità
-    SONIC = "sonic"            # sonoro
+    FIRE = "fire"
+    COLD = "cold"
+    ACID = "acid"
+    ELECTRICITY = "electricity"
+    SONIC = "sonic"
     # FORCE / DISINTEGRATION
     DISINTEGRATION = "disintegration"
     FORCE = "force"
-    # ENERGIA NEGATIVA/ POSITIVA
+    # NEGATIVE / POSITIVE ENERGY
     NEGATIVE_ENERGY = "negative_energy"
     POSITIVE_ENERGY = "positive_energy"
-    # RISUCCHIO
+    # DRAIN
     ENERGY_DRAIN = "energy_drain"
 
 class ConditionType(str, Enum):
@@ -162,8 +162,8 @@ class TargetType(str, Enum):
     OBJECT = "object"
     AREA = "area"
     EFFECT = "effect"
-    SOMETHING = "something"   # creature ed oggetti
-    EVERYTHING = "everything" # anche effetti e incantesimi, esempio (campo antimagia)
+    SOMETHING = "something"   # creatures and objects
+    EVERYTHING = "everything" # also effects and spells, e.g. an antimagic field
 
 class RequirementOperator(str, Enum):
     LESS_THAN = "less_than"
@@ -173,7 +173,7 @@ class RequirementOperator(str, Enum):
     GREATER_THAN = "greater_than"
 
 class GrantedType(str, Enum):
-    CREATURE = "creature"     # esempio evocazione o charme
+    CREATURE = "creature"     # e.g. summoning or a charm effect
     PHYSICAL_FORM = "physical_form"
     OBJECT = "object"
     ATTACK = "attack"
@@ -185,17 +185,17 @@ class GrantedType(str, Enum):
     SPELL = "spell"
 
 class ModifierTarget(str, Enum):
-    HIT_DICE = "hit_dice"      # dadi vita
-    RANGE = "range"            # portata
-    HIT_POINTS = "hit_points"  # punti ferita
-    SKILL_BONUS = "skill_bonus"  # abilità
-    ABILITY_SCORE = "ability_score" # caratteristiche
-    ATTACK_BONUS = "attack_bonus"  # tiro per colpire
-    SAVING_THROW = "saving_throw"  # tiro salvezza
-    SPELL_RESISTANCE = "spell_resistance" # resistenza incantesimi
-    POWER_RESISTANCE = "power_resistance" # resistenza poteri psionici
-    DAMAGE = "damage"             # danni
-    TURN_RESISTANCE = "turn_resistance" # resistenza allo scacciare
+    HIT_DICE = "hit_dice"
+    RANGE = "range"
+    HIT_POINTS = "hit_points"
+    SKILL_BONUS = "skill_bonus"
+    ABILITY_SCORE = "ability_score"
+    ATTACK_BONUS = "attack_bonus"  # to-hit roll
+    SAVING_THROW = "saving_throw"
+    SPELL_RESISTANCE = "spell_resistance"
+    POWER_RESISTANCE = "power_resistance"
+    DAMAGE = "damage"
+    TURN_RESISTANCE = "turn_resistance" # turning undead
 
 class ModifierConditionType(str, Enum):
     EFFECT = "effect"
@@ -207,59 +207,59 @@ class ModifierConditionType(str, Enum):
 # CREATURE
 # =====================
 class CreatureType(str, Enum):
-    ANIMAL = "animal"               # ANIMALE
-    ABERRATION = "aberration"       # ABBERRAZIONE
-    BEAST = "beast"                 # BESTIA  -> V3.0 only
-    MAGICAL_BEAST = "magical_beast" # BESTIA_MAGICA
-    CONSTRUCT = "construct"         # COSTRUTTO
-    DRAGON = "dragon"               # DRAGO
-    ELEMENTAL = "elemental"         # ELEMENTALE    
-    GIANT = "giant"                 # GIGANTE
-    OUTSIDER = "outsider"           # ESTERNO
-    FEY = "fey"                     # FOLLETTO
-    OOZE = "ooze"                   # MELMA
-    UNDEAD = "undead"               # NON_MORTO
-    VERMIN = "vermin"               # PARASSITA
-    HUMANOID = "humanoid"           # UMANOIDE
-    MONSTROUS_HUMANOID = "monstrous_humanoid" # UMANOIDE_MOSTRUOSO 
-    PLANT = "plant"                 # VEGETALE
+    ANIMAL = "animal"
+    ABERRATION = "aberration"
+    BEAST = "beast"                 # V3.0 only
+    MAGICAL_BEAST = "magical_beast"
+    CONSTRUCT = "construct"
+    DRAGON = "dragon"
+    ELEMENTAL = "elemental"
+    GIANT = "giant"
+    OUTSIDER = "outsider"
+    FEY = "fey"
+    OOZE = "ooze"
+    UNDEAD = "undead"
+    VERMIN = "vermin"
+    HUMANOID = "humanoid"
+    MONSTROUS_HUMANOID = "monstrous_humanoid"
+    PLANT = "plant"
 
 class CreatureSubtype(str, Enum):
     AIR = "air"
     ANGEL = "angel"
-    AQUATIC = "aquatic" 
-    ARCHON = "archon" 
-    AUGMENTED = "augmented" 
-    CHAOTIC = "chaotic" 
-    COLD = "cold" 
-    EARTH = "earth" 
-    EVIL = "evil" 
-    EXTRAPLANAR = "extraplanar" 
-    FIRE = "fire" 
-    GOBLINOID = "goblinoid" 
-    GOOD = "good" 
+    AQUATIC = "aquatic"
+    ARCHON = "archon"
+    AUGMENTED = "augmented"
+    CHAOTIC = "chaotic"
+    COLD = "cold"
+    EARTH = "earth"
+    EVIL = "evil"
+    EXTRAPLANAR = "extraplanar"
+    FIRE = "fire"
+    GOBLINOID = "goblinoid"
+    GOOD = "good"
     INCORPOREAL = "incorporeal"
-    LAWFUL = "lawful" 
-    NATIVE = "native" 
+    LAWFUL = "lawful"
+    NATIVE = "native"
     PSIONIC = "psionic"
-    REPTILIAN = "reptilian" 
-    SHAPECHANGER = "shapechanger" 
-    SWARM = "swarm" 
-    WATER = "water" 
+    REPTILIAN = "reptilian"
+    SHAPECHANGER = "shapechanger"
+    SWARM = "swarm"
+    WATER = "water"
 
-class MovementMode(str, Enum): # metodi di movimento
-    LAND = "land"      # movimento via terra
-    FLY = "fly"        # volare
-    SWIM = "swim"      # nuotare
-    CLIMB = "climb"    # scalare
-    BURROW = "burrow"  # scavare
+class MovementMode(str, Enum):
+    LAND = "land"
+    FLY = "fly"
+    SWIM = "swim"
+    CLIMB = "climb"
+    BURROW = "burrow"
 
-class FlyManeuverability(str, Enum): # manovrabilità di volo
-    PERFECT = "perfect"  # perfetta
-    GOOD = "good"        # buona
-    AVERAGE = "average"  # media
-    POOR = "poor"        # scarsa
-    CLUMSY = "clumsy"    # maldestra
+class FlyManeuverability(str, Enum):
+    PERFECT = "perfect"
+    GOOD = "good"
+    AVERAGE = "average"
+    POOR = "poor"
+    CLUMSY = "clumsy"
 
 class Alignment(str, Enum):
     LAWFUL_GOOD = "Lawful_Good"
@@ -304,7 +304,7 @@ class CastingTime(str, Enum):
     FULL_ROUND_ACTION = "full-round_action"
     FREE_ACTION = "free_action"
     IMMEDIATE_ACTION = "immediate_action"
-    SWIFT_ACTION = "swift_action"  
+    SWIFT_ACTION = "swift_action"
     ROUND = "round"
     MINUTE = "minute"
     HOUR = "hour"
@@ -327,30 +327,30 @@ class SpecialAbilityType(str, Enum):
 # FEATS
 # =====================
 class FeatCategory(str, Enum):
-    METAMAGIC = "metamagic"          # metamagico
-    METAPSIONIC = "metapsionic"      # metapsionico
-    GRANTS_BONUS = "grants_bonus"    # concede bonus o modificatori
-    CRAFTING = "crafting"            # talenti di creazione oggetto
-    GRANTS_ATTACK = "grants_attack"  # concede attacchi speciali
-    GRANTS_QUALITY = "grants_quality"# concede qualità speciali
-    PROFICIENCY = "proficiency"      # concede competenze
-    GRANTS_ITEM = "grants_item"      # concede o simula il possesso di oggetti
-    GRANTS_CREATURE = "grants_creature" # concede creature o compagni
-    GENERIC = "generic"              # categoria generica
-    PSIONIC = "psionic"              # talento psionico
-    CLASS_RELATED = "class_related"  # talento legato a una classe
+    METAMAGIC = "metamagic"
+    METAPSIONIC = "metapsionic"
+    GRANTS_BONUS = "grants_bonus"    # grants a bonus or modifier
+    CRAFTING = "crafting"            # item-creation feats
+    GRANTS_ATTACK = "grants_attack"  # grants a special attack
+    GRANTS_QUALITY = "grants_quality"# grants a special quality
+    PROFICIENCY = "proficiency"      # grants a proficiency
+    GRANTS_ITEM = "grants_item"      # grants or simulates possessing an item
+    GRANTS_CREATURE = "grants_creature" # grants a creature or companion
+    GENERIC = "generic"              # generic catch-all category
+    PSIONIC = "psionic"              # psionic feat
+    CLASS_RELATED = "class_related"  # feat tied to a specific class
 
 # =====================
 # CHARACTER CLASS
 # =====================
 class ProgressionRate(str, Enum):
-    LOW = "low"        # +10 max -> esempio mago (1/2 liv)
-    MEDIUM = "medium"  # +15 max -> esempio chierco  (3/4 liv)
-    HIGH = "high"      # +20 max -> esempio guerriero (= liv)
+    LOW = "low"        # +10 max, e.g. wizard (1/2 level)
+    MEDIUM = "medium"  # +15 max, e.g. cleric (3/4 level)
+    HIGH = "high"      # +20 max, e.g. fighter (= level)
 
 class SaveProgression(str, Enum):
-    POOR = "poor"   # basso
-    GOOD = "good"   # alto
+    POOR = "poor"
+    GOOD = "good"
 
 class ClassPrivilegeType(str, Enum):
     ATTACK = "attack"
@@ -382,7 +382,7 @@ class CompanionPrivilegeType(str, Enum):
     CREATURE_MODIFIER = "creature_modifier"
 
 # =====================
-# ITEM 
+# ITEM
 # =====================
 class ItemType(str, Enum):
     WEAPON = "weapon"
@@ -411,73 +411,72 @@ class IntelligentItemType(str, Enum):
 # domain objects from external systems.
 class SkillId(str, Enum):
     # STANDARD SKILLS 3.5
-    APPRAISE = "appraise"              # Valutare
-    BALANCE = "balance"                # Equilibrio
-    BLUFF = "bluff"                    # Raggirare
-    CLIMB = "climb"                    # Scalare
-    CONCENTRATION = "concentration"    # Concentrazione
+    APPRAISE = "appraise"
+    BALANCE = "balance"
+    BLUFF = "bluff"
+    CLIMB = "climb"
+    CONCENTRATION = "concentration"
 
-    CRAFT = "craft"  # Artigianato
+    CRAFT = "craft"
     ## Craft (alchemy, weaponsmithing, etc.)
 
-    DECIPHER_SCRIPT = "decipher_script"   # Decifrare Scritture
-    DIPLOMACY = "diplomacy"               # Diplomazia
-    DISABLE_DEVICE = "disable_device"     # Disattivare Congegni
-    DISGUISE = "disguise"                 # Camuffare
-    ESCAPE_ARTIST = "escape_artist"       # Artista della Fuga
-    FORGERY = "forgery"                   # Falsificare
-    GATHER_INFORMATION = "gather_information"  # Raccogliere Informazioni
-    HANDLE_ANIMAL = "handle_animal"       # Addestrare Animali
-    HEAL = "heal"                         # Guarire
-    HIDE = "hide"                         # Nascondersi
-    INTIMIDATE = "intimidate"             # Intimidire
-    JUMP = "jump"                         # Saltare
+    DECIPHER_SCRIPT = "decipher_script"
+    DIPLOMACY = "diplomacy"
+    DISABLE_DEVICE = "disable_device"
+    DISGUISE = "disguise"
+    ESCAPE_ARTIST = "escape_artist"
+    FORGERY = "forgery"
+    GATHER_INFORMATION = "gather_information"
+    HANDLE_ANIMAL = "handle_animal"
+    HEAL = "heal"
+    HIDE = "hide"
+    INTIMIDATE = "intimidate"
+    JUMP = "jump"
 
-    KNOWLEDGE = "knowledge"  # Conoscenze
+    KNOWLEDGE = "knowledge"
     ## Knowledge (arcana, nature, religion, etc.)
 
-    LISTEN = "listen"                    # Ascoltare
-    MOVE_SILENTLY = "move_silently"      # Muoversi Silenziosamente
-    OPEN_LOCK = "open_lock"              # Scassinare
+    LISTEN = "listen"
+    MOVE_SILENTLY = "move_silently"
+    OPEN_LOCK = "open_lock"
 
-    PERFORM = "perform"  # Intrattenere
+    PERFORM = "perform"
     # Perform (sing, dance, oratory, etc.)
 
-    PROFESSION = "profession"  # Professione
+    PROFESSION = "profession"
     # Profession (farmer, sailor, merchant, etc.)
 
-    RIDE = "ride"                        # Cavalcare
-    SEARCH = "search"                    # Cercare
-    SENSE_MOTIVE = "sense_motive"        # Percepire Intenzioni
-    SLEIGHT_OF_HAND = "sleight_of_hand"  # Rapidità di Mano
+    RIDE = "ride"
+    SEARCH = "search"
+    SENSE_MOTIVE = "sense_motive"
+    SLEIGHT_OF_HAND = "sleight_of_hand"
 
     # NOTE: speak_language is intentionally excluded from skill mapping:
     # languages are tracked separately, as known languages rather than numeric skill values
 
-    SPELLCRAFT = "spellcraft"            # Sapienza Magica
-    SPOT = "spot"                        # Osservare
-    SURVIVAL = "survival"                # Sopravvivenza
-    SWIM = "swim"                        # Nuotare
-    TUMBLE = "tumble"                    # Acrobazia
-    USE_MAGIC_DEVICE = "use_magic_device"  # Utilizzare Oggetti Magici
-    USE_ROPE = "use_rope"                # Usare Corde
+    SPELLCRAFT = "spellcraft"
+    SPOT = "spot"
+    SURVIVAL = "survival"
+    SWIM = "swim"
+    TUMBLE = "tumble"
+    USE_MAGIC_DEVICE = "use_magic_device"
+    USE_ROPE = "use_rope"
 
     # PSIONIC SKILLS 3.5
-    AUTOHYPNOSIS = "autohypnosis"        # autoipnosi
-    PSICRAFT = "psicraft"                # sapienza psionica
-    USE_PSIONIC_DEVICE = "use_psionic_device"  # Utilizzare Oggetti Psionici
+    AUTOHYPNOSIS = "autohypnosis"
+    PSICRAFT = "psicraft"
+    USE_PSIONIC_DEVICE = "use_psionic_device"
 
     # NOTE: the following skills are specific to version 3.0.
     # STANDARD SKILLS 3.0
-    ALCHEMY = "alchemy"                  # Alchimia
-    INNUENDO = "innuendo"                # Comunicazione Segreta
-    ANIMAL_EMPATHY = "animal_empathy"    # Empatia Animale
-    READ_LIPS = "read_lips"              # Leggere Labbra
-    INTUIT_DIRECTION = "intuit_direction"  # Orientamento
-    SCRY = "scry"                        # Scrutare
-    PICK_POCKET = "pick_pocket"          # Svuotare Tasche
+    ALCHEMY = "alchemy"
+    INNUENDO = "innuendo"
+    ANIMAL_EMPATHY = "animal_empathy"
+    READ_LIPS = "read_lips"
+    INTUIT_DIRECTION = "intuit_direction"
+    SCRY = "scry"
+    PICK_POCKET = "pick_pocket"
 
     # PSIONIC SKILLS 3.0
-    STABILIZE_SELF = "stabilize_self"    # Stabilizzarsi
-    REMOTE_VIEW = "remote_view"          # Vista Remota
-    
+    STABILIZE_SELF = "stabilize_self"
+    REMOTE_VIEW = "remote_view"

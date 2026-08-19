@@ -34,17 +34,17 @@ class FeatRequirement:
     # NOTE:
     # Feat, class feature, proficiency, and specific class requirements are
     # kept as strings to maintain flexibility across different supplements.
-    ability: Abilities | None = None    # caratteristica
+    ability: Abilities | None = None
     saving_throw: list[SaveRequirement] = field(default_factory=list)
-    skill: Skills | None = None         # abilità
-    feat: str | None = None   
-    character_class_feature: str | None = None # qualità di classe richiesta
+    skill: Skills | None = None
+    feat: str | None = None
+    character_class_feature: str | None = None # the required class feature
     base_attack_bonus: int | None = None
-    proficiency: str | None = None  # competenza  
+    proficiency: str | None = None
     minimum_level: int | None = None
-    required_character_class: str | None = None  # classe specifica richiesta
-    spellcasting: bool = False # se richiesto True (richiede di essere incantatori?)
-    psionics: bool = False # se richiesto True (richiede capacità psioniche?)
+    required_character_class: str | None = None  # the specific class required
+    spellcasting: bool = False # True if this feat requires spellcasting ability
+    psionics: bool = False # True if this feat requires psionic ability
     minimum_spell_level: int | None = None
     minimum_manifester_level: int | None = None
     description: str 
@@ -65,10 +65,11 @@ class Feat:
     """
     name: str
     description: str
-    categories: list[FeatCategory] = field(default_factory=list)  # un talento può appartenere a più categorie
+    categories: list[FeatCategory] = field(default_factory=list)  # a feat can belong to multiple categories
     requirements: list[FeatRequirement] = field(default_factory=list)
 
-    # Optional behavioral components, presence coerente con la/le categorie dichiarate
+    # Optional behavioral components — which ones are populated should be
+    # consistent with the declared categories above.
     granted_modifiers: list[EffectModifier] = field(default_factory=list)
     
     granted_attacks: list[SpecialAttack] = field(default_factory=list)
@@ -84,5 +85,4 @@ class Feat:
     metapsionic_effect: str | None = None
     metapsionic_power_point_adjustment: int | None = None  # power point cost adjustment
 
-    # guadagna carte?
-    grants: list[EffectGrant] = field(default_factory=list) # creatura, oggetto, effetto
+    grants: list[EffectGrant] = field(default_factory=list) # creature, item, or effect

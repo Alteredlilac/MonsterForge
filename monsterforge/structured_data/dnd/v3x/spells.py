@@ -27,83 +27,77 @@ class SpellLevel:
 
 
 # =====================
-# Incantesimi
+# Spells
 # =====================
 @dataclass(kw_only=True)
 class Spell:
-    name: str 
+    name: str
     # data
-    school: MagicSchool # 8 scuole +  universal
+    school: MagicSchool # 8 schools + universal
     # NOTE:
     # Spell subschools and descriptors are intentionally not mapped,
     # as they are not required by this domain model.
-    level: list[SpellLevel] # va passata per forza
+    level: list[SpellLevel] # required — must be provided
     # NOTE:
     # Spell components (verbal, somatic, material, etc.) are intentionally
     # not mapped, as they are not required by this domain model.
 
-    casting_time: CastingTimeValue  #  standard action.  full-round action  free action 
+    casting_time: CastingTimeValue  # standard action, full-round action, free action
 
-    spell_range: EffectRange | None = None # 30 metri 
+    spell_range: EffectRange | None = None # e.g. 30 meters
 
-    range_type: SpellRangeType | None = None # contatto, raggio personale, raggio illimitato
-    
-    # danni 
+    range_type: SpellRangeType | None = None # touch, personal range, unlimited range
+
     damages: list[Damage] = field(default_factory=list)
-    # cura 
     healing: list[Healing] = field(default_factory=list)
     # delayed effect?
     delayed_effect: bool = False
     delay_time: TimeExpression | None = None
 
-    # descrizione
-    effect_description: str # breve descizione dell'incantesimo
-    long_description: str   # descrizione estesa dell'incantesimo
+    effect_description: str # brief description of the spell
+    long_description: str   # extended description of the spell
 
-    duration: EffectDuration = field(default_factory=EffectDuration) 
-    target: EffectTarget | None = None # brasaglio dell'effetto
-    target_number: int | None = None  # numero di bersagli
-    area_effect: EffectArea | None = None # area di effetto
+    duration: EffectDuration = field(default_factory=EffectDuration)
+    target: EffectTarget | None = None
+    target_number: int | None = None
+    area_effect: EffectArea | None = None
 
-    # resistenze e immunità
-    # riduzione del danno
+    # resistances and immunities
     damage_reduction: DamageReduction | None = None
-    # resistenze 
-    damage_resistances: list[DamageResistance] = field(default_factory=list) # elenco delle resistenze
-    # resistenza scacciare
-    turn_resistance: int | None = None # resistenza allo scacciare non morti 
-    # immunità
-    immunities: list[str] = field(default_factory=list) # per ora lasciato str per scelta enum troppo lungo / limitante
-    
-    # vulnerabilità 
+    damage_resistances: list[DamageResistance] = field(default_factory=list)
+    turn_resistance: int | None = None # resistance to turning undead
+
+    # NOTE:
+    # Left as list[str] for now rather than an enum — the set of possible
+    # immunities is too large/limiting to enumerate cleanly.
+    immunities: list[str] = field(default_factory=list)
+
     vulnerabilities: list[DamageType] = field(default_factory=list)
-    
+
     # bonus / malus
     modifiers: list[EffectModifier] = field(default_factory=list)
 
-    # percezioni 
-    perception: str | None = None # descrizione della percezione (scurovisione)
-    #  comunicazione
-    communication: str | None = None # descrizione (Telepatia)
-    
-    # metodo di movimento (volare) 
-    granted_movement: list[Movement] = field(default_factory=list) 
+    perception: str | None = None # e.g. darkvision
+    communication: str | None = None # e.g. telepathy
 
-    # guarigione rapida / rigenerazione
-    regeneration: Regeneration | None = None
+    granted_movement: list[Movement] = field(default_factory=list) # e.g. granted flight
 
-    # guadagna carte?
-    grants: list[EffectGrant] = field(default_factory=list) # esempio evoca 2d4 lupi 
+    regeneration: Regeneration | None = None # covers both fast healing and regeneration
 
-    saving_throw: SavingThrow | None = None # None = nessun tiro salvezza
-    # si calcola con 10+liv+ caratteristica minima di lancio
+    grants: list[EffectGrant] = field(default_factory=list) # e.g. summons 2d4 wolves
 
-    spell_resistance: bool = True # permette resistenza incantesimi? 
+    saving_throw: SavingThrow | None = None # None = no saving throw
+    # NOTE:
+    # Saving throw DC is calculated as 10 + spell level + the minimum
+    # casting ability score.
 
-    # Material Component non mappato anche focus non mappato
+    spell_resistance: bool = True # whether spell resistance applies
 
-    applied_conditions: list[ConditionType] = field(default_factory=list)  # condizioni applicate esempio paralizzato, pietrificato 
-   
+    # NOTE:
+    # Material components and focus requirements are intentionally not mapped.
+
+    applied_conditions: list[ConditionType] = field(default_factory=list)  # e.g. paralyzed, petrified
+
 
 # =====================
 # Spellcasting
@@ -111,7 +105,8 @@ class Spell:
 
 @dataclass(kw_only=True)
 class Spellcaster:
-    """Represents il fatto che una creatura sia una incatatore e se è arcano o divino"""
+    """Represents whether a creature is a spellcaster, and if so whether
+    it casts arcane or divine spells."""
     # NOTE:
     # Spellcasting class is kept as a generic string to support classes from
     # different supplements and avoid limiting the model to a fixed set of values.
@@ -121,10 +116,11 @@ class Spellcaster:
 @dataclass(kw_only=True)
 class Spellcasting(Spellcaster):
     """Represents the spellcasting data of a creature."""
-    caster_level: int | None = None  # livello incantatore
-    spells_known: list[Spell] = field(default_factory=list)  # incantesimi conosciuti
-    # incantesimi preparati non mappati
-    # slot incantesimi non mappati vedi nota su classi personaggi
+    caster_level: int | None = None
+    spells_known: list[Spell] = field(default_factory=list)
+    # NOTE:
+    # Prepared spells and spell slots are intentionally not mapped — see
+    # the note on character classes for the related scoping decision.
 
     @property
     def is_spellcaster(self) -> bool:

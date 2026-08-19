@@ -29,63 +29,63 @@ from types import MappingProxyType
 # SKILL_TO_INTERPRETATION_MAPPING   input → output
 SKILL_TO_INTERPRETATION_MAPPING: Mapping[str, list[str]] = MappingProxyType({
     "athletics": [
-        "tumble",          # Acrobazia
-        "escape_artist",   # Artista della Fuga
-        "ride",            # Cavalcare
-        "balance",         # Equilibrio
-        "swim",            # Nuotare
-        "jump",            # Saltare
-        "climb",           # Scalare
-        "stabilize_self",  # Stabilizzarsi (v3.0 psionica)
+        "tumble",
+        "escape_artist",
+        "ride",
+        "balance",
+        "swim",
+        "jump",
+        "climb",
+        "stabilize_self",  # v3.0 psionic
     ],
     "empathy": [
-        "animal_empathy",       # Empatia Animale (v3.0)
-        "handle_animal",        # Addestrare Animali
-        "diplomacy",            # Diplomazia
-        "intimidate",           # Intimidire
-        "perform",              # Intrattenere*
-        "sense_motive",         # Percepire Intenzioni
-        "gather_information",   # Raccogliere Informazioni
-        "bluff",                # Raggirare
+        "animal_empathy",       # v3.0
+        "handle_animal",
+        "diplomacy",
+        "intimidate",
+        "perform",              # *
+        "sense_motive",
+        "gather_information",
+        "bluff",
     ],
     "perception": [
-        "intuit_direction", # Orientamento (v3.0)
-        "listen",           # Ascoltare
-        "search",           # Cercare
-        "scry",             # Scrutare (v3.0)
-        "spot",             # Osservare
-        "read_lips",        # Leggere Labbra (v3.0)
-        "remote_view",      # Vista Remota (v3.0 psionica)
+        "intuit_direction", # v3.0
+        "listen",
+        "search",
+        "scry",             # v3.0
+        "spot",
+        "read_lips",        # v3.0
+        "remote_view",      # v3.0 psionic
     ],
     "stealth": [
-        "disguise",        # Camuffare
-        "move_silently",   # Muoversi Silenziosamente
-        "hide",            # Nascondersi
-        "innuendo",        # Comunicazione Segreta (v3.0)
-        "sleight_of_hand", # Rapidità di Mano
-        "pick_pocket",     # Svuotare Tasche (v3.0)
+        "disguise",
+        "move_silently",
+        "hide",
+        "innuendo",        # v3.0
+        "sleight_of_hand",
+        "pick_pocket",     # v3.0
     ],
     "knowledge": [
-        "concentration",   # Concentrazione
-        "autohypnosis",    # Autoipnosi 
-        "knowledge",       # Conoscenze*
-        "decipher_script", # Decifrare Scritture
-        "heal",            # Guarire
-        "profession",      # Professione*
-        "spellcraft",      # Sapienza Magica
-        "psicraft",        # Sapienza psionica
-        "survival",        # Sopravvivenza
-        "appraise",        # Valutare
+        "concentration",
+        "autohypnosis",
+        "knowledge",       # *
+        "decipher_script",
+        "heal",
+        "profession",      # *
+        "spellcraft",
+        "psicraft",
+        "survival",
+        "appraise",
     ],
     "crafting": [
-        "alchemy",            # Alchimia (v3.0)
-        "craft",              # Artigianato*
-        "disable_device",     # Disattivare Congegni
-        "forgery",            # Falsificare
-        "open_lock",          # Scassinare Serrature
-        "use_rope",           # Utilizzare Corde
-        "use_magic_device",   # Utilizzare Oggetti Magici
-        "use_psionic_device", # Utilizzare Oggetti Psionici
+        "alchemy",            # v3.0
+        "craft",              # *
+        "disable_device",
+        "forgery",
+        "open_lock",
+        "use_rope",
+        "use_magic_device",
+        "use_psionic_device",
     ],
 })
 

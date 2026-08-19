@@ -6,7 +6,7 @@ special attacks (e.g. "trip" granted by a bite, "poison" following a
 sting) are parsed by attacks_effects_parser.py with no semantic
 classification at all — only a bare name and a placeholder
 special_ability_type (see get_special_attacks() NOTE). A full semantic
-classification of these (comparable to talenti/qualità speciali) is out
+classification of these (comparable to feats/special qualities) is out
 of scope for now, the same way FullAttack is: this module exists to give
 such references a valid, presentable MoveCard (used via
 attacks_converter.py's cards_to_add), not to interpret their real

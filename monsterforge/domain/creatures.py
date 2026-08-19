@@ -21,27 +21,27 @@ class CreatureCard(Card):
     # Life
     total_life: int
     current_life: int | None = None
-    # Protection 
-    armor: int     # armatura
-    talisman: int  # talismano
+    # Protection
+    armor: int
+    talisman: int
     # Skills
-    athletics: int  # atletica
-    empathy: int    # empatia
-    perception: int # percezione
-    stealth: int    # furtività
-    knowledge: int    # cultura
-    crafting: int   # artigianato
+    athletics: int
+    empathy: int
+    perception: int
+    stealth: int
+    knowledge: int
+    crafting: int
     # Resources
-    stamina: int  # fiato
-    mana: int    # magia
+    stamina: int
+    mana: int
     # Body
-    attack: int    # attacco
-    defense: int   # difesa
-    speed: int     # velocità
+    attack: int
+    defense: int
+    speed: int
     # Spirit
-    power: int     # potere
-    ward: int      # tangenza
-    flow: int      # spin
+    power: int
+    ward: int
+    flow: int
        
        
 

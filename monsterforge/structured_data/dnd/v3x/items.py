@@ -20,10 +20,10 @@ from .defenses import DamageReduction
 class Item:
     name: str | None = None 
     description: str | None = None 
-    price: float | None = None    # espresso in monete d'oro 
-    weight: float | None = None 
+    price: float | None = None    # expressed in gold pieces
+    weight: float | None = None
 
-    item_type: ItemType # arma, armatura, generico, strumento, alchemico, vestito, accessorio 
+    item_type: ItemType # weapon, armor, generic, tool, alchemical, clothing, accessory
     # NOTE:
     # Class-specific items are classified as tools if they provide bonuses
     # or mechanical benefits, otherwise they are classified as generic items.
@@ -43,23 +43,22 @@ class Item:
     # Item capacity is intentionally not mapped, as it is not required by the
     # card-based game system.
 
-    # arma
-    melee: bool = False      #utilizzabile per attaccare in mischia 
-    touch: bool = False     # attacco di contatto
+    # weapon
+    melee: bool = False      # usable to attack in melee
+    touch: bool = False     # touch attack
     # Range
     attack_range: EffectRange | None = None
     # Damages
-    damages: list[Damage] = field(default_factory=list) # elenco dei danni dell'attacco
-    # Critical Hit    
-    critical_hit: CriticalHit | None = None   
+    damages: list[Damage] = field(default_factory=list)
+    # Critical Hit
+    critical_hit: CriticalHit | None = None
     # Effects
     attack_effects: list[SpecialAttack] = field(default_factory=list)
 
-    # armatura 
-    # riduzione del danno
+    # armor
     damage_reduction: DamageReduction | None = None
     # bonus / malus
-    modifiers: list[EffectModifier] = field(default_factory=list) # bonus concessi dall'oggetto
+    modifiers: list[EffectModifier] = field(default_factory=list) # bonuses granted by the item
     max_speed: int | None = None # speed limit imposed by the item when worn or carried
      
 
@@ -77,14 +76,13 @@ class MagicItem(Item):
     is_artifact: bool = False
     is_cursed: bool = False
 
-    charges: int | None = None  # cariche dell'oggetto, esempio bacchetta = 50 cariche
+    charges: int | None = None  # item charges, e.g. a wand = 50 charges
 
     defense_effects: list[SpecialQuality] = field(default_factory=list)
     # Healing
-    healing_effects: list[Healing] = field(default_factory=list) # elenco delle cure dell'oggetto
-    
-    # guadagna carte?
-    grants: list[EffectGrant] = field(default_factory=list) # creatura, oggetto, effetto
+    healing_effects: list[Healing] = field(default_factory=list)
+
+    grants: list[EffectGrant] = field(default_factory=list) # creature, item, or effect
 
 
 
@@ -94,7 +92,7 @@ class IntelligentItem(MagicItem):
     Represents a magic item with its own intelligence, personality,
     or supernatural entity.
     """
-    intelligent_type: IntelligentItemType # intelligente, simbionte, posseduto
+    intelligent_type: IntelligentItemType # intelligent, symbiont, possessed
     # NOTE:
     # Symbionts are intentionally mapped as items rather than creatures,
     # as the card-based game system represents them as item cards.

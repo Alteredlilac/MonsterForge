@@ -31,7 +31,7 @@ GrantedPower = (
 @dataclass(kw_only=True)
 class ClericDomain:
     id: uuid.UUID = field(default_factory=uuid.uuid4)
-    name: str   # esempio Dominio delfuoco
+    name: str   # e.g. Fire Domain
     description: str | None = None
     
     # NOTE:

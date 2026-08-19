@@ -50,8 +50,8 @@ class Companion:
     (e.g., familiar, special mount, animal companion).
     """
     id: uuid.UUID = field(default_factory=uuid.uuid4)
-    name: str   # esempio famiglio 
+    name: str   # e.g. familiar
     description: str | None = None
     base_creature: Creature
-    total_levels: int # numero di livelli totali della classe (esempio 5 , 10, 20)
+    total_levels: int # total number of class levels, e.g. 5, 10, 20
     privileges: dict[int, list[CreaturePrivilege]] = field(default_factory=dict) # key = level, value = list of privileges granted at that level

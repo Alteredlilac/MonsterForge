@@ -73,7 +73,7 @@ class CharacterClass:
     name: str 
     description: str
 
-    hit_die: DiceType  # dado vita della classe
+    hit_die: DiceType
 
     # NOTE:
     # Class skills are intentionally not mapped: in the card-based game
@@ -81,19 +81,19 @@ class CharacterClass:
     # regardless of character class, and there is no concept of
     # class-restricted or unavailable skills.
 
-    total_levels: int # numero di livelli totali della classe (esempio 5 , 10, 20)
+    total_levels: int # total number of class levels, e.g. 5, 10, 20
 
-    base_attack_bonus: ProgressionRate | None = None # basso, medio, alto None aggiunto per casi limite/ speculare a bab magico
-    
-    fortitude_save: SaveProgression # alta o bassa
-    reflex_save: SaveProgression # alta o bassa
-    will_save: SaveProgression # alta o bassa
+    base_attack_bonus: ProgressionRate | None = None # low, medium, high — None covers edge cases, mirroring spellcasting progression below
+
+    fortitude_save: SaveProgression # high or low
+    reflex_save: SaveProgression # high or low
+    will_save: SaveProgression # high or low
 
     privileges: dict[int, list[ClassPrivilege]] = field(default_factory=dict) # key = level, value = list of privileges granted at that level
     # NOTE:
     # Spellcasting data is intentionally simplified.
     # Spell slots and known spells are not mapped at class level.
-    max_spell_level: int | None = None #fino a 4 basso, fino 7 = medio, fino a 9 = alto
+    max_spell_level: int | None = None # up to 4 = low, up to 7 = medium, up to 9 = high
     
     @property
     def spellcasting_progression(self) -> ProgressionRate | None:
@@ -129,16 +129,12 @@ class PrestigeClass(CharacterClass):
     required_movement: list[Movement] = field(default_factory=list)
     required_creature_type: CreatureType | None = None
     required_creature_subtype: list[CreatureSubtype] = field(default_factory=list)
-    required_race: str | None = None # esempio "elfo"
+    required_race: str | None = None # e.g. "elf"
     required_attack_bonus: int | None = None
     required_feats: list[Feat] = field(default_factory=list)
     required_spells: list[Spell] = field(default_factory=list)
     required_saves: list[SaveRequirement] = field(default_factory=list)
-    # livello incantatore
     required_caster_level: int | None = None
-    # oggetti
     required_items: list[Item] = field(default_factory=list)
-    # allineamento
     required_alignment: list[Alignment] = field(default_factory=list)
-    # speciale
-    required_special: str | None = None # opzioni speciali gestite come str
+    required_special: str | None = None # special options, handled as free text

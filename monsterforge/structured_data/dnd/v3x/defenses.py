@@ -13,17 +13,17 @@ from .enums import DamageType
 
 @dataclass(kw_only=True)
 class DamageReduction:
-    reduction_value: int              # es. 5, 10, 15
-    bypass_type: str | None = None    # es. "magic", "silver", "cold iron" usato str, invece di enum per compatibilità
+    reduction_value: int              # e.g. 5, 10, 15
+    bypass_type: str | None = None    # e.g. "magic", "silver", "cold iron" — kept as str rather than an enum for flexibility
 
 
 @dataclass(kw_only=True)
 class DamageResistance:
-    damage_type: DamageType          # elementali (fuoco, freddo), energia (positiva/negativa), tipo (contundenti)
-    resistance_value: int             # es. 10, 20, 30
+    damage_type: DamageType          # elemental (fire, cold), energy (positive/negative), or type (bludgeoning)
+    resistance_value: int             # e.g. 10, 20, 30
 
 
 @dataclass(kw_only=True)
 class Regeneration:
-    regeneration_value: int           # es. 5 (PF recuperati per round)
-    bypass_damage_types: list[DamageType] = field(default_factory=list)  # es. [FIRE, ACID]
+    regeneration_value: int           # e.g. 5 (HP recovered per round)
+    bypass_damage_types: list[DamageType] = field(default_factory=list)  # e.g. [FIRE, ACID]
