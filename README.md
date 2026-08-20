@@ -50,9 +50,16 @@ A card as the pipeline actually renders it today (left) next to the same
 template with artwork (right) — art sourcing isn't part of the pipeline yet,
 this is a manually-supplied image showing the template supports one:
 
-| Rendered by the pipeline (no artwork) | Same template, with artwork (not pipeline-generated) |
-|---|---|
-| ![A MoveCard as rendered by the pipeline, without artwork](./monsterforge/docs/images/readme/MoveCard_pipeline.png) | ![The same MoveCard template with a manually-supplied artwork image](./monsterforge/docs/images/readme/MoveCard_artwork.png) |
+<table>
+<tr>
+<th width="50%">Rendered by the pipeline (no artwork)</th>
+<th width="50%">Same template, with artwork (not pipeline-generated)</th>
+</tr>
+<tr>
+<td width="50%"><img src="./monsterforge/docs/images/readme/MoveCard_pipeline.png" width="100%" alt="A MoveCard as rendered by the pipeline, without artwork"></td>
+<td width="50%"><img src="./monsterforge/docs/images/readme/MoveCard_artwork.png" width="100%" alt="The same MoveCard template with a manually-supplied artwork image"></td>
+</tr>
+</table>
 
 Clicking a card in the gallery opens a drill-down into its raw input, LLM
 classification, JSON, and rendered card:
