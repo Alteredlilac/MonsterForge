@@ -8,15 +8,8 @@ Used by every entry point that wants classify_attack() exercised with
 realistic context instead of always defaulting it to None — currently
 convert_attack_cli.py and test_llm_prompt_cli.py.
 """
-from dataclasses import dataclass
 from monsterforge.structured_data.dnd.v3x.enums import CreatureSubtype
-
-
-@dataclass(kw_only=True)
-class SemanticContextInput:
-    additional_description: str | None
-    creature_description: str | None
-    creature_subtype: CreatureSubtype | None
+from monsterforge.llm.semantic_classification.attacks import SemanticContextInput  # re-exported: existing importers use this module's path
 
 
 def prompt_for_creature_subtype() -> CreatureSubtype | None:

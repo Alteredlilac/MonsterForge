@@ -118,6 +118,27 @@ class AttackSemanticResult:
 
 
 # =====================
+# CONTEXT INPUT
+# =====================
+@dataclass(kw_only=True)
+class SemanticContextInput:
+    """
+    The optional classification context a caller can supply, as a real
+    dataclass rather than the AttackSemanticContext TypedDict above.
+
+    AttackSemanticContext is internal, disposable input to
+    _build_attack_prompt() (also carrying raw_attack, and explicitly
+    documented as needing no identity/equality). SemanticContextInput is
+    for callers that need to hold onto and compare this context outside
+    that call — e.g. an interactive entry point collecting it, or a
+    human review handler receiving it alongside a classification result.
+    """
+    additional_description: str | None
+    creature_description: str | None
+    creature_subtype: CreatureSubtype | None
+
+
+# =====================
 # ERRORS
 # =====================
 class InvalidAttackSemanticResultError(ValueError):
