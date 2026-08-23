@@ -138,26 +138,30 @@ and `llm/`.
 ```
 
 > **Status note.** Stage 5 above diagrams low-confidence classifications
-> as routed to `ui/`. The validation design actually settled on later is
-> an interactive CLI, not a `ui/` interface — consistent with
-> `DESIGN.md`'s "simplest tool" philosophy, and with the original PyQt5
-> desktop-tool vision itself having been superseded by a FastAPI JSON API
-> (see [PROJECT_STATUS.md](./PROJECT_STATUS.md)). `ui/` remains an empty,
-> unplanned stub. The diagram is left as originally drawn here rather
-> than silently rewritten, since it predates that decision.
+> as routed to `ui/` — this part turned out accurate, just later and via
+> a different first interface than assumed when the diagram was drawn.
+> The validation design settled first on an interactive CLI
+> (`entrypoints/_review_input.py`), consistent with `DESIGN.md`'s
+> "simplest tool" philosophy, and with the original PyQt5 desktop-tool
+> vision itself having been superseded by a FastAPI JSON API (see
+> [PROJECT_STATUS.md](./PROJECT_STATUS.md)). `ui/` was an empty,
+> unplanned stub for a while, but is now built: a FastAPI + Bootstrap
+> web form (`ui/app.py`) exposing the same conversion-and-review flow
+> over HTTP. The diagram itself is left as originally drawn rather than
+> rewritten, since both interfaces still route through the same
+> underlying gate described below, not two different validation designs.
 >
-> `validation/` is now built, but narrower in scope than this diagram
-> depicts: it gates the D&D 3.x attack pipeline specifically
-> (`pipeline.attack_pipeline.convert_attack()`), not yet the general
+> `validation/` is still narrower in scope than this diagram depicts: it
+> gates the D&D 3.x attack pipeline specifically
+> (`pipeline.attack_pipeline.convert_attack()`, or the CLI/web routes
+> that compose its own stages directly), not yet the general
 > `structured_data` conversion this stage is drawn for — the same
 > vertical-slice-first approach already applied throughout this project
-> (see decision 7 below). The reviewing interface lives in `entrypoints/`
-> (`entrypoints/_review_input.py`), not a dedicated `validation/cli_form.py`
-> as first sketched. "Keeps a history of corrections" above is also not
-> yet true: today's review is stateless, in-session only — no correction
-> history is persisted anywhere yet. See
-> [PROJECT_STATUS.md](./PROJECT_STATUS.md) for exactly what's built and
-> what's still designed-only.
+> (see decision 7 below). "Keeps a history of corrections" above is also
+> not yet true on either interface: today's review is stateless,
+> in-session/in-request only — no correction history is persisted
+> anywhere yet. See [PROJECT_STATUS.md](./PROJECT_STATUS.md) for exactly
+> what's built and what's still designed-only.
 
 ---
 
@@ -321,13 +325,26 @@ that a reviewer is trusted not to introduce nonsense — the alternative
 description uncorrectable in the one case it matters most: when the LLM
 gets it badly wrong.
 
+**Two interfaces, the same gate, two different mechanics.** The CLI
+reaches this gate through `pipeline.attack_pipeline.convert_attack()`'s
+own `review_handler` callback: one function call blocks until the
+reviewer decides, in the same process. The web form can't do that — an
+HTTP request/response is a single, complete round trip, so a decision
+that requires showing something and waiting can't happen inside one
+request. The web interface instead composes the same underlying stages
+(`classify_attack()`, then either `raw_to_structured_attack()` or a
+review form) directly across two separate routes, rather than going
+through `convert_attack()`'s single-call shape. Same gate, same
+decision logic, different composition — dictated by the transport, not
+a design split.
+
 **Scope, deliberately narrow for now**: this gate exists only for the
-attack pipeline, and is stateless — no review decision is persisted
-anywhere yet, so the same low-confidence input reviewed twice gets
-reviewed twice. Persistence, and extending the same gate to other future
-`structured_data` sources (talents, spells, special qualities), are both
-deferred; see [PROJECT_STATUS.md](./PROJECT_STATUS.md) for current
-status.
+attack pipeline, on both interfaces, and is stateless on both — no
+review decision is persisted anywhere yet, so the same low-confidence
+input reviewed twice gets reviewed twice. Persistence, and extending the
+same gate to other future `structured_data` sources (talents, spells,
+special qualities), are both deferred; see
+[PROJECT_STATUS.md](./PROJECT_STATUS.md) for current status.
 
 ---
 

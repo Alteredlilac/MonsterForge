@@ -1,6 +1,6 @@
 # Project Status
 
-Snapshot of where MonsterForge stands as of August 23, 2026.
+Snapshot of where MonsterForge stands as of August 24, 2026.
 For the system's design and long-term architecture, see [PIPELINE_ARCHITECTURE.md](./PIPELINE_ARCHITECTURE.md)
 and [DESIGN.md](../../DESIGN.md). For how the LLM layer specifically is
 structured, see [LLM_ARCHITECTURE.md](./LLM_ARCHITECTURE.md). For how a
@@ -36,10 +36,18 @@ as-is, correct specific fields directly, reject it outright (no card is
 produced), or rerun the classification — optionally with a different
 prompt template — and review the new result under the same menu.
 
-The current test suite contains 532 passing tests, 0 failing.
+That same conversion-and-review flow is now also reachable over the web
+(FastAPI + Bootstrap, no framework changes needed on the pipeline side),
+not just the CLI — with a few things the CLI still doesn't have: an
+optional image URL for the card, friendlier error messages instead of a
+raw crash on malformed input, and a way to revisit and correct a card's
+classification even after it was auto-approved, which previously had no
+correction path at all.
 
-Persistence and an HTTP API are designed in detail but not yet built —
-see [Limitations](#limitations--not-yet-built) below.
+The current test suite contains 552 passing tests, 0 failing.
+
+Persistence and a JSON API for external consumers are designed in detail
+but not yet built — see [Limitations](#limitations--not-yet-built) below.
 
 ## What works today
 
@@ -133,9 +141,20 @@ see [Limitations](#limitations--not-yet-built) below.
   classification / JSON / rendered-card drill-down — real pipeline
   output, not hand-picked examples.
 
+- **The conversion + review flow over the web** (`ui/`, FastAPI +
+  Bootstrap): `GET`/`POST /convert` collects a raw attack and classifies
+  it; `POST /review` handles approve/correct/reject; `POST /review/edit`
+  reopens review for an already-rendered card without reclassifying —
+  closing a gap the CLI still has, where a high-confidence but wrong
+  classification has no correction path once the JSON is printed. Every
+  rendered card can also be printed at its real ~63×88mm size (a CSS
+  `@page`/`transform: scale()` pair that works on both A4 and US Letter
+  without needing to detect which is active) and carries an optional,
+  user-supplied image URL end to end.
+
 ## Test coverage
 
-**532 passing, 0 failing.** A set of 9 pre-existing failures (unrelated
+**552 passing, 0 failing.** A set of 9 pre-existing failures (unrelated
 to the attack pipeline itself — stale tests in `tests/domain/`,
 `tests/rules/dnd/v3x/`, and `tests/structured_data/dnd/v3x/`, left over
 from earlier field/behavior changes elsewhere in the codebase that the
@@ -160,6 +179,13 @@ real branching logic get dedicated tests in this project — batch
 data-collection scripts and thin CLI wrappers that only glue together
 already-tested logic don't.
 
+The web layer (`ui/`) added 20 more: all four review outcomes plus the
+blank-attack short-circuit over HTTP (FastAPI's `TestClient`, the LLM
+always mocked), the constrained `attack_type` dropdown rejecting an
+unrecognized value, friendly-error responses for both a classification
+failure and a downstream parsing failure, the edit-after-render round
+trip, and image URL propagation end to end.
+
 ## Limitations / not yet built
 
 Deliberately out of scope for "MVP zero", to keep it small enough to
@@ -171,8 +197,11 @@ ship:
 - **Persistence** — no database; every conversion is computed fresh,
   with no stable/deterministic card IDs across runs.
 
-- **HTTP API** — no FastAPI layer; the pipeline is reachable only via
-  the CLI entry points.
+- **JSON API for external consumers** — `api/` is still an empty stub;
+  the pipeline is reachable via the CLI or the human-facing web form
+  (`ui/`), not as machine-readable JSON over HTTP. Deliberately planned
+  for after persistence exists (see below) — an API returning ephemeral,
+  non-cacheable conversions has little value on its own.
 
 - **Other `MoveCard` sources** — only attacks produce move cards today;
   talents, spells, and special qualities aren't wired in
@@ -182,13 +211,14 @@ ship:
 All of the above is designed in detail but not yet built: persistence
 with stable card identity derived from a content fingerprint (so the
 same attack always resolves to the same card, even across separate
-runs), and a FastAPI HTTP layer. Rendering a `MoveCard` into a printable
-card and a confidence-gated human review step for low-confidence LLM
-classifications — both originally part of this same "later" bucket —
-have since moved out of it and are built; see
-[RENDERING_AND_GALLERY.md](./RENDERING_AND_GALLERY.md) for the former.
-The human review step is still CLI-only and stateless — a web form and
-a persisted review history remain part of the "later" bucket above.
+runs), and the JSON API above. Rendering a `MoveCard` into a printable
+card, a confidence-gated human review step for low-confidence LLM
+classifications, and that whole flow exposed over the web — all
+originally part of this same "later" bucket — have since moved out of
+it and are built; see [RENDERING_AND_GALLERY.md](./RENDERING_AND_GALLERY.md)
+for the former. The review flow's history still isn't persisted
+anywhere (CLI or web) — that lands together with the fingerprint work
+above.
 
 ## Notable fixes and findings
 
@@ -269,6 +299,27 @@ full changelog:
   raw LLM response, which the pipeline's own entry point doesn't
   expose), so it needed the same short-circuit applied to it
   separately rather than inheriting it automatically.
+- Building the web form surfaced a real classification-parsing gap:
+  `is_melee()`/`is_touch()` only match fixed English substrings, so a
+  free-text `attack_type` field accepted a value like "mischia"
+  (Italian for melee) and silently treated it as a ranged attack
+  instead of erroring — found via live testing, not code review, and
+  fixed by constraining the web form's `attack_type` to a dropdown
+  rather than changing the parser.
+- A hidden form field carrying a JSON blob wasn't HTML-escaped in a new
+  template, corrupting the attribute it was embedded in — traced to
+  `rendering/`'s Jinja2 environment never actually enabling autoescape
+  for any of its `*.html.jinja2`-suffixed templates (`select_autoescape`
+  checks for a literal `.html` extension, which none of these filenames
+  end in). Fixed locally for the affected field; the broader gap across
+  the rest of `rendering/` is real but untouched, since fixing it
+  environment-wide risks changing output nothing has verified against
+  it yet.
+- A first attempt at shrinking an oversized card to fit the screen used
+  pure CSS (`calc(80vh / 815px)` as a `scale()` argument) — confirmed to
+  have no effect in a real browser test, since cross-browser support for
+  dividing mixed CSS units into a plain number isn't reliable yet.
+  Replaced with a small vanilla JS snippet instead.
 
 ## Documentation housekeeping
 

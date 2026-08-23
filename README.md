@@ -9,11 +9,11 @@ A Python-based pipeline that transforms semi-structured RPG data into normalized
 The project is under active development. A first vertical slice — converting a
 single D&D 3.x attack all the way from raw input to a domain `MoveCard`,
 classified live against the real Gemini API — works end to end today via CLI
-tools, that `MoveCard` can be rendered into an actual printable HTML/CSS card,
-and a low-confidence classification is now gated behind a human review step
-(approve, correct, reject, or rerun the classification) before it reaches the
-rest of the pipeline. Persistence and the HTTP API are designed in detail but
-not yet built.
+tools **and a web form**, that `MoveCard` can be rendered into an actual
+printable HTML/CSS card, and a low-confidence classification is gated behind
+a human review step (approve, correct, reject, or rerun the classification)
+before it reaches the rest of the pipeline, on both channels. Persistence and
+a JSON API for external consumers are designed in detail but not yet built.
 
 For the full, up-to-date picture (what's implemented, test coverage, known
 limitations) see **[monsterforge/docs/PROJECT_STATUS.md](./monsterforge/docs/PROJECT_STATUS.md)**.
@@ -186,13 +186,14 @@ Built and working today:
 - CLI entry points for manual input, prompt iteration, and batch data collection against the real API
 - Card rendering pipeline (`MoveCard` → printable HTML/CSS card), plus a static gallery browsing every card produced against the real API with a raw-input/classification/JSON drill-down per card
 - Confidence-gated human review: a low-confidence classification is shown to a reviewer (raw input, full LLM context, the classification itself) before it reaches the rest of the pipeline — approve, correct specific fields, reject outright, or rerun the classification (optionally against a different prompt template)
+- The same conversion-and-review flow exposed over the web (`ui/`, FastAPI + Bootstrap), not only the CLI — plus a few things the CLI doesn't have yet: an optional image URL for the card, friendlier error messages on malformed input, and a way to revisit and correct a card's classification even after it was auto-approved
 
 Planned, not yet built:
 
 - Web scraping with `requests` + `BeautifulSoup`
 - SQL persistence of raw and structured data
-- A JSON API (FastAPI) exposing the domain model
-- The human review step above exposed over the web instead of only the CLI, with persisted review history
+- A JSON API (`api/`) exposing the domain model to external consumers — distinct from the web review UI above, which already uses FastAPI but returns HTML, not JSON
+- Persisted review history (currently every review, CLI or web, is stateless)
 
 ---
 
@@ -249,7 +250,7 @@ A typical pipeline execution is designed to produce traceable logs for each tran
 [2026-07-10 14:32:11] INFO  Generating card templates (1 creature, 2 moves)...
 [2026-07-10 14:32:11] INFO  Export completed: creature_card.html, bite_card.html, keen_scent_card.html
 ```
-Logging makes each transformation stage observable and simplifies debugging, validation, and future rule changes. This is a mock-up of the target end-to-end flow and its intended log output for a full creature — no logging system exists yet, and full-creature scraping/validation aren't built. A CLI-based human review step does exist today, but for the attack-only pipeline, not with this log shape — see [Current Status](#current-status).
+Logging makes each transformation stage observable and simplifies debugging, validation, and future rule changes. This is a mock-up of the target end-to-end flow and its intended log output for a full creature — no logging system exists yet, and full-creature scraping/validation aren't built. A human review step does exist today, on both the CLI and the web form, but for the attack-only pipeline, not with this log shape — see [Current Status](#current-status).
 
 ---
 
@@ -285,9 +286,13 @@ monsterforge/
 ├── entrypoints/                         # CLI tools: manual conversion, prompt testing,
 │                                          real-API data collection
 ├── validation/                          # human review gate: ValidationStatus,
-│                                          needs_review() — the review UI itself
-│                                          is a CLI, in entrypoints/
-├── api/                                  # JSON API, FastAPI (planned)
+│                                          needs_review()
+├── ui/                                   # FastAPI + Bootstrap web form: the same
+│                                          conversion + review flow as entrypoints/,
+│                                          over HTTP instead of a terminal prompt
+├── api/                                  # JSON API for external consumers, FastAPI
+│                                          (planned — distinct from ui/ above, which
+│                                          already exists but returns HTML, not JSON)
 └── tests/                                  # unit tests
 ```
 **Two-stage parsing.** Extraction is split into `raw_fields/` (source-format
@@ -329,6 +334,13 @@ python -m monsterforge.entrypoints.test_llm_prompt_cli
 
 Renders any Jinja2 prompt template with real input and prints the LLM's raw
 response — useful for iterating on prompts directly.
+
+```bash
+uvicorn monsterforge.ui.app:app --reload
+```
+
+Starts the web form at `http://127.0.0.1:8000/convert` — the same
+conversion-and-review flow as `convert_attack_cli`, over HTTP.
 
 The target CLI shape once the full pipeline exists:
 
@@ -429,8 +441,9 @@ just not yet wired to a single end-to-end `convert()` call like this.
 
 ## Future Improvements
 
-- HTTP API (FastAPI) exposing the domain model as JSON
-- Web-based human review (reusing the same review logic already built for the CLI), with persisted review history
+- A JSON API (`api/`) exposing the domain model to external consumers
+- Persisted review history (currently every review is stateless, CLI or web)
+- Rerun on the web form (already built for the CLI), and images served from local files instead of only web URLs
 - Transformation versioning system
 - Support for additional RPG systems
 - Advanced balancing heuristics
@@ -443,9 +456,12 @@ just not yet wired to a single end-to-end `convert()` call like this.
 Currently used:
 
 - Python
-- `google-generativeai` (Gemini API)
-- Jinja2 (LLM prompts, and HTML/CSS card + gallery templates)
-- Bootstrap 5 / highlight.js (via CDN, gallery page UI only — not a pip dependency)
+- `google-generativeai` (Gemini API — deprecated upstream in favor of
+  `google-genai`; migration planned, not yet done, see
+  [PROJECT_STATUS.md](./monsterforge/docs/PROJECT_STATUS.md))
+- FastAPI + `uvicorn` (the `ui/` web form) + `python-multipart` (HTML form parsing)
+- Jinja2 (LLM prompts, HTML/CSS card + gallery templates, and the `ui/` web form)
+- Bootstrap 5 / highlight.js (via CDN, gallery and web form UI only — not a pip dependency)
 - dataclasses
 - pytest
 
@@ -453,7 +469,6 @@ Planned:
 
 - requests / BeautifulSoup
 - SQLite / SQLAlchemy
-- FastAPI
 
 ---
 
