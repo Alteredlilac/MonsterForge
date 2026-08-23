@@ -4,10 +4,12 @@ Tests for pipeline.attack_pipeline.convert_attack().
 Covers the full "bite plus trip" reference scenario end to end, with
 the LLM classifier mocked (no real API calls in tests).
 """
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 from monsterforge.parsing.dnd.v3x.raw_fields.attacks import Attack as RawAttack
 from monsterforge.llm.semantic_classification.attacks import AttackSemanticResult
 from monsterforge.structured_data.dnd.v3x.enums import MoveType, CreatureSubtype
+from monsterforge.validation.enums import ValidationStatus
+from monsterforge.validation.review import HumanReview
 from monsterforge.pipeline.attack_pipeline import convert_attack
 
 
@@ -86,3 +88,85 @@ def test_convert_attack_forwards_optional_semantic_context():
         creature_description="A translucent, drifting undead.",
         creature_subtype=CreatureSubtype.INCORPOREAL,
     )
+
+
+def test_convert_attack_returns_none_for_blank_attack():
+    """A blank raw_attack is an empty submission, not a real attack —
+    skip classification entirely rather than spending an LLM call on it."""
+    raw_attack = RawAttack(name="", modifier="", attack_type="", attack_effect="")
+
+    with patch("monsterforge.pipeline.attack_pipeline.classify_attack") as mock_classify:
+        card = convert_attack(raw_attack)
+
+    mock_classify.assert_not_called()
+    assert card is None
+
+
+def test_convert_attack_skips_review_without_a_handler_even_at_low_confidence():
+    """Preserves MVP zero's behavior: without review_handler, no review
+    is ever triggered regardless of confidence, so batch scripts and
+    other non-interactive callers are unaffected by this feature."""
+    raw_attack = RawAttack(name="Claw", modifier="+9", attack_type="melee", attack_effect="2d6+4")
+
+    with patch(
+        "monsterforge.pipeline.attack_pipeline.classify_attack",
+        return_value=make_semantic_result(confidence=0.1),
+    ):
+        card = convert_attack(raw_attack)
+
+    assert card is not None
+
+
+def test_convert_attack_skips_review_handler_at_high_confidence():
+    raw_attack = RawAttack(name="Claw", modifier="+9", attack_type="melee", attack_effect="2d6+4")
+    review_handler = Mock()
+
+    with patch(
+        "monsterforge.pipeline.attack_pipeline.classify_attack",
+        return_value=make_semantic_result(confidence=0.95),
+    ):
+        convert_attack(raw_attack, review_handler=review_handler)
+
+    review_handler.assert_not_called()
+
+
+def test_convert_attack_rejected_review_returns_none():
+    raw_attack = RawAttack(name="Claw", modifier="+9", attack_type="melee", attack_effect="2d6+4")
+    review_handler = Mock(return_value=HumanReview(status=ValidationStatus.REJECTED, result=None))
+
+    with patch(
+        "monsterforge.pipeline.attack_pipeline.classify_attack",
+        return_value=make_semantic_result(confidence=0.1),
+    ):
+        card = convert_attack(raw_attack, review_handler=review_handler)
+
+    review_handler.assert_called_once()
+    assert card is None
+
+
+def test_convert_attack_corrected_review_uses_edited_result():
+    raw_attack = RawAttack(name="Claw", modifier="+9", attack_type="melee", attack_effect="2d6+4")
+    corrected_result = make_semantic_result(confidence=0.1, description="A hand-corrected claw strike.")
+    review_handler = Mock(return_value=HumanReview(status=ValidationStatus.CORRECTED, result=corrected_result))
+
+    with patch(
+        "monsterforge.pipeline.attack_pipeline.classify_attack",
+        return_value=make_semantic_result(confidence=0.1, description="original description"),
+    ):
+        card = convert_attack(raw_attack, review_handler=review_handler)
+
+    assert card.description == "A hand-corrected claw strike."
+
+
+def test_convert_attack_approved_review_keeps_original_result():
+    raw_attack = RawAttack(name="Claw", modifier="+9", attack_type="melee", attack_effect="2d6+4")
+    original_result = make_semantic_result(confidence=0.1, description="original description")
+    review_handler = Mock(return_value=HumanReview(status=ValidationStatus.APPROVED, result=original_result))
+
+    with patch(
+        "monsterforge.pipeline.attack_pipeline.classify_attack",
+        return_value=original_result,
+    ):
+        card = convert_attack(raw_attack, review_handler=review_handler)
+
+    assert card.description == "original description"
