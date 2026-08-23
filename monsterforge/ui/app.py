@@ -26,6 +26,7 @@ and reported as a plain error response instead.
 import dataclasses
 import json
 from pathlib import Path
+from typing import Literal
 from fastapi import FastAPI, Form, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -42,7 +43,7 @@ from monsterforge.llm.semantic_classification.attacks import (
     SemanticContextInput,
     classify_attack,
 )
-from monsterforge.rendering.move_card_renderer import render_move_card_html
+from monsterforge.rendering.move_card_renderer import render_move_card_html_with_edit
 from monsterforge.serialization.domain_to_json import card_to_json
 from monsterforge.structured_data.dnd.v3x.effect_mechanics import EffectRange
 from monsterforge.structured_data.dnd.v3x.enums import CreatureSubtype, MoveType, UnitSystem
@@ -50,6 +51,19 @@ from monsterforge.validation.review import needs_review
 
 app = FastAPI()
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
+
+# NOTE:
+# raw_fields.Attack.attack_type is deliberately an unconstrained str
+# (see parsing/dnd/v3x/raw_fields/attacks.py), not an enum — but
+# is_melee()/is_touch() in attacks_converter.py only recognize these
+# exact English substrings ("melee" in attack_type.lower(), etc.). A
+# free-text web input let a value like "mischia" (not matching any of
+# them) silently fall through to "ranged", triggering an LLM range
+# lookup for what was actually a melee attack. Constrained to a
+# dropdown here for that reason — the CLI keeps free text, since a
+# person typing at a terminal is already expected to match the
+# parser's vocabulary.
+ATTACK_TYPE_OPTIONS = ("melee", "melee touch", "ranged", "ranged touch")
 
 
 # =====================
@@ -94,13 +108,88 @@ def _semantic_result_from_json(text: str) -> AttackSemanticResult:
 
 
 # =====================
+# SEMANTIC CONTEXT HELPERS
+# =====================
+def _semantic_context_from_form(
+        additional_description: str,
+        creature_description: str,
+        creature_subtype: str) -> SemanticContextInput:
+    return SemanticContextInput(
+        additional_description=additional_description or None,
+        creature_description=creature_description or None,
+        creature_subtype=CreatureSubtype(creature_subtype) if creature_subtype else None,
+    )
+
+
+def _review_form_context(
+        raw_attack: RawAttack,
+        semantic_context: SemanticContextInput,
+        semantic_result: AttackSemanticResult,
+        template_name: str,
+        image_uri: str) -> dict:
+    """Shared template context for review_form.html.jinja2, built by
+    both a fresh /convert classification and a revisit via /review/edit."""
+    return {
+        "raw_attack": raw_attack,
+        "semantic_context": semantic_context,
+        "semantic_result": semantic_result,
+        "semantic_result_json": _semantic_result_to_json(semantic_result),
+        "template_name": template_name,
+        "image_uri": image_uri,
+        "move_types": [move_type.value for move_type in MoveType],
+        "unit_systems": [unit.value for unit in UnitSystem],
+    }
+
+
+# =====================
+# DEAD-END RESPONSES
+# =====================
+def _message_page(message: str, status_code: int = 200) -> HTMLResponse:
+    """A plain response for an outcome that produces no card (blank
+    input, a classification failure, a rejected review) — always with a
+    way back to /convert, rather than a bare dead-end message."""
+    return HTMLResponse(f'<p>{message}</p><p><a href="/convert">Home</a></p>', status_code=status_code)
+
+
+# =====================
 # CARD RENDERING
 # =====================
-def _render_card(raw_attack: RawAttack, semantic_result: AttackSemanticResult) -> HTMLResponse:
-    structured_attack = raw_to_structured_attack(raw_attack, semantic_result)
-    move_card = attack_converter(structured_attack)
+def _render_card(
+        raw_attack: RawAttack,
+        semantic_result: AttackSemanticResult,
+        semantic_context: SemanticContextInput,
+        template_name: str,
+        image_uri: str) -> HTMLResponse:
+    try:
+        structured_attack = raw_to_structured_attack(raw_attack, semantic_result)
+        move_card = attack_converter(structured_attack, attack_image_uri=image_uri or None)
+    except Exception as exc:
+        # NOTE:
+        # Deliberately broad: raw_to_structured_attack()/attack_converter()
+        # are deterministic regex/rule-based parsing over free-typed input
+        # (e.g. an attack_effect like "2d80" or another malformed dice
+        # expression) — without this, any parsing failure here reaches
+        # the browser as FastAPI's generic, contextless 500 error page,
+        # with the actual exception visible only in the server's own
+        # terminal, not to whoever is using the form.
+        return _message_page(f"Could not build the card: {exc}", status_code=422)
+
     card_data = json.loads(card_to_json(move_card))
-    return HTMLResponse(render_move_card_html(card_data))
+
+    edit_form_fields = {
+        "raw_attack_name": raw_attack.name,
+        "raw_attack_modifier": raw_attack.modifier,
+        "raw_attack_attack_type": raw_attack.attack_type,
+        "raw_attack_attack_effect": raw_attack.attack_effect,
+        "additional_description": semantic_context.additional_description or "",
+        "creature_description": semantic_context.creature_description or "",
+        "creature_subtype": semantic_context.creature_subtype.value if semantic_context.creature_subtype else "",
+        "template_name": template_name,
+        "image_uri": image_uri,
+        "semantic_result_json": _semantic_result_to_json(semantic_result),
+    }
+
+    return HTMLResponse(render_move_card_html_with_edit(card_data, "/review/edit", edit_form_fields))
 
 
 # =====================
@@ -110,6 +199,7 @@ def _render_card(raw_attack: RawAttack, semantic_result: AttackSemanticResult) -
 def show_convert_form(request: Request) -> HTMLResponse:
     return templates.TemplateResponse(request, "convert_form.html.jinja2", {
         "creature_subtypes": [subtype.value for subtype in CreatureSubtype],
+        "attack_types": ATTACK_TYPE_OPTIONS,
     })
 
 
@@ -118,22 +208,20 @@ def convert(
         request: Request,
         name: str = Form(""),
         modifier: str = Form(""),
-        attack_type: str = Form(""),
+        attack_type: Literal["", "melee", "melee touch", "ranged", "ranged touch"] = Form(""),
         attack_effect: str = Form(""),
         additional_description: str = Form(""),
         creature_description: str = Form(""),
         creature_subtype: str = Form(""),
+        image_uri: str = Form(""),
+        force_review: bool = Form(False),
         ) -> HTMLResponse:
     raw_attack = RawAttack(name=name, modifier=modifier, attack_type=attack_type, attack_effect=attack_effect)
 
     if is_blank_attack(raw_attack):
-        return HTMLResponse("<p>No card produced: the submitted attack was blank.</p>")
+        return _message_page("No card produced: the submitted attack was blank.")
 
-    semantic_context = SemanticContextInput(
-        additional_description=additional_description or None,
-        creature_description=creature_description or None,
-        creature_subtype=CreatureSubtype(creature_subtype) if creature_subtype else None,
-    )
+    semantic_context = _semantic_context_from_form(additional_description, creature_description, creature_subtype)
 
     try:
         semantic_result = classify_attack(
@@ -143,20 +231,61 @@ def convert(
             creature_subtype=semantic_context.creature_subtype,
         )
     except ModelUnavailableError as exc:
-        return HTMLResponse(f"<p>The configured LLM model is unavailable: {exc}</p>", status_code=503)
+        return _message_page(f"The configured LLM model is unavailable: {exc}", status_code=503)
+    except Exception as exc:
+        return _message_page(f"Classification failed: {exc}", status_code=502)
 
-    if needs_review(confidence=semantic_result.confidence):
-        return templates.TemplateResponse(request, "review_form.html.jinja2", {
-            "raw_attack": raw_attack,
-            "semantic_context": semantic_context,
-            "semantic_result": semantic_result,
-            "semantic_result_json": _semantic_result_to_json(semantic_result),
-            "template_name": ATTACK_PROMPT_TEMPLATE,
-            "move_types": [move_type.value for move_type in MoveType],
-            "unit_systems": [unit.value for unit in UnitSystem],
-        })
+    # NOTE:
+    # force_review is a per-request local value, never written to
+    # config.validation_settings.ALWAYS_ON — that setting is shared,
+    # process-wide, mutable state, safe for a single sequential batch
+    # script (see entrypoints/collect_real_pipeline_conversions_with_simulated_review.py)
+    # but not for a web server handling concurrent requests: mutating it
+    # here could leak "always review" into an unrelated request that
+    # never asked for it.
+    if force_review or needs_review(confidence=semantic_result.confidence):
+        return templates.TemplateResponse(
+            request, "review_form.html.jinja2",
+            _review_form_context(raw_attack, semantic_context, semantic_result, ATTACK_PROMPT_TEMPLATE, image_uri),
+        )
 
-    return _render_card(raw_attack, semantic_result)
+    return _render_card(raw_attack, semantic_result, semantic_context, ATTACK_PROMPT_TEMPLATE, image_uri)
+
+
+@app.post("/review/edit", response_class=HTMLResponse)
+def edit_review(
+        request: Request,
+        raw_attack_name: str = Form(...),
+        raw_attack_modifier: str = Form(...),
+        raw_attack_attack_type: str = Form(...),
+        raw_attack_attack_effect: str = Form(...),
+        additional_description: str = Form(""),
+        creature_description: str = Form(""),
+        creature_subtype: str = Form(""),
+        image_uri: str = Form(""),
+        semantic_result_json: str = Form(...),
+        template_name: str = Form(...),
+        ) -> HTMLResponse:
+    """
+    Reopens the review form for an already-produced card — reachable
+    from the "Edit this classification" button render_move_card_html_
+    with_edit() adds to every rendered card, not just ones that already
+    went through review. No LLM call here: the classification is the
+    one already carried in semantic_result_json, not reclassified.
+    """
+    raw_attack = RawAttack(
+        name=raw_attack_name,
+        modifier=raw_attack_modifier,
+        attack_type=raw_attack_attack_type,
+        attack_effect=raw_attack_attack_effect,
+    )
+    semantic_context = _semantic_context_from_form(additional_description, creature_description, creature_subtype)
+    semantic_result = _semantic_result_from_json(semantic_result_json)
+
+    return templates.TemplateResponse(
+        request, "review_form.html.jinja2",
+        _review_form_context(raw_attack, semantic_context, semantic_result, template_name, image_uri),
+    )
 
 
 @app.post("/review", response_class=HTMLResponse)
@@ -165,6 +294,11 @@ def review(
         raw_attack_modifier: str = Form(...),
         raw_attack_attack_type: str = Form(...),
         raw_attack_attack_effect: str = Form(...),
+        additional_description: str = Form(""),
+        creature_description: str = Form(""),
+        creature_subtype: str = Form(""),
+        image_uri: str = Form(""),
+        template_name: str = Form(...),
         semantic_result_json: str = Form(...),
         decision: str = Form(...),
         description: str = Form(""),
@@ -180,6 +314,7 @@ def review(
         attack_type=raw_attack_attack_type,
         attack_effect=raw_attack_attack_effect,
     )
+    semantic_context = _semantic_context_from_form(additional_description, creature_description, creature_subtype)
     original_result = _semantic_result_from_json(semantic_result_json)
 
     # NOTE:
@@ -188,7 +323,7 @@ def review(
     # MVP 0.5) — they're read here and then discarded, not stored.
 
     if decision == "reject":
-        return HTMLResponse("<p>No card produced: the classification was rejected.</p>")
+        return _message_page("No card produced: the classification was rejected.")
 
     if decision == "correct":
         corrected_range = None
@@ -205,4 +340,4 @@ def review(
     else:
         final_result = original_result
 
-    return _render_card(raw_attack, final_result)
+    return _render_card(raw_attack, final_result, semantic_context, template_name, image_uri)

@@ -23,7 +23,7 @@ from monsterforge.domain.enums import (
 )
 from monsterforge.serialization.domain_to_json import card_to_json
 from monsterforge.rendering.move_card_renderer import (
-    render_move_card_html, format_move_effects, format_bonus_cards,
+    render_move_card_html, render_move_card_html_with_edit, format_move_effects, format_bonus_cards,
 )
 from monsterforge.rendering.labels import MOVE_TYPE_TO_COLOR_MAPPING
 
@@ -159,3 +159,35 @@ def test_accent_color_is_salmon_for_physical_move_type():
     data = make_card_data()
     html = render_move_card_html(data)
     assert MOVE_TYPE_TO_COLOR_MAPPING[MoveType.PHYSICAL] in html
+
+
+# =====================
+# WITH EDIT FORM
+# =====================
+def test_with_edit_includes_the_edit_form_fields_as_hidden_inputs():
+    data = make_card_data()
+    html = render_move_card_html_with_edit(data, "/review/edit", {"raw_attack_name": "Bite"})
+
+    assert 'action="/review/edit"' in html
+    assert '<input type="hidden" name="raw_attack_name" value="Bite">' in html
+
+
+def test_with_edit_escapes_special_characters_in_field_values():
+    """A hidden field value with an embedded double quote must not
+    break out of the HTML attribute it's rendered inside — this broke
+    once for a JSON-serialized field before the value was explicitly
+    escaped in the template."""
+    data = make_card_data()
+    html = render_move_card_html_with_edit(data, "/review/edit", {"semantic_result_json": '{"a": "b"}'})
+
+    assert '{"a": "b"}' not in html
+    assert "&#34;a&#34;" in html
+
+
+def test_with_edit_includes_print_specific_rules():
+    data = make_card_data()
+    html = render_move_card_html_with_edit(data, "/review/edit", {})
+
+    assert "@page" in html
+    assert "@media print" in html
+    assert "display: none" in html  # hides the on-screen controls when printing

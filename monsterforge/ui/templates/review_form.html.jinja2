@@ -36,6 +36,11 @@
     <input type="hidden" name="raw_attack_modifier" value="{{ raw_attack.modifier }}">
     <input type="hidden" name="raw_attack_attack_type" value="{{ raw_attack.attack_type }}">
     <input type="hidden" name="raw_attack_attack_effect" value="{{ raw_attack.attack_effect }}">
+    <input type="hidden" name="additional_description" value="{{ semantic_context.additional_description or '' }}">
+    <input type="hidden" name="creature_description" value="{{ semantic_context.creature_description or '' }}">
+    <input type="hidden" name="creature_subtype" value="{{ semantic_context.creature_subtype.value if semantic_context.creature_subtype else '' }}">
+    <input type="hidden" name="template_name" value="{{ template_name }}">
+    <input type="hidden" name="image_uri" value="{{ image_uri }}">
     <input type="hidden" name="semantic_result_json" value='{{ semantic_result_json }}'>
 
     <fieldset class="mb-4">

@@ -105,3 +105,28 @@ def render_move_card_html(card_data: dict) -> str:
     """
     template = environment.get_template("move_card.html.jinja2")
     return template.render(**build_card_context(card_data))
+
+
+def render_move_card_html_with_edit(
+        card_data: dict,
+        edit_form_action: str,
+        edit_form_fields: dict[str, str]) -> str:
+    """
+    Same as render_move_card_html(), but wraps the card with a small
+    "Edit this classification" form beneath it, POSTing edit_form_fields
+    (rendered as hidden inputs) to edit_form_action.
+
+    Lets a consumer (ui/app.py) make a rendered card never a dead end —
+    a reviewer can revisit the classification even after an
+    auto-approved result, which otherwise has no correction path at all.
+    Reuses move_card_fragment.html.jinja2/move_card_style.html.jinja2,
+    the same shared partials move_card.html.jinja2 and the gallery
+    already build on, rather than embedding a second full HTML document
+    inside this one.
+    """
+    template = environment.get_template("move_card_with_edit.html.jinja2")
+    return template.render(
+        edit_form_action=edit_form_action,
+        edit_form_fields=edit_form_fields,
+        **build_card_context(card_data),
+    )

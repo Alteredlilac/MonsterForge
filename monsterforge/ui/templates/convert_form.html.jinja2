@@ -21,7 +21,12 @@
       </div>
       <div class="mb-3">
         <label for="attack_type" class="form-label">Attack type</label>
-        <input type="text" class="form-control" id="attack_type" name="attack_type" placeholder="e.g. melee">
+        <select class="form-select" id="attack_type" name="attack_type" required>
+          <option value="" disabled selected>-- select --</option>
+          {% for value in attack_types %}
+          <option value="{{ value }}">{{ value }}</option>
+          {% endfor %}
+        </select>
       </div>
       <div class="mb-3">
         <label for="attack_effect" class="form-label">Attack effect</label>
@@ -40,6 +45,11 @@
         <textarea class="form-control" id="creature_description" name="creature_description" rows="2"></textarea>
       </div>
       <div class="mb-3">
+        <label for="image_uri" class="form-label">Image URL (optional)</label>
+        <input type="url" class="form-control" id="image_uri" name="image_uri" placeholder="https://...">
+        <div class="form-text">Web URLs only — a local file path won't load from this page.</div>
+      </div>
+      <div class="mb-3">
         <label for="creature_subtype" class="form-label">Creature subtype</label>
         <select class="form-select" id="creature_subtype" name="creature_subtype">
           <option value="">(none)</option>
@@ -47,6 +57,12 @@
           <option value="{{ subtype }}">{{ subtype }}</option>
           {% endfor %}
         </select>
+      </div>
+      <div class="form-check mb-3">
+        <input type="checkbox" class="form-check-input" id="force_review" name="force_review" value="true">
+        <label class="form-check-label" for="force_review">
+          Always review, regardless of confidence
+        </label>
       </div>
     </fieldset>
 
