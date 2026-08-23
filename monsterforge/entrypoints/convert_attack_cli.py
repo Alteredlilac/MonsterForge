@@ -10,6 +10,7 @@ from monsterforge.pipeline.attack_pipeline import convert_attack
 from monsterforge.serialization.domain_to_json import card_to_json
 from ._raw_attack_input import prompt_for_raw_attack
 from ._semantic_context_input import prompt_for_semantic_context
+from ._review_input import prompt_for_human_review
 from ._llm_model_selection import ensure_model_available, call_llm_with_model_fallback
 
 
@@ -23,7 +24,13 @@ def main() -> None:
         additional_description=semantic_context.additional_description,
         creature_description=semantic_context.creature_description,
         creature_subtype=semantic_context.creature_subtype,
+        review_handler=prompt_for_human_review,
     ))
+
+    if move_card is None:
+        print("No card produced (blank attack or rejected in review).")
+        return
+
     print(card_to_json(move_card))
 
 
