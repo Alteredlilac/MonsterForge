@@ -9,9 +9,11 @@ A Python-based pipeline that transforms semi-structured RPG data into normalized
 The project is under active development. A first vertical slice — converting a
 single D&D 3.x attack all the way from raw input to a domain `MoveCard`,
 classified live against the real Gemini API — works end to end today via CLI
-tools, and that `MoveCard` can now be rendered into an actual printable
-HTML/CSS card. Persistence, the HTTP API, and human validation are designed
-in detail but not yet built.
+tools, that `MoveCard` can be rendered into an actual printable HTML/CSS card,
+and a low-confidence classification is now gated behind a human review step
+(approve, correct, reject, or rerun the classification) before it reaches the
+rest of the pipeline. Persistence and the HTTP API are designed in detail but
+not yet built.
 
 For the full, up-to-date picture (what's implemented, test coverage, known
 limitations) see **[monsterforge/docs/PROJECT_STATUS.md](./monsterforge/docs/PROJECT_STATUS.md)**.
@@ -183,13 +185,14 @@ Built and working today:
 - Full conversion path from raw attack input to a domain `MoveCard`, including secondary/referenced cards (e.g. a bite granting Trip)
 - CLI entry points for manual input, prompt iteration, and batch data collection against the real API
 - Card rendering pipeline (`MoveCard` → printable HTML/CSS card), plus a static gallery browsing every card produced against the real API with a raw-input/classification/JSON drill-down per card
+- Confidence-gated human review: a low-confidence classification is shown to a reviewer (raw input, full LLM context, the classification itself) before it reaches the rest of the pipeline — approve, correct specific fields, reject outright, or rerun the classification (optionally against a different prompt template)
 
 Planned, not yet built:
 
 - Web scraping with `requests` + `BeautifulSoup`
 - SQL persistence of raw and structured data
 - A JSON API (FastAPI) exposing the domain model
-- Confidence-based human validation workflow
+- The human review step above exposed over the web instead of only the CLI, with persisted review history
 
 ---
 
@@ -246,7 +249,7 @@ A typical pipeline execution is designed to produce traceable logs for each tran
 [2026-07-10 14:32:11] INFO  Generating card templates (1 creature, 2 moves)...
 [2026-07-10 14:32:11] INFO  Export completed: creature_card.html, bite_card.html, keen_scent_card.html
 ```
-Logging makes each transformation stage observable and simplifies debugging, validation, and future rule changes. This is a mock-up of the target end-to-end flow and its intended log output — no logging system exists yet either, and scraping and validation aren't built, see [Current Status](#current-status).
+Logging makes each transformation stage observable and simplifies debugging, validation, and future rule changes. This is a mock-up of the target end-to-end flow and its intended log output for a full creature — no logging system exists yet, and full-creature scraping/validation aren't built. A CLI-based human review step does exist today, but for the attack-only pipeline, not with this log shape — see [Current Status](#current-status).
 
 ---
 
@@ -260,7 +263,9 @@ monsterforge/
 │                        # compatible dict), shared by api/ and rendering/
 ├── rendering/           # MoveCard → printable HTML/CSS card, and the
 │                          # real-sample gallery page
-├── config/             # runtime settings (LLM API key, confidence thresholds, DB config — see .env.example) (planned)
+├── config/             # runtime settings: validation_settings.py (confidence
+│                        # threshold, force-review toggle) is built; DB/LLM-key
+│                        # config is still planned
 ├── db/                  # DB schema and access (raw scraped content, generic table) (planned)
 ├── rules/                 # typed conversion tables (dataclasses: size→HP, characteristic→attribute, ...)
 ├── scraping/                # HTML acquisition (requests + BeautifulSoup), writes to db/ (planned)
@@ -279,7 +284,9 @@ monsterforge/
 ├── pipeline/                           # orchestration (e.g. attack_pipeline.convert_attack)
 ├── entrypoints/                         # CLI tools: manual conversion, prompt testing,
 │                                          real-API data collection
-├── validation/                          # human review logic (planned)
+├── validation/                          # human review gate: ValidationStatus,
+│                                          needs_review() — the review UI itself
+│                                          is a CLI, in entrypoints/
 ├── api/                                  # JSON API, FastAPI (planned)
 └── tests/                                  # unit tests
 ```
@@ -312,7 +319,9 @@ python -m monsterforge.entrypoints.convert_attack_cli
 ```
 
 Prompts for a raw attack (and optional context) interactively, then prints
-the resulting `MoveCard` as JSON.
+the resulting `MoveCard` as JSON. If the classification's confidence is low,
+prompts for human review first (approve/correct/reject/rerun) before
+continuing.
 
 ```bash
 python -m monsterforge.entrypoints.test_llm_prompt_cli
@@ -342,7 +351,7 @@ The LLM is used strictly as a semantic classifier, not a generator.
 - Fixed output schema
 - Low temperature
 - Confidence scoring
-- Automatic fallback to human validation when confidence < threshold (planned; today confidence is captured but not yet routed anywhere)
+- Automatic fallback to human review when confidence < threshold (built, CLI-based — see [Current Status](#current-status))
 
 Example output *(simplified — see [DESIGN.md](./DESIGN.md) for the full schema, including duration, usage, and card fields)*:
 
@@ -421,7 +430,7 @@ just not yet wired to a single end-to-end `convert()` call like this.
 ## Future Improvements
 
 - HTTP API (FastAPI) exposing the domain model as JSON
-- CLI-based human validation workflow for low-confidence classifications
+- Web-based human review (reusing the same review logic already built for the CLI), with persisted review history
 - Transformation versioning system
 - Support for additional RPG systems
 - Advanced balancing heuristics

@@ -1,6 +1,6 @@
 # Project Status
 
-Snapshot of where MonsterForge stands as of August 20, 2026.
+Snapshot of where MonsterForge stands as of August 23, 2026.
 For the system's design and long-term architecture, see [PIPELINE_ARCHITECTURE.md](./PIPELINE_ARCHITECTURE.md)
 and [DESIGN.md](../../DESIGN.md). For how the LLM layer specifically is
 structured, see [LLM_ARCHITECTURE.md](./LLM_ARCHITECTURE.md). For how a
@@ -28,11 +28,18 @@ live at <https://alteredlilac.github.io/MonsterForge/>, see
 [RENDERING_AND_GALLERY.md](./RENDERING_AND_GALLERY.md) for what that
 demonstrates.
 
-The current test suite contains 497 passing tests, 0 failing.
+A confidence-gated human review step now sits between LLM classification
+and the deterministic conversion stages: a low-confidence classification
+is shown to a reviewer (raw attack, full LLM context, the classification
+itself) before it's trusted downstream, with the option to approve it
+as-is, correct specific fields directly, reject it outright (no card is
+produced), or rerun the classification — optionally with a different
+prompt template — and review the new result under the same menu.
 
-Persistence, an HTTP API, and a human-validation workflow are designed
-in detail but not yet built — see [Limitations](#limitations--not-yet-built)
-below.
+The current test suite contains 532 passing tests, 0 failing.
+
+Persistence and an HTTP API are designed in detail but not yet built —
+see [Limitations](#limitations--not-yet-built) below.
 
 ## What works today
 
@@ -58,9 +65,25 @@ below.
   classification (e.g. `creature_subtype=incorporeal` correctly forces
   `move_type=magical` per the prompt's own rule).
 
+- **Confidence-gated human review** (`validation/`): a classification
+  below a configurable confidence threshold — or every classification,
+  if forced on for data-collection purposes — is shown to a reviewer
+  (the raw attack, the full LLM context, and the classification itself:
+  description, move type, range, confidence, rationale) before the
+  pipeline continues downstream. The reviewer can approve it as-is,
+  correct `description`/`move_type`/`move_range` directly, reject it
+  outright (no card is produced), or rerun the classification — with an
+  optional extra note and/or a different prompt template — and review
+  the new result under the same menu, repeatable until a decision is
+  made. `convert_attack()` now returns `None` rather than always a
+  `MoveCard`, for a rejected review or a blank submission (an attack
+  with every field empty is skipped before any LLM call at all, rather
+  than being classified and then failing downstream).
+
 - **CLI entry points** (`python -m monsterforge.entrypoints.<name>`):
-  - `convert_attack_cli` — hand-enter an attack (+ optional context), get its
-    MoveCard JSON.
+  - `convert_attack_cli` — hand-enter an attack (+ optional context), get
+    its MoveCard JSON; triggers the interactive human review above when
+    the classification's confidence is low.
   - `test_llm_prompt_cli` — render any Jinja2 prompt template and send it
     to the real LLM client, for iterating on prompts directly.
   - `collect_real_classifications` — batch tool running all 65 cases in
@@ -68,10 +91,17 @@ below.
   - `collect_real_pipeline_conversions` — batch tool running all 65 cases
     in `SAMPLE_ATTACKS_WITH_CONTEXT` (the same attacks, paired with real
     semantic context) through the complete pipeline against the real API.
-    Both batch tools save raw + parsed results to `entrypoints/output/*.json`
+  - `collect_real_pipeline_conversions_with_simulated_review` — the same
+    65 cases with human review forced on for every one, using a
+    deterministic, non-interactive reviewer that cycles through
+    approve/correct/reject so all three outcomes get exercised against
+    real pipeline output — an observational run, not a source of genuine
+    review judgments.
+
+    All batch tools save raw + parsed results to `entrypoints/output/*.json`
     for manual review, with a 5s delay between calls (configurable per
-    script). Deliberately two independent scripts making independent rounds
-    of real calls, not one reusing the other's data — so results can also
+    script). Deliberately independent scripts making independent rounds
+    of real calls, not one reusing another's data — so results can also
     be diffed against each other to see how much a live classification
     varies run to run (including whether the model's self-reported
     confidence is at all stable). **Not** part of the automated test suite:
@@ -105,7 +135,7 @@ below.
 
 ## Test coverage
 
-**497 passing, 0 failing.** A set of 9 pre-existing failures (unrelated
+**532 passing, 0 failing.** A set of 9 pre-existing failures (unrelated
 to the attack pipeline itself — stale tests in `tests/domain/`,
 `tests/rules/dnd/v3x/`, and `tests/structured_data/dnd/v3x/`, left over
 from earlier field/behavior changes elsewhere in the codebase that the
@@ -118,6 +148,17 @@ later the same day, in `damages_converter.py` (a bonus-only typed damage
 component silently defaulting to PHYSICAL), came with its own dedicated
 test file — previously zero coverage on that file, now covering all 8
 damage-classification branches and every resolver.
+
+The confidence-gated human review work (`validation/`, the interactive
+review CLI, rerun) added 35 new tests: `needs_review()`'s four
+confidence/force-review combinations, the review CLI's branching logic
+(enum retry-on-invalid-input, range correction, rerun's note-appending
+and failure handling), and the pipeline wiring (the blank-attack
+short-circuit, all three review outcomes, and that review is skipped
+entirely when no handler is supplied). Entry-point helper modules with
+real branching logic get dedicated tests in this project — batch
+data-collection scripts and thin CLI wrappers that only glue together
+already-tested logic don't.
 
 ## Limitations / not yet built
 
@@ -133,10 +174,6 @@ ship:
 - **HTTP API** — no FastAPI layer; the pipeline is reachable only via
   the CLI entry points.
 
-- **Human validation workflow** — low-confidence LLM classifications
-  aren't routed anywhere for review; there's no CLI or UI validation
-  step.
-
 - **Other `MoveCard` sources** — only attacks produce move cards today;
   talents, spells, and special qualities aren't wired in
   (`transformation/dnd/v3x/converters/move_converter.py` remains an
@@ -145,11 +182,13 @@ ship:
 All of the above is designed in detail but not yet built: persistence
 with stable card identity derived from a content fingerprint (so the
 same attack always resolves to the same card, even across separate
-runs), a FastAPI HTTP layer, and a confidence-gated human validation
-step for low-confidence LLM classifications. Rendering a `MoveCard`
-into a printable card — originally part of this same "later" bucket —
-has since moved out of it and is built; see
-[RENDERING_AND_GALLERY.md](./RENDERING_AND_GALLERY.md).
+runs), and a FastAPI HTTP layer. Rendering a `MoveCard` into a printable
+card and a confidence-gated human review step for low-confidence LLM
+classifications — both originally part of this same "later" bucket —
+have since moved out of it and are built; see
+[RENDERING_AND_GALLERY.md](./RENDERING_AND_GALLERY.md) for the former.
+The human review step is still CLI-only and stateless — a web form and
+a persisted review history remain part of the "later" bucket above.
 
 ## Notable fixes and findings
 
@@ -190,7 +229,8 @@ full changelog:
   and, for the attacks known to need it, the actual source text stating
   their range — and a fresh full-pipeline run against the real API
   cleared 10 of the 11 errors that run produced (the one remaining
-  error is the intentional blank placeholder case, not a real attack).
+  error was the intentional blank placeholder case, not a real attack
+  — see below for how that error was resolved too, later on).
   This reframes the finding above: the gap wasn't primarily a
   `KNOWN_ATTACKS` coverage problem, it was a missing-context problem —
   the LLM resolves a range correctly once the source material actually
@@ -215,6 +255,20 @@ full changelog:
   160-character cap, then verified — not just assumed to work — by
   running the full 65-case sample set against the real API a third
   time and comparing description lengths against the two earlier runs.
+- The one remaining error from the follow-up above (the blank
+  placeholder case) turned out to be a real, if minor, inefficiency:
+  the pipeline still made a real LLM call on a completely empty
+  submission before failing with `UnknownAttackRange` downstream.
+  Fixed with an explicit short-circuit — an attack with every field
+  empty is now skipped before any LLM call, treated as an empty
+  submission rather than something to classify. Verified against a
+  fresh full-pipeline run of the same 65 cases: 0 errors this time,
+  the blank case now recording no LLM response and no card rather than
+  an error. The batch collector script that produces this dataset
+  calls the deterministic conversion stages directly (to capture the
+  raw LLM response, which the pipeline's own entry point doesn't
+  expose), so it needed the same short-circuit applied to it
+  separately rather than inheriting it automatically.
 
 ## Documentation housekeeping
 

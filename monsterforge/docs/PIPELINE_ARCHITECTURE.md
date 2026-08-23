@@ -139,15 +139,25 @@ and `llm/`.
 
 > **Status note.** Stage 5 above diagrams low-confidence classifications
 > as routed to `ui/`. The validation design actually settled on later is
-> a blocking CLI form in `validation/cli_form.py`, not a `ui/` interface
-> — consistent with `DESIGN.md`'s "simplest tool" philosophy, and with
-> the original PyQt5 desktop-tool vision itself having been superseded by
-> a FastAPI JSON API (see [PROJECT_STATUS.md](./PROJECT_STATUS.md)).
-> `ui/` remains an empty, unplanned stub. The diagram is left as
-> originally drawn here rather than silently rewritten, since it predates
-> that decision; see [PROJECT_STATUS.md](./PROJECT_STATUS.md) for what's
-> actually implemented today — as of this writing, neither `validation/`
-> nor `ui/` exist yet.
+> an interactive CLI, not a `ui/` interface — consistent with
+> `DESIGN.md`'s "simplest tool" philosophy, and with the original PyQt5
+> desktop-tool vision itself having been superseded by a FastAPI JSON API
+> (see [PROJECT_STATUS.md](./PROJECT_STATUS.md)). `ui/` remains an empty,
+> unplanned stub. The diagram is left as originally drawn here rather
+> than silently rewritten, since it predates that decision.
+>
+> `validation/` is now built, but narrower in scope than this diagram
+> depicts: it gates the D&D 3.x attack pipeline specifically
+> (`pipeline.attack_pipeline.convert_attack()`), not yet the general
+> `structured_data` conversion this stage is drawn for — the same
+> vertical-slice-first approach already applied throughout this project
+> (see decision 7 below). The reviewing interface lives in `entrypoints/`
+> (`entrypoints/_review_input.py`), not a dedicated `validation/cli_form.py`
+> as first sketched. "Keeps a history of corrections" above is also not
+> yet true: today's review is stateless, in-session only — no correction
+> history is persisted anywhere yet. See
+> [PROJECT_STATUS.md](./PROJECT_STATUS.md) for exactly what's built and
+> what's still designed-only.
 
 ---
 
@@ -271,6 +281,53 @@ boundary.
 
 **Consequence**: `serialization/` stays a single stage shared by `api/`
 and `rendering/` — the fork happens after that stage, not before.
+
+### 7. Where human review sits relative to LLM classification
+
+**Problem**: once an LLM classification carries a self-reported
+confidence score, something has to decide what to do with a low one —
+trust it anyway, or show it to a person first.
+
+**Solution**: a review gate sits strictly between classification and the
+deterministic conversion stages, not inside either one. Concretely, for
+the attack pipeline: `classify_attack()` runs first and always; if its
+confidence is below a configurable threshold (or review is forced on),
+the raw classification — together with the raw input and every piece of
+context that produced it — is shown to a reviewer before
+`raw_to_structured_attack()` ever runs. The reviewer can approve the
+classification unchanged, correct it directly, reject it (no card is
+produced at all), or have it reclassified — optionally against a
+different prompt template — and reconsider the new result under the
+same choice.
+
+**Why the review boundary sits exactly there, not earlier or later**: a
+classification's `confidence`/`rationale` only exist as long as the raw
+classification result is still in hand — pushing review any later (e.g.
+after `structured_data` conversion) would mean either carrying that
+transient metadata further than it needs to go, or losing the ability to
+compare the classification against the same context a reviewer would
+need to judge it. Pushing review earlier (inside the classification
+function itself) would make the LLM call itself interactive, coupling a
+pure classification function to a CLI/UI concern it has no business
+knowing about.
+
+**Not everything a reviewer edits is a constrained value.** The
+classification's enum-typed fields (move type, the range's unit) are
+corrected through a fixed choice, since a constrained value is reusable
+as clean data later; but its free-text field (the generated description)
+and the range's raw magnitude are edited directly, on the understanding
+that a reviewer is trusted not to introduce nonsense — the alternative
+(never allowing a free-text fix) would leave an obviously wrong
+description uncorrectable in the one case it matters most: when the LLM
+gets it badly wrong.
+
+**Scope, deliberately narrow for now**: this gate exists only for the
+attack pipeline, and is stateless — no review decision is persisted
+anywhere yet, so the same low-confidence input reviewed twice gets
+reviewed twice. Persistence, and extending the same gate to other future
+`structured_data` sources (talents, spells, special qualities), are both
+deferred; see [PROJECT_STATUS.md](./PROJECT_STATUS.md) for current
+status.
 
 ---
 
