@@ -38,9 +38,11 @@ from monsterforge.validation.review import HumanReview, needs_review
 ReviewHandler = Callable[[RawAttack, SemanticContextInput, AttackSemanticResult, str], HumanReview]
 
 
-def _is_blank(raw_attack: RawAttack) -> bool:
+def is_blank_attack(raw_attack: RawAttack) -> bool:
     """A raw_attack with every field empty is an empty submission, not
-    a real attack — nothing to classify or convert."""
+    a real attack — nothing to classify or convert. Public (not
+    underscore-prefixed) because collect_real_pipeline_conversions.py
+    reuses it too, bypassing convert_attack() to capture raw_response."""
     return not any((raw_attack.name, raw_attack.modifier, raw_attack.attack_type, raw_attack.attack_effect))
 
 
@@ -74,7 +76,7 @@ def convert_attack(
     call re-invokes the LLM classifier and produces a MoveCard with a
     fresh random id.
     """
-    if _is_blank(raw_attack):
+    if is_blank_attack(raw_attack):
         return None
 
     semantic_result = classify_attack(

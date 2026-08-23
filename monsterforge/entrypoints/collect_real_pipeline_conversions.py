@@ -37,6 +37,7 @@ from monsterforge.parsing.dnd.v3x.raw_fields.attacks import Attack as RawAttack
 from monsterforge.parsing.dnd.v3x.structured_conversions.attacks.attacks_converter import (
     raw_to_structured_attack,
 )
+from monsterforge.pipeline.attack_pipeline import is_blank_attack
 from monsterforge.transformation.dnd.v3x.converters.attacks_converter import attack_converter
 from monsterforge.llm.client import get_llm_client
 from monsterforge.serialization.domain_to_json import card_to_json
@@ -116,6 +117,23 @@ def main() -> None:
         creature_subtype = CreatureSubtype(subtype_text) if subtype_text else None
         label = case.get("name") or "(blank case)"
         print(f"[{index + 1}/{total}] {label}...")
+
+        if is_blank_attack(raw_attack):
+            # No real attack to classify: skip the LLM call entirely.
+            # This script bypasses pipeline.attack_pipeline.convert_attack()
+            # (to capture raw_response, which that function doesn't
+            # expose), so it needs this same check applied explicitly
+            # here rather than inheriting it for free.
+            samples.append({
+                "case": case,
+                "context": context,
+                "raw_response": None,
+                "confidence": None,
+                "rationale": None,
+                "move_card": None,
+                "error": None,
+            })
+            continue
 
         try:
             captured = call_llm_with_model_fallback(
