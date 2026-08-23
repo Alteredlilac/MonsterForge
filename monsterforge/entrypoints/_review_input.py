@@ -15,11 +15,13 @@ from monsterforge.parsing.dnd.v3x.raw_fields.attacks import Attack as RawAttack
 from monsterforge.llm.semantic_classification.attacks import (
     AttackSemanticResult,
     SemanticContextInput,
+    classify_attack,
 )
 from monsterforge.structured_data.dnd.v3x.effect_mechanics import EffectRange
 from monsterforge.structured_data.dnd.v3x.enums import MoveType, UnitSystem
 from monsterforge.validation.enums import ValidationStatus
 from monsterforge.validation.review import HumanReview
+from ._llm_model_selection import call_llm_with_model_fallback
 
 
 # =====================
@@ -107,6 +109,49 @@ def _prompt_correction(current: AttackSemanticResult) -> AttackSemanticResult:
 
 
 # =====================
+# RERUN
+# =====================
+def _rerun_classification(
+        raw_attack: RawAttack,
+        semantic_context: SemanticContextInput,
+        current_template_name: str,
+        ) -> tuple[SemanticContextInput, AttackSemanticResult, str] | None:
+    """
+    Reclassify raw_attack with an optional extra note appended to
+    additional_description and/or a different template. Returns None
+    (leaving the caller's state unchanged) if the reclassification
+    itself fails — e.g. an unknown template path — rather than crashing
+    the review session over a typo.
+    """
+    note = input("Rerun note, appended to additional_description (optional): ").strip()
+
+    if note:
+        additional_description = (
+            f"{semantic_context.additional_description}\n{note}"
+            if semantic_context.additional_description else note
+        )
+        semantic_context = dataclasses.replace(semantic_context, additional_description=additional_description)
+
+    template_name = input(f"Template [{current_template_name}]: ").strip() or current_template_name
+
+    print("Reclassifying...")
+
+    try:
+        new_result = call_llm_with_model_fallback(lambda: classify_attack(
+            raw_attack=raw_attack,
+            additional_description=semantic_context.additional_description,
+            creature_description=semantic_context.creature_description,
+            creature_subtype=semantic_context.creature_subtype,
+            template_name=template_name,
+        ))
+    except Exception as exc:
+        print(f"Rerun failed, nothing changed: {exc}")
+        return None
+
+    return semantic_context, new_result, template_name
+
+
+# =====================
 # REVIEW
 # =====================
 def prompt_for_human_review(
@@ -125,17 +170,30 @@ def prompt_for_human_review(
       (dropdown), and optionally move_range (numeric value + dropdown unit).
     - [r]eject produces a HumanReview with result=None: convert_attack()
       stops there, no card is generated.
+    - [re]run reclassifies raw_attack for real (a fresh LLM call), with
+      an optional extra note and/or a different template, then shows the
+      new classification and re-presents this same menu — repeatable
+      until the reviewer picks a/c/r.
     - Every branch may optionally record assigned_llm_score and edit_note.
     """
-    _print_review_context(raw_attack, semantic_context, semantic_result, template_name)
-
     while True:
-        choice = input("[a]pprove / [c]orrect / [r]eject: ").strip().lower()
+        _print_review_context(raw_attack, semantic_context, semantic_result, template_name)
 
-        if choice in ("a", "c", "r"):
+        while True:
+            choice = input("[a]pprove / [c]orrect / [r]eject / [re]run: ").strip().lower()
+
+            if choice in ("a", "c", "r", "re"):
+                break
+
+            print("Please enter 'a', 'c', 'r', or 're'.")
+
+        if choice != "re":
             break
 
-        print("Please enter 'a', 'c', or 'r'.")
+        rerun_outcome = _rerun_classification(raw_attack, semantic_context, template_name)
+
+        if rerun_outcome is not None:
+            semantic_context, semantic_result, template_name = rerun_outcome
 
     if choice == "a":
         return HumanReview(

@@ -158,16 +158,22 @@ class AttackClassificationError(RuntimeError):
 # =====================
 def _build_attack_prompt(
     context: AttackSemanticContext,
+    template_name: str = ATTACK_PROMPT_TEMPLATE,
 ) -> str:
     """
     Build the prompt used for semantic attack classification.
 
-    The prompt is rendered from the dedicated Jinja2 attack-classification
-    template and receives the raw attack data together with any additional
-    contextual information available to the classifier.
+    The prompt is rendered from the Jinja2 attack-classification template
+    named by template_name (ATTACK_PROMPT_TEMPLATE by default) and
+    receives the raw attack data together with any additional contextual
+    information available to the classifier.
 
     Args:
         context: Temporary contextual data required by the prompt.
+        template_name: Path (relative to PROMPT_TEMPLATE_DIR) of the
+            template to render. Overridable so a human review rerun can
+            classify against a different template without touching any
+            other caller's behavior.
 
     Returns:
         The rendered prompt string.
@@ -178,7 +184,7 @@ def _build_attack_prompt(
             autoescape=False,      # Prompt is plain text, not HTML
         )
 
-        template = environment.get_template(ATTACK_PROMPT_TEMPLATE)
+        template = environment.get_template(template_name)
 
         return template.render(
             raw_attack=context["raw_attack"],
@@ -395,6 +401,7 @@ def classify_attack(
     additional_description: str | None = None,
     creature_description: str | None = None,
     creature_subtype: CreatureSubtype | None = None,
+    template_name: str = ATTACK_PROMPT_TEMPLATE,
 ) -> AttackSemanticResult:
     """
     Classify a D&D 3.x attack using the semantic LLM pipeline.
@@ -410,6 +417,12 @@ def classify_attack(
         creature_description: Optional description of the creature using
             the attack.
         creature_subtype: Optional D&D 3.x creature subtype.
+        template_name: Jinja2 template name (relative to
+            PROMPT_TEMPLATE_DIR, forward-slash separated regardless of
+            OS — a Jinja2 loader name, not a filesystem Path). Defaults
+            to ATTACK_PROMPT_TEMPLATE; overridable so a human review
+            rerun can try a different template without affecting any
+            other caller, which all keep using the default.
 
     Returns:
         The semantic classification result for the attack.
@@ -421,7 +434,7 @@ def classify_attack(
         "creature_subtype": creature_subtype,
     }
 
-    prompt = _build_attack_prompt(context)
+    prompt = _build_attack_prompt(context, template_name)
     response = _call_attack_classifier(prompt)
 
     return _parse_attack_result(response)
