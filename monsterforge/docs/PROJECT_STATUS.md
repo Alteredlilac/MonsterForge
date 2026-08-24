@@ -139,7 +139,9 @@ but not yet built — see [Limitations](#limitations--not-yet-built) below.
 - **A static gallery of every card produced against the real API**: one
   page, a clickable entry per sample, each opening a raw-input /
   classification / JSON / rendered-card drill-down — real pipeline
-  output, not hand-picked examples.
+  output, not hand-picked examples. Browsing only — unlike the
+  standalone card page or the web UI below, the gallery doesn't offer
+  printing (see [RENDERING_AND_GALLERY.md](./RENDERING_AND_GALLERY.md)).
 
 - **The conversion + review flow over the web** (`ui/`, FastAPI +
   Bootstrap): `GET`/`POST /convert` collects a raw attack and classifies
