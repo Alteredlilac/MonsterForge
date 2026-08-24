@@ -4,11 +4,98 @@
 <meta charset="UTF-8">
 <title>SLAM</title>
 <style>
+  /*
+    10mm margin fits safely inside both A4 (210x297mm) and US Letter
+    (215.9x279.4mm) without needing to detect which one is active —
+    print-time detection of the OS/printer's selected page size is
+    inconsistently supported across browsers, so this design
+    deliberately avoids depending on it.
+  */
+  @page {
+    margin: 10mm;
+  }
   body {
     background: #2b2b2b;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
     padding: 2rem;
+  }
+  .controls-row {
+    width: 560px;
+    margin-bottom: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .controls-row button, .controls-row a {
+    padding: 0.5rem 1.5rem;
+    font-size: 1rem;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    background: #e8ddc4;
+    border: 2px solid #333;
+    border-radius: 4px;
+    font-family: Georgia, "Times New Roman", serif;
+  }
+
+  /*
+    NOTE:
+    On-screen only: shrinks the card to fit within 80% of the viewport
+    height on short screens, instead of forcing a scrollbar. Same
+    transform: scale() technique as the print rule below (a max-height
+    alone would clip the card's fixed-height sections rather than
+    shrinking them together), but the ratio is computed in JavaScript
+    (see move_card_print_script.html.jinja2) rather than pure CSS
+    calc()/min() — dividing two different CSS units (vh, px) into a
+    plain number for scale() relies on CSS math-function support that
+    isn't reliably available in every browser yet, confirmed not to
+    take effect in at least one real test. --screen-scale is a custom
+    property, not the transform property itself, specifically so the
+    @media print rule below (a plain, self-contained transform
+    declaration) keeps winning during printing through normal CSS
+    cascade — an inline style directly on `transform` would otherwise
+    always win over any stylesheet rule, print media query included.
+  */
+  .card {
+    transform: scale(var(--screen-scale, 1));
+    transform-origin: top center;
+  }
+
+  /*
+    NOTE:
+    A physically accurate print needs the card at its real ~63x88mm
+    size (Magic-style), not the 560px width sized for comfortable
+    screen viewing. Rather than rewriting every nested px value in
+    move_card_style.html.jinja2 in mm (dozens of fixed heights/paddings
+    across header/art/body-section/etc.), a single uniform transform:
+    scale() on .card preserves every internal proportion exactly as
+    designed on screen. The factor is derived from width only (560px ->
+    63mm, using the standard 96px = 1in = 25.4mm conversion: 63 / (560 *
+    25.4 / 96) ~= 0.4252) since width is the one dimension with no
+    min-height ambiguity in the source CSS. This card's actual pixel
+    ratio (~560:815) isn't a perfect match for 63:88 (the .art section
+    uses min-height, not a fixed height), so the printed height comes
+    out around 91-92mm rather than exactly 88mm — undistorted, just
+    not pinned to both dimensions at once. Deliberately left as-is
+    rather than adjusting the screen layout's fixed heights to true up
+    the ratio, since that's already-approved visual design from an
+    earlier session, not something to change for print's sake alone.
+  */
+  @media print {
+    .controls-row {
+      display: none;
+    }
+    body {
+      background: none;
+      padding: 0;
+      align-items: flex-start;
+    }
+    .card {
+      transform: scale(0.4252);
+      transform-origin: top left;
+    }
   }
 </style>
 <style>
@@ -286,6 +373,9 @@
 </style>
 </head>
 <body>
+<div class="controls-row">
+  <button type="button" onclick="window.print()">Print</button>
+</div>
   <div class="card" style="--accent-color: #c17f68;">
     <div class="card-header">
       <div class="name-box">
@@ -339,5 +429,15 @@
     </div>
     <div class="footer">ID: 71117512-0bb2-4cd3-a119-631eca102016</div>
   </div>
+<script>
+  var card = document.querySelector(".card");
+  var naturalHeight = card.getBoundingClientRect().height;
+  var maxHeight = window.innerHeight * 0.8;
+
+  if (naturalHeight > maxHeight) {
+    var ratio = maxHeight / naturalHeight;
+    card.style.setProperty("--screen-scale", ratio);
+  }
+</script>
 </body>
 </html>
