@@ -73,6 +73,52 @@ PROMPT_TEMPLATE_DIR = (
 )
 ATTACK_PROMPT_TEMPLATE = "attacks/classify_attack.jinja2"
 
+
+@dataclass(frozen=True, kw_only=True)
+class AttackPromptTemplateOption:
+    """One selectable classify_attack prompt template, for a human
+    (CLI menu, web dropdown) choosing which one to classify against.
+    Frozen: this is static configuration data, not a mutable runtime
+    object."""
+    path: str
+    label: str
+    description: str
+
+
+# NOTE:
+# The single source of truth for which classify_attack prompt template
+# variants exist and how they're presented to a human choosing between
+# them (CLI menu, web dropdown) — add a template here, once, rather than
+# hardcoding its path in each place that offers a choice.
+ATTACK_PROMPT_TEMPLATE_OPTIONS: tuple[AttackPromptTemplateOption, ...] = (
+    AttackPromptTemplateOption(
+        path=ATTACK_PROMPT_TEMPLATE,
+        label="Default",
+        description="The baseline classification prompt.",
+    ),
+    AttackPromptTemplateOption(
+        path="attacks/classify_attack_creature_context.jinja2",
+        label="Creature context",
+        description=(
+            "Uses the creature description as context for the attack, "
+            "without re-describing the creature."
+        ),
+    ),
+    AttackPromptTemplateOption(
+        path="attacks/classify_attack_confidence_guard.jinja2",
+        label="Confidence guard",
+        description=(
+            "Returns low confidence when key information (attack effect, "
+            "damage, description, creature context) is missing."
+        ),
+    ),
+    AttackPromptTemplateOption(
+        path="attacks/classify_attack_creature_context_confidence_guard.jinja2",
+        label="Creature context + confidence guard",
+        description="Combines the creature-context and confidence-guard instructions.",
+    ),
+)
+
 # NOTE:
 # Model selection is centralized in llm.client.get_llm_client() (see
 # _DEFAULT_MODEL there), not repeated per classifier module.

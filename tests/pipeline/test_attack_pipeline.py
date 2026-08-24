@@ -6,7 +6,7 @@ the LLM classifier mocked (no real API calls in tests).
 """
 from unittest.mock import Mock, patch
 from monsterforge.parsing.dnd.v3x.raw_fields.attacks import Attack as RawAttack
-from monsterforge.llm.semantic_classification.attacks import AttackSemanticResult
+from monsterforge.llm.semantic_classification.attacks import AttackSemanticResult, ATTACK_PROMPT_TEMPLATE
 from monsterforge.structured_data.dnd.v3x.enums import MoveType, CreatureSubtype
 from monsterforge.validation.enums import ValidationStatus
 from monsterforge.validation.review import HumanReview
@@ -41,6 +41,7 @@ def test_convert_attack_bite_plus_trip_end_to_end():
         additional_description=None,
         creature_description=None,
         creature_subtype=None,
+        template_name=ATTACK_PROMPT_TEMPLATE,
     )
     assert card.name == "Bite"
     assert card.move_effects[0].effect_value == 6  # 1d6 avg (3) + bonus (3)
@@ -87,7 +88,29 @@ def test_convert_attack_forwards_optional_semantic_context():
         additional_description="Part of a larger grapple attempt.",
         creature_description="A translucent, drifting undead.",
         creature_subtype=CreatureSubtype.INCORPOREAL,
+        template_name=ATTACK_PROMPT_TEMPLATE,
     )
+
+
+def test_convert_attack_forwards_a_non_default_template_name():
+    """template_name must reach both classify_attack() and, when review
+    is triggered, review_handler() — a reviewer needs to see which
+    template actually produced the classification, not always the
+    default."""
+    raw_attack = RawAttack(name="Claw", modifier="+9", attack_type="melee", attack_effect="2d6+4")
+    chosen_template = "attacks/classify_attack_confidence_guard.jinja2"
+    review_handler = Mock(return_value=HumanReview(
+        status=ValidationStatus.APPROVED, result=make_semantic_result(confidence=0.1),
+    ))
+
+    with patch(
+        "monsterforge.pipeline.attack_pipeline.classify_attack",
+        return_value=make_semantic_result(confidence=0.1),
+    ) as mock_classify:
+        convert_attack(raw_attack, review_handler=review_handler, template_name=chosen_template)
+
+    assert mock_classify.call_args.kwargs["template_name"] == chosen_template
+    assert review_handler.call_args.args[-1] == chosen_template
 
 
 def test_convert_attack_returns_none_for_blank_attack():

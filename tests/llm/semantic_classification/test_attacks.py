@@ -21,6 +21,9 @@ from monsterforge.llm.semantic_classification.attacks import (
     classify_attack,
     AttackSemanticResult,
     InvalidAttackSemanticResultError,
+    ATTACK_PROMPT_TEMPLATE,
+    ATTACK_PROMPT_TEMPLATE_OPTIONS,
+    PROMPT_TEMPLATE_DIR,
 )
 from monsterforge.structured_data.dnd.v3x.enums import MoveType, UnitSystem
 
@@ -129,6 +132,26 @@ def test_parse_effect_range_rejects_missing_keys():
 def test_parse_effect_range_rejects_negative_value():
     with pytest.raises(InvalidAttackSemanticResultError):
         _parse_effect_range({"value": -5, "unit": "feet"})
+
+
+# =====================
+# ATTACK_PROMPT_TEMPLATE_OPTIONS
+# =====================
+def test_attack_prompt_template_options_paths_all_exist_on_disk():
+    """A typo'd path here would only surface as a runtime
+    TemplateNotFound when someone actually picks that option — catch it
+    at test time instead."""
+    for option in ATTACK_PROMPT_TEMPLATE_OPTIONS:
+        assert (PROMPT_TEMPLATE_DIR / option.path).is_file(), option.path
+
+
+def test_attack_prompt_template_options_paths_are_unique():
+    paths = [option.path for option in ATTACK_PROMPT_TEMPLATE_OPTIONS]
+    assert len(paths) == len(set(paths))
+
+
+def test_attack_prompt_template_options_first_entry_is_the_default():
+    assert ATTACK_PROMPT_TEMPLATE_OPTIONS[0].path == ATTACK_PROMPT_TEMPLATE
 
 
 # =====================

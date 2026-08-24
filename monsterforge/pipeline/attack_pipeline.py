@@ -52,7 +52,8 @@ def convert_attack(
         additional_description: str | None = None,
         creature_description: str | None = None,
         creature_subtype: CreatureSubtype | None = None,
-        review_handler: ReviewHandler | None = None) -> MoveCard | None:
+        review_handler: ReviewHandler | None = None,
+        template_name: str = ATTACK_PROMPT_TEMPLATE) -> MoveCard | None:
     """
     Convert a raw D&D 3.x attack into a domain MoveCard.
 
@@ -72,6 +73,14 @@ def convert_attack(
       of the raw fields into a structured Attack.
     - Convert the structured Attack into a MoveCard.
 
+    template_name selects which classify_attack prompt template the
+    initial classification runs against (see
+    llm.semantic_classification.attacks.ATTACK_PROMPT_TEMPLATE_OPTIONS
+    for the curated choices) — defaults to the baseline template,
+    unchanged from before this parameter existed. Also forwarded to
+    review_handler, so a reviewer sees which template actually produced
+    the classification instead of always the default.
+
     No caching, deduplication, or persistence is performed here — every
     call re-invokes the LLM classifier and produces a MoveCard with a
     fresh random id.
@@ -84,6 +93,7 @@ def convert_attack(
         additional_description=additional_description,
         creature_description=creature_description,
         creature_subtype=creature_subtype,
+        template_name=template_name,
     )
 
     if review_handler is not None and needs_review(confidence=semantic_result.confidence):
@@ -92,7 +102,7 @@ def convert_attack(
             creature_description=creature_description,
             creature_subtype=creature_subtype,
         )
-        review = review_handler(raw_attack, semantic_context, semantic_result, ATTACK_PROMPT_TEMPLATE)
+        review = review_handler(raw_attack, semantic_context, semantic_result, template_name)
 
         if review.status == ValidationStatus.REJECTED:
             return None
