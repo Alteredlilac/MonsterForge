@@ -33,6 +33,8 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from monsterforge.parsing.dnd.v3x.raw_fields.attacks import Attack as RawAttack
 from monsterforge.parsing.dnd.v3x.structured_conversions.attacks.attacks_converter import (
+    UnknownAttackRange,
+    is_melee,
     raw_to_structured_attack,
 )
 from monsterforge.transformation.dnd.v3x.converters.attacks_converter import attack_converter
@@ -120,6 +122,39 @@ def _semantic_result_from_json(text: str) -> AttackSemanticResult:
 
 
 # =====================
+# RANGE CONTEXT HELPERS
+# =====================
+def _parse_positive_range(range_value: str, range_unit: str) -> EffectRange | None:
+    """
+    Build an EffectRange from raw form input, deterministically — a
+    numeric value plus a unit dropdown is already fixed, structured
+    data, so it's built directly rather than round-tripped through the
+    LLM's own free-text interpretation of it.
+
+    Returns None if no range value was given (range is optional unless
+    the caller has already required it). Raises ValueError if a range
+    value is given but isn't a positive integer, or if the unit is
+    missing/invalid — a negative or zero range has no real meaning.
+    """
+    if not range_value.strip():
+        return None
+
+    value = int(range_value)
+    if value < 1:
+        raise ValueError(f"range value must be positive, got {value}.")
+
+    return EffectRange(effect_range=value, range_unit_system=UnitSystem(range_unit))
+
+
+def _range_context_note(effect_range: EffectRange) -> str:
+    """Render an EffectRange as a short sentence to prepend to the LLM's
+    additional_description context, so its own confidence reflects that
+    the range is already known rather than guessed."""
+    unit = "feet" if effect_range.range_unit_system == UnitSystem.IMPERIAL else "meters"
+    return f"Range: {effect_range.effect_range} {unit}."
+
+
+# =====================
 # SEMANTIC CONTEXT HELPERS
 # =====================
 def _semantic_context_from_form(
@@ -138,9 +173,12 @@ def _review_form_context(
         semantic_context: SemanticContextInput,
         semantic_result: AttackSemanticResult,
         template_name: str,
-        image_uri: str) -> dict:
+        image_uri: str,
+        error_message: str | None = None) -> dict:
     """Shared template context for review_form.html.jinja2, built by
-    both a fresh /convert classification and a revisit via /review/edit."""
+    a fresh /convert classification, a revisit via /review/edit, or a
+    bounce-back from a failed card build (error_message set — see
+    UnknownAttackRange handling in convert()/review())."""
     return {
         "raw_attack": raw_attack,
         "semantic_context": semantic_context,
@@ -150,6 +188,8 @@ def _review_form_context(
         "image_uri": image_uri,
         "move_types": [move_type.value for move_type in MoveType],
         "unit_systems": [unit.value for unit in UnitSystem],
+        "is_melee": is_melee(raw_attack),
+        "error_message": error_message,
     }
 
 
@@ -175,6 +215,13 @@ def _render_card(
     try:
         structured_attack = raw_to_structured_attack(raw_attack, semantic_result)
         move_card = attack_converter(structured_attack, attack_image_uri=image_uri or None)
+    except UnknownAttackRange:
+        # Re-raised rather than turned into a dead end here: the caller
+        # (convert()/review()) has the raw_attack/semantic_result/context
+        # needed to send the reviewer back to the correction form
+        # instead, where the range fields this error is actually about
+        # are right there to fill in.
+        raise
     except Exception as exc:
         # NOTE:
         # Deliberately broad: raw_to_structured_attack()/attack_converter()
@@ -212,13 +259,14 @@ def show_convert_form(request: Request) -> HTMLResponse:
     return templates.TemplateResponse(request, "convert_form.html.jinja2", {
         "creature_subtypes": [subtype.value for subtype in CreatureSubtype],
         "attack_types": ATTACK_TYPE_OPTIONS,
+        "unit_systems": [unit.value for unit in UnitSystem],
     })
 
 
 @app.post("/convert", response_class=HTMLResponse)
 def convert(
         request: Request,
-        name: str = Form(""),
+        name: str = Form(...),
         modifier: str = Form(""),
         attack_type: Literal["", "melee", "melee touch", "ranged", "ranged touch"] = Form(""),
         attack_effect: str = Form(""),
@@ -227,13 +275,46 @@ def convert(
         creature_subtype: str = Form(""),
         image_uri: str = Form(""),
         force_review: bool = Form(False),
+        range_value: str = Form(""),
+        range_unit: str = Form(""),
         ) -> HTMLResponse:
     raw_attack = RawAttack(name=name, modifier=modifier, attack_type=attack_type, attack_effect=attack_effect)
 
     if is_blank_attack(raw_attack):
         return _message_page("No card produced: the submitted attack was blank.")
 
+    # NOTE:
+    # A ranged/ranged touch attack needs to resolve a distance somehow —
+    # either from an explicit range value/unit here, or from prose in
+    # additional_description (the existing, already-reliable path for
+    # most real attacks). Only required as a last resort, when neither
+    # is present, rather than forcing structured input on attacks that
+    # already work fine from context alone.
+    if (attack_type in ("ranged", "ranged touch")
+            and not additional_description.strip()
+            and not (range_value.strip() and range_unit.strip())):
+        return _message_page(
+            "A ranged attack needs either a range value and unit, or a description "
+            "mentioning its range — neither was provided.",
+            status_code=422,
+        )
+
+    try:
+        explicit_range = None if is_melee(raw_attack) else _parse_positive_range(range_value, range_unit)
+    except ValueError as exc:
+        return _message_page(f"Invalid range value: {exc}", status_code=422)
+
     semantic_context = _semantic_context_from_form(additional_description, creature_description, creature_subtype)
+
+    if explicit_range is not None:
+        range_note = _range_context_note(explicit_range)
+        semantic_context = dataclasses.replace(
+            semantic_context,
+            additional_description=(
+                f"{range_note} {semantic_context.additional_description}"
+                if semantic_context.additional_description else range_note
+            ),
+        )
 
     try:
         semantic_result = classify_attack(
@@ -246,6 +327,14 @@ def convert(
         return _message_page(f"The configured LLM model is unavailable: {exc}", status_code=503)
     except Exception as exc:
         return _message_page(f"Classification failed: {exc}", status_code=502)
+
+    if explicit_range is not None:
+        # The form's own range/unit is trusted over whatever the LLM
+        # returned for move_range — it was already handed to the LLM as
+        # context above (so confidence reflects that it had the value),
+        # but the actual domain value used downstream comes from the
+        # deterministic form input, not the LLM's own reconstruction of it.
+        semantic_result = dataclasses.replace(semantic_result, move_range=explicit_range)
 
     # NOTE:
     # force_review is a per-request local value, never written to
@@ -261,16 +350,25 @@ def convert(
             _review_form_context(raw_attack, semantic_context, semantic_result, ATTACK_PROMPT_TEMPLATE, image_uri),
         )
 
-    return _render_card(raw_attack, semantic_result, semantic_context, ATTACK_PROMPT_TEMPLATE, image_uri)
+    try:
+        return _render_card(raw_attack, semantic_result, semantic_context, ATTACK_PROMPT_TEMPLATE, image_uri)
+    except UnknownAttackRange as exc:
+        return templates.TemplateResponse(
+            request, "review_form.html.jinja2",
+            _review_form_context(
+                raw_attack, semantic_context, semantic_result, ATTACK_PROMPT_TEMPLATE, image_uri,
+                error_message=f"Could not build the card: {exc} Provide a range below and try again.",
+            ),
+        )
 
 
 @app.post("/review/edit", response_class=HTMLResponse)
 def edit_review(
         request: Request,
-        raw_attack_name: str = Form(...),
-        raw_attack_modifier: str = Form(...),
-        raw_attack_attack_type: str = Form(...),
-        raw_attack_attack_effect: str = Form(...),
+        raw_attack_name: str = Form(""),
+        raw_attack_modifier: str = Form(""),
+        raw_attack_attack_type: str = Form(""),
+        raw_attack_attack_effect: str = Form(""),
         additional_description: str = Form(""),
         creature_description: str = Form(""),
         creature_subtype: str = Form(""),
@@ -302,10 +400,18 @@ def edit_review(
 
 @app.post("/review", response_class=HTMLResponse)
 def review(
-        raw_attack_name: str = Form(...),
-        raw_attack_modifier: str = Form(...),
-        raw_attack_attack_type: str = Form(...),
-        raw_attack_attack_effect: str = Form(...),
+        request: Request,
+        # NOTE:
+        # These four carry the original raw attack through the hidden
+        # form fields, unchanged since /convert. They default to "" (not
+        # required) rather than Form(...): FastAPI treats an empty
+        # string on a required Form field as if it weren't sent at all,
+        # which turned a legitimately blank modifier into a hard 422
+        # ("Field required") instead of the empty value it actually is.
+        raw_attack_name: str = Form(""),
+        raw_attack_modifier: str = Form(""),
+        raw_attack_attack_type: str = Form(""),
+        raw_attack_attack_effect: str = Form(""),
         additional_description: str = Form(""),
         creature_description: str = Form(""),
         creature_subtype: str = Form(""),
@@ -313,6 +419,7 @@ def review(
         template_name: str = Form(...),
         semantic_result_json: str = Form(...),
         decision: str = Form(...),
+        name: str = Form(""),
         description: str = Form(""),
         move_type: str = Form(""),
         range_value: str = Form(""),
@@ -338,10 +445,15 @@ def review(
         return _message_page("No card produced: the classification was rejected.")
 
     if decision == "correct":
-        corrected_range = None
+        if not name.strip():
+            return _message_page("Name cannot be blank.", status_code=422)
 
-        if range_value.strip():
-            corrected_range = EffectRange(effect_range=int(range_value), range_unit_system=UnitSystem(range_unit))
+        raw_attack = dataclasses.replace(raw_attack, name=name)
+
+        try:
+            corrected_range = _parse_positive_range(range_value, range_unit)
+        except ValueError as exc:
+            return _message_page(f"Invalid range value: {exc}", status_code=422)
 
         final_result = dataclasses.replace(
             original_result,
@@ -352,4 +464,13 @@ def review(
     else:
         final_result = original_result
 
-    return _render_card(raw_attack, final_result, semantic_context, template_name, image_uri)
+    try:
+        return _render_card(raw_attack, final_result, semantic_context, template_name, image_uri)
+    except UnknownAttackRange as exc:
+        return templates.TemplateResponse(
+            request, "review_form.html.jinja2",
+            _review_form_context(
+                raw_attack, semantic_context, final_result, template_name, image_uri,
+                error_message=f"Could not build the card: {exc} Provide a range below and try again.",
+            ),
+        )

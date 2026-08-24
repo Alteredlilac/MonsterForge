@@ -13,7 +13,7 @@
       <legend class="h5">Raw attack</legend>
       <div class="mb-3">
         <label for="name" class="form-label">Name</label>
-        <input type="text" class="form-control" id="name" name="name">
+        <input type="text" class="form-control" id="name" name="name" required>
       </div>
       <div class="mb-3">
         <label for="modifier" class="form-label">Attack modifier</label>
@@ -31,6 +31,26 @@
       <div class="mb-3">
         <label for="attack_effect" class="form-label">Attack effect</label>
         <input type="text" class="form-control" id="attack_effect" name="attack_effect" placeholder="e.g. 1d6+3 plus trip">
+      </div>
+      <div class="row">
+        <div class="col mb-3">
+          <label for="range_value" class="form-label">Range value</label>
+          <input type="number" min="1" class="form-control" id="range_value" name="range_value">
+        </div>
+        <div class="col mb-3">
+          <label for="range_unit" class="form-label">Range unit</label>
+          <select class="form-select" id="range_unit" name="range_unit">
+            <option value="">-- select --</option>
+            {% for value in unit_systems %}
+            <option value="{{ value }}">{{ value }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="form-text mb-3">
+        Only needed for a ranged/ranged touch attack whose range isn't already stated in
+        "Additional description" below — melee attacks disable these, and any range already
+        described in prose is left to the classifier.
       </div>
     </fieldset>
 
@@ -69,5 +89,41 @@
     <button type="submit" class="btn btn-primary">Convert</button>
   </form>
 </div>
+<script>
+  // NOTE:
+  // Range value/unit are required only for a ranged/ranged touch attack
+  // with no additional_description at all — most ranged attacks already
+  // resolve their range from prose context (e.g. real SRD text), so this
+  // is a last-resort requirement, not a blanket one. Melee/melee touch
+  // attacks disable these fields entirely, since get_known_attack_range()
+  // ignores any range for a melee attack regardless of what's supplied.
+  var attackType = document.getElementById("attack_type");
+  var additionalDescription = document.getElementById("additional_description");
+  var rangeValue = document.getElementById("range_value");
+  var rangeUnit = document.getElementById("range_unit");
+
+  function updateRangeFields() {
+    var isMelee = attackType.value === "melee" || attackType.value === "melee touch";
+    var isRanged = attackType.value === "ranged" || attackType.value === "ranged touch";
+    var hasDescription = additionalDescription.value.trim().length > 0;
+
+    rangeValue.disabled = isMelee;
+    rangeUnit.disabled = isMelee;
+
+    if (isMelee) {
+      rangeValue.required = false;
+      rangeUnit.required = false;
+      rangeValue.value = "";
+    } else {
+      var required = isRanged && !hasDescription;
+      rangeValue.required = required;
+      rangeUnit.required = required;
+    }
+  }
+
+  attackType.addEventListener("change", updateRangeFields);
+  additionalDescription.addEventListener("input", updateRangeFields);
+  updateRangeFields();
+</script>
 </body>
 </html>

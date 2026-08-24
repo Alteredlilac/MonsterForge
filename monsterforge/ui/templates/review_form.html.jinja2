@@ -9,6 +9,10 @@
 <div class="container py-5" style="max-width: 640px;">
   <h1 class="mb-4">Human Review Requested</h1>
 
+  {% if error_message %}
+  <div class="alert alert-warning" role="alert">{{ error_message }}</div>
+  {% endif %}
+
   <div class="card mb-4">
     <div class="card-body">
       <h2 class="h6">Raw attack</h2>
@@ -46,6 +50,10 @@
     <fieldset class="mb-4">
       <legend class="h5">Correction (used only if you click "Correct")</legend>
       <div class="mb-3">
+        <label for="name" class="form-label">Name</label>
+        <input type="text" class="form-control" id="name" name="name" value="{{ raw_attack.name }}" required>
+      </div>
+      <div class="mb-3">
         <label for="description" class="form-label">Description</label>
         <textarea class="form-control" id="description" name="description" rows="2">{{ semantic_result.description }}</textarea>
       </div>
@@ -57,10 +65,11 @@
           {% endfor %}
         </select>
       </div>
+      {% if not is_melee %}
       <div class="row">
         <div class="col mb-3">
           <label for="range_value" class="form-label">Range value</label>
-          <input type="number" class="form-control" id="range_value" name="range_value"
+          <input type="number" min="1" class="form-control" id="range_value" name="range_value"
                  value="{{ semantic_result.move_range.effect_range if semantic_result.move_range else '' }}">
         </div>
         <div class="col mb-3">
@@ -72,6 +81,7 @@
           </select>
         </div>
       </div>
+      {% endif %}
     </fieldset>
 
     <fieldset class="mb-4">
@@ -86,9 +96,15 @@
       </div>
     </fieldset>
 
-    <button type="submit" name="decision" value="approve" class="btn btn-success me-2">Approve</button>
+    <!--
+      formnovalidate on Approve/Reject: the correction fieldset above
+      (name/description/move_type/range) is used only if Correct is
+      clicked — HTML5 required on the name field must not block Approve
+      or Reject just because a field that decision ignores is blank.
+    -->
+    <button type="submit" name="decision" value="approve" class="btn btn-success me-2" formnovalidate>Approve</button>
     <button type="submit" name="decision" value="correct" class="btn btn-primary me-2">Correct</button>
-    <button type="submit" name="decision" value="reject" class="btn btn-danger">Reject</button>
+    <button type="submit" name="decision" value="reject" class="btn btn-danger" formnovalidate>Reject</button>
   </form>
 </div>
 </body>

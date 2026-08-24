@@ -60,14 +60,22 @@ def test_show_convert_form_lists_creature_subtypes():
 # =====================
 # POST /convert
 # =====================
-def test_convert_blank_attack_produces_no_card_and_skips_classification():
+def test_convert_without_a_name_is_rejected_before_classification():
+    """
+    Name became mandatory on /convert (a nameless MoveCard is a
+    degenerate case, and a blank name reaching /review also triggered a
+    FastAPI quirk — see the NOTE on review()'s raw_attack_* parameters).
+    A completely empty submission is now rejected by FastAPI's own
+    required-field validation before classify_attack() is ever called —
+    the old is_blank_attack() short-circuit is no longer reachable
+    through this route, since every submission that passes validation
+    already has a non-blank name.
+    """
     with patch("monsterforge.ui.app.classify_attack") as mock_classify:
         response = client.post("/convert", data={})
 
     mock_classify.assert_not_called()
-    assert response.status_code == 200
-    assert "No card produced" in response.text
-    assert 'href="/convert"' in response.text
+    assert response.status_code == 422
 
 
 def test_convert_malformed_attack_effect_reports_a_friendly_error():
@@ -149,6 +157,79 @@ def test_convert_force_review_bypasses_high_confidence():
 
 
 # =====================
+# POST /convert — range/unit
+# =====================
+RANGED_ATTACK_FORM = {"name": "Bow", "modifier": "+5", "attack_type": "ranged", "attack_effect": "1d8"}
+
+
+def test_convert_ranged_attack_without_context_or_range_is_rejected():
+    with patch("monsterforge.ui.app.classify_attack") as mock_classify:
+        response = client.post("/convert", data=RANGED_ATTACK_FORM)
+
+    mock_classify.assert_not_called()
+    assert response.status_code == 422
+    assert "range" in response.text.lower()
+
+
+def test_convert_ranged_attack_with_description_skips_the_range_requirement():
+    """A ranged attack whose range is already stated in prose doesn't
+    need the structured range fields — the existing free-text path
+    (classify_attack reading additional_description) already resolves
+    most real attacks correctly, so the structured fields are a
+    last-resort requirement, not a blanket one. move_range is set on the
+    mock to stand in for a real LLM call actually resolving "Range 60
+    feet." from the prose — mocking classify_attack means nothing
+    downstream would resolve a range from context text otherwise."""
+    mocked_result = make_semantic_result(
+        confidence=0.95, move_range=EffectRange(effect_range=60, range_unit_system=UnitSystem.IMPERIAL),
+    )
+    with patch("monsterforge.ui.app.classify_attack", return_value=mocked_result) as mock_classify:
+        response = client.post("/convert", data={
+            **RANGED_ATTACK_FORM, "additional_description": "Range 60 feet.",
+        })
+
+    mock_classify.assert_called_once()
+    assert response.status_code == 200
+
+
+def test_convert_ranged_attack_with_range_fields_overrides_the_llm_move_range():
+    """The form's own range/unit is trusted over whatever the LLM
+    returns for move_range, even though it's also handed to the LLM as
+    context (so its confidence reflects that it had the value)."""
+    with patch("monsterforge.ui.app.classify_attack", return_value=make_semantic_result(confidence=0.95)) as mock_classify:
+        response = client.post("/convert", data={
+            **RANGED_ATTACK_FORM, "range_value": "45", "range_unit": "metric",
+        })
+
+    assert response.status_code == 200
+    assert ">45<" in response.text
+    _, kwargs = mock_classify.call_args
+    assert "Range: 45 meters." in kwargs["additional_description"]
+
+
+def test_convert_negative_range_value_is_rejected():
+    with patch("monsterforge.ui.app.classify_attack") as mock_classify:
+        response = client.post("/convert", data={
+            **RANGED_ATTACK_FORM, "range_value": "-5", "range_unit": "metric",
+        })
+
+    mock_classify.assert_not_called()
+    assert response.status_code == 422
+
+
+def test_convert_melee_attack_ignores_range_fields_even_if_provided():
+    """get_known_attack_range() ignores range for a melee attack
+    regardless of what's supplied — a stray value here (e.g. left over
+    from switching attack_type in the browser) must not error."""
+    with patch("monsterforge.ui.app.classify_attack", return_value=make_semantic_result(confidence=0.95)):
+        response = client.post("/convert", data={
+            **RAW_ATTACK_FORM, "range_value": "-5", "range_unit": "metric",
+        })
+
+    assert response.status_code == 200
+
+
+# =====================
 # POST /review, POST /review/edit
 # =====================
 TEMPLATE_NAME = "attacks/classify_attack.jinja2"
@@ -210,7 +291,7 @@ def test_review_correct_uses_edited_fields():
     response = client.post("/review", data={
         **REVIEW_HIDDEN_BASE,
         "semantic_result_json": semantic_result_json, "decision": "correct",
-        "description": "A hand-corrected bite.", "move_type": "magical",
+        "name": "Bite", "description": "A hand-corrected bite.", "move_type": "magical",
         "range_value": "", "range_unit": "metric",
     })
 
@@ -229,7 +310,7 @@ def test_review_correct_with_a_range_value_builds_effect_range():
     response = client.post("/review", data={
         **REVIEW_HIDDEN_BASE,
         "semantic_result_json": semantic_result_json, "decision": "correct",
-        "description": "A ranged bite.", "move_type": "physical",
+        "name": "Bite", "description": "A ranged bite.", "move_type": "physical",
         "range_value": "60", "range_unit": "metric",
     })
 
@@ -304,9 +385,144 @@ def test_review_edit_then_correct_updates_the_card():
     response = client.post("/review", data={
         **REVIEW_HIDDEN_BASE,
         "semantic_result_json": semantic_result_json_again, "decision": "correct",
-        "description": "Edited after the fact.", "move_type": "physical",
+        "name": "Bite", "description": "Edited after the fact.", "move_type": "physical",
         "range_value": "", "range_unit": "metric",
     })
 
     assert response.status_code == 200
     assert "edited after the fact" in response.text.lower()
+
+
+def test_review_correct_rejects_a_negative_range_value():
+    semantic_result_json = _extract_semantic_result_json(
+        _review_page_html(move_range=EffectRange(effect_range=10, range_unit_system=UnitSystem.IMPERIAL))
+    )
+
+    response = client.post("/review", data={
+        **REVIEW_HIDDEN_BASE,
+        "semantic_result_json": semantic_result_json, "decision": "correct",
+        "name": "Bite", "description": "A ranged bite.", "move_type": "physical",
+        "range_value": "-10", "range_unit": "metric",
+    })
+
+    assert response.status_code == 422
+
+
+def test_review_page_hides_range_fields_for_a_melee_attack():
+    """get_known_attack_range() ignores range for melee regardless of
+    what's supplied — showing an editable-but-inert field there is
+    confusing, not just unnecessary."""
+    page = _review_page_html()  # REVIEW_HIDDEN_BASE / RAW_ATTACK_FORM default attack_type is "melee"
+
+    assert 'name="range_value"' not in page
+
+
+def test_review_page_shows_range_fields_for_a_ranged_attack():
+    with patch("monsterforge.ui.app.classify_attack", return_value=make_semantic_result(confidence=0.3)):
+        response = client.post("/convert", data={
+            **RANGED_ATTACK_FORM, "additional_description": "Range 60 feet.",
+        })
+
+    assert 'name="range_value"' in response.text
+
+
+def test_review_correct_can_fix_the_name():
+    semantic_result_json = _extract_semantic_result_json(_review_page_html())
+
+    response = client.post("/review", data={
+        **REVIEW_HIDDEN_BASE,
+        "semantic_result_json": semantic_result_json, "decision": "correct",
+        "name": "Fixed Name", "description": "A vicious bite.", "move_type": "physical",
+        "range_value": "", "range_unit": "metric",
+    })
+
+    assert response.status_code == 200
+    assert "FIXED NAME" in response.text.upper()
+
+
+def test_review_correct_with_a_blank_name_is_rejected():
+    """Server-side backstop for the same rule the review form enforces
+    client-side (required + formnovalidate on Approve/Reject) — a
+    non-browser client could still submit a blank name on Correct."""
+    semantic_result_json = _extract_semantic_result_json(_review_page_html())
+
+    response = client.post("/review", data={
+        **REVIEW_HIDDEN_BASE,
+        "semantic_result_json": semantic_result_json, "decision": "correct",
+        "name": "", "description": "A vicious bite.", "move_type": "physical",
+        "range_value": "", "range_unit": "metric",
+    })
+
+    assert response.status_code == 422
+
+
+def test_review_survives_a_blank_modifier():
+    """Regression test for the FastAPI quirk fixed on review()'s
+    raw_attack_* parameters: a legitimately blank modifier
+    (get_modifier() treats it as "no attack bonus") was being treated as
+    a missing required field, 422ing every decision — including Reject —
+    whenever the original attack had no modifier."""
+    with patch("monsterforge.ui.app.classify_attack", return_value=make_semantic_result(confidence=0.3)):
+        response = client.post("/convert", data={**RAW_ATTACK_FORM, "modifier": ""})
+
+    semantic_result_json = _extract_semantic_result_json(response.text)
+
+    review_response = client.post("/review", data={
+        **REVIEW_HIDDEN_BASE, "raw_attack_modifier": "",
+        "semantic_result_json": semantic_result_json, "decision": "approve",
+    })
+
+    assert review_response.status_code == 200
+    assert "BITE" in review_response.text.upper()
+
+
+# =====================
+# UnknownAttackRange bounce-back
+# =====================
+def test_convert_unresolvable_range_bounces_back_to_review_with_a_message():
+    """A ranged attack whose name isn't in KNOWN_ATTACKS and whose
+    context didn't let the LLM resolve a range used to dead-end with a
+    generic "Could not build the card" message and no way to fix it —
+    it now lands back on the review form (range is directly fixable
+    there) with an explanation of what went wrong."""
+    mocked_result = make_semantic_result(confidence=0.95, move_range=None)
+    with patch("monsterforge.ui.app.classify_attack", return_value=mocked_result):
+        response = client.post("/convert", data={
+            "name": "Arco", "modifier": "+5", "attack_type": "ranged",
+            "attack_effect": "1d8", "additional_description": "A bow-like weapon.",
+        })
+
+    assert response.status_code == 200
+    assert "Human Review Requested" in response.text
+    assert "not mapped" in response.text.lower()
+
+
+def test_review_approve_with_an_unresolvable_range_bounces_back_to_review():
+    """Same failure, reached by clicking Approve without filling in the
+    range fields in review (they're optional there, unlike /convert) —
+    arguably more likely to happen this way than via the direct
+    /convert path this scenario was first found through."""
+    semantic_result_json = _extract_semantic_result_json(_review_page_html(move_range=None))
+    hidden = {**REVIEW_HIDDEN_BASE, "raw_attack_name": "Arco", "raw_attack_attack_type": "ranged"}
+
+    response = client.post("/review", data={
+        **hidden,
+        "semantic_result_json": semantic_result_json, "decision": "approve",
+    })
+
+    assert response.status_code == 200
+    assert "Human Review Requested" in response.text
+    assert "not mapped" in response.text.lower()
+
+
+def test_convert_malformed_dice_still_dead_ends_instead_of_bouncing_back():
+    """Scope check: only UnknownAttackRange bounces back to review — a
+    malformed dice expression has no fixable field in the review form
+    (attack_effect isn't editable there), so it must stay a dead-end
+    message instead of looping the reviewer back to the same failure."""
+    with patch("monsterforge.ui.app.classify_attack", return_value=make_semantic_result(confidence=0.95)):
+        response = client.post("/convert", data={**RAW_ATTACK_FORM, "attack_effect": "2d80"})
+
+    assert response.status_code == 422
+    assert "Could not build the card" in response.text
+    assert "Human Review Requested" not in response.text
