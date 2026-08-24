@@ -151,6 +151,62 @@ def test_build_attack_prompt_renders_the_real_template():
     assert "Return ONLY a valid JSON object" in prompt
 
 
+def test_build_attack_prompt_creature_context_template_adds_its_instruction():
+    """classify_attack_creature_context.jinja2's added instruction must
+    actually reach the rendered prompt, and its Jinja comment (NOTE:
+    explaining why it exists) must not leak into it."""
+    context = {
+        "raw_attack": RawAttack(name="Bite", modifier="+7", attack_type="melee", attack_effect="1d6+3"),
+        "additional_description": None,
+        "creature_description": "A big lizard.",
+        "creature_subtype": None,
+    }
+
+    prompt = _build_attack_prompt(context, template_name="attacks/classify_attack_creature_context.jinja2")
+
+    assert "without describing" in prompt
+    assert "Confidence must be low" not in prompt
+    assert "{#" not in prompt and "#}" not in prompt
+
+
+def test_build_attack_prompt_confidence_guard_template_adds_its_instruction():
+    """classify_attack_confidence_guard.jinja2's added instruction must
+    actually reach the rendered prompt, and its Jinja comment must not
+    leak into it."""
+    context = {
+        "raw_attack": RawAttack(name="Bite", modifier="+7", attack_type="melee", attack_effect="1d6+3"),
+        "additional_description": None,
+        "creature_description": None,
+        "creature_subtype": None,
+    }
+
+    prompt = _build_attack_prompt(context, template_name="attacks/classify_attack_confidence_guard.jinja2")
+
+    assert "Confidence must be low" in prompt
+    assert "without describing" not in prompt
+    assert "{#" not in prompt and "#}" not in prompt
+
+
+def test_build_attack_prompt_combined_template_adds_both_instructions():
+    """classify_attack_creature_context_confidence_guard.jinja2 combines
+    both fixes, for a reviewer/rerun that wants both at once — only one
+    template can be selected per classification call."""
+    context = {
+        "raw_attack": RawAttack(name="Bite", modifier="+7", attack_type="melee", attack_effect="1d6+3"),
+        "additional_description": None,
+        "creature_description": "A big lizard.",
+        "creature_subtype": None,
+    }
+
+    prompt = _build_attack_prompt(
+        context, template_name="attacks/classify_attack_creature_context_confidence_guard.jinja2"
+    )
+
+    assert "without describing" in prompt
+    assert "Confidence must be low" in prompt
+    assert "{#" not in prompt and "#}" not in prompt
+
+
 # =====================
 # classify_attack
 # =====================
