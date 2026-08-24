@@ -94,6 +94,16 @@ def test_resolve_dice_modifier_same_type_combines_into_one_effect():
     assert effects == [MoveEffect(damage_type=DomainDamageType.FIRE, effect_value=9)]
 
 
+def test_resolve_dice_modifier_negative_modifier_clamps_to_minimum_one():
+    """1d4-2 physical damage: D4 averages 2, minus 2 -> 0, clamped to the
+    D&D rule that a dice-based damage roll always deals at least 1
+    point. Regression case: found as a real 0-damage MoveEffect on a
+    "Bite 1d4-2" attack in committed gallery output."""
+    d = Damage(dice_number=1, dice_type=DiceType.D4, damage_bonus=-2)
+    effects = resolve_dice_modifier(d)
+    assert effects == [MoveEffect(damage_type=DomainDamageType.PHYSICAL, effect_value=1)]
+
+
 def test_resolve_dice_modifier_defaults_both_components_to_physical():
     d = Damage(dice_number=1, dice_type=DiceType.D6, damage_bonus=3)
     effects = resolve_dice_modifier(d)

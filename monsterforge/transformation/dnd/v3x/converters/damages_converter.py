@@ -258,9 +258,17 @@ def resolve_dice_modifier(d: Damage)-> list[MoveEffect]:
     # e.g. 2d4+5 fire damage, 1d8+3 physical damage
     if dice_damages_type == type_of_damage_modifier:
         # MoveEffect
-        damage_type = dice_damages_type        
+        damage_type = dice_damages_type
 
-        effect_value = dice_value + damage_modifier
+        # NOTE:
+        # A dice-based damage roll always deals at least 1 point of
+        # damage, even when a negative modifier brings the dice average
+        # to zero or below (e.g. "1d4-2": average 2, minus 2 = 0). Not
+        # capping this produced a 0-damage MoveEffect on real attacks
+        # (e.g. a bite with a Strength penalty large enough to offset
+        # its own low dice average) — found by inspecting real gallery
+        # output, not covered by the original algorithm design.
+        effect_value = max(1, dice_value + damage_modifier)
 
         return [MoveEffect(
             damage_type= DAMAGE_TYPE_MAPPING[damage_type],
