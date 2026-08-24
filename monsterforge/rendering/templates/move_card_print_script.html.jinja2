@@ -1,0 +1,10 @@
+<script>
+  var card = document.querySelector(".card");
+  var naturalHeight = card.getBoundingClientRect().height;
+  var maxHeight = window.innerHeight * 0.8;
+
+  if (naturalHeight > maxHeight) {
+    var ratio = maxHeight / naturalHeight;
+    card.style.setProperty("--screen-scale", ratio);
+  }
+</script>

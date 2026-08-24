@@ -107,6 +107,28 @@ def test_format_bonus_cards_caps_at_three_entries():
 
 
 # =====================
+# render_move_card_html — print support
+# =====================
+def test_render_move_card_html_includes_a_print_button():
+    """The standalone page (used by render_sample_cards.py) shares the
+    same print CSS/button as ui/'s render_move_card_html_with_edit() —
+    it previously had neither, despite README/PROJECT_STATUS describing
+    every rendered card as "printable"."""
+    html = render_move_card_html(make_card_data())
+    assert 'onclick="window.print()"' in html
+    assert "@media print" in html
+
+
+def test_render_move_card_html_has_no_edit_or_home_controls():
+    """Unlike render_move_card_html_with_edit(), the standalone page has
+    no live backend to POST an edit to — only the print button is
+    shared, not the rest of ui/'s controls-row."""
+    html = render_move_card_html(make_card_data())
+    assert "Edit this classification" not in html
+    assert 'href="/convert"' not in html
+
+
+# =====================
 # render_move_card_html — binary branches
 # =====================
 def test_range_box_appears_when_move_range_is_set():
