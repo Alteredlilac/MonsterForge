@@ -42,6 +42,7 @@ from monsterforge.pipeline.attack_pipeline import is_blank_attack
 from monsterforge.llm.clients.gemini import ModelUnavailableError
 from monsterforge.llm.semantic_classification.attacks import (
     ATTACK_PROMPT_TEMPLATE,
+    ATTACK_PROMPT_TEMPLATE_OPTIONS,
     AttackSemanticResult,
     SemanticContextInput,
     classify_attack,
@@ -260,6 +261,7 @@ def show_convert_form(request: Request) -> HTMLResponse:
         "creature_subtypes": [subtype.value for subtype in CreatureSubtype],
         "attack_types": ATTACK_TYPE_OPTIONS,
         "unit_systems": [unit.value for unit in UnitSystem],
+        "prompt_templates": ATTACK_PROMPT_TEMPLATE_OPTIONS,
     })
 
 
@@ -277,11 +279,19 @@ def convert(
         force_review: bool = Form(False),
         range_value: str = Form(""),
         range_unit: str = Form(""),
+        template_name: str = Form(ATTACK_PROMPT_TEMPLATE),
         ) -> HTMLResponse:
     raw_attack = RawAttack(name=name, modifier=modifier, attack_type=attack_type, attack_effect=attack_effect)
 
     if is_blank_attack(raw_attack):
         return _message_page("No card produced: the submitted attack was blank.")
+
+    # NOTE:
+    # Not a Literal[...] like attack_type — that would duplicate the
+    # path list ATTACK_PROMPT_TEMPLATE_OPTIONS already exists to be the
+    # single source of. Checked against the option paths directly instead.
+    if template_name not in {option.path for option in ATTACK_PROMPT_TEMPLATE_OPTIONS}:
+        return _message_page(f"Unknown prompt template: {template_name!r}.", status_code=422)
 
     # NOTE:
     # A ranged/ranged touch attack needs to resolve a distance somehow —
@@ -322,6 +332,7 @@ def convert(
             additional_description=semantic_context.additional_description,
             creature_description=semantic_context.creature_description,
             creature_subtype=semantic_context.creature_subtype,
+            template_name=template_name,
         )
     except ModelUnavailableError as exc:
         return _message_page(f"The configured LLM model is unavailable: {exc}", status_code=503)
@@ -347,16 +358,16 @@ def convert(
     if force_review or needs_review(confidence=semantic_result.confidence):
         return templates.TemplateResponse(
             request, "review_form.html.jinja2",
-            _review_form_context(raw_attack, semantic_context, semantic_result, ATTACK_PROMPT_TEMPLATE, image_uri),
+            _review_form_context(raw_attack, semantic_context, semantic_result, template_name, image_uri),
         )
 
     try:
-        return _render_card(raw_attack, semantic_result, semantic_context, ATTACK_PROMPT_TEMPLATE, image_uri)
+        return _render_card(raw_attack, semantic_result, semantic_context, template_name, image_uri)
     except UnknownAttackRange as exc:
         return templates.TemplateResponse(
             request, "review_form.html.jinja2",
             _review_form_context(
-                raw_attack, semantic_context, semantic_result, ATTACK_PROMPT_TEMPLATE, image_uri,
+                raw_attack, semantic_context, semantic_result, template_name, image_uri,
                 error_message=f"Could not build the card: {exc} Provide a range below and try again.",
             ),
         )

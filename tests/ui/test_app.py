@@ -57,6 +57,14 @@ def test_show_convert_form_lists_creature_subtypes():
     assert "incorporeal" in response.text
 
 
+def test_show_convert_form_lists_prompt_templates():
+    response = client.get("/convert")
+
+    assert response.status_code == 200
+    assert "Confidence guard" in response.text
+    assert "attacks/classify_attack_confidence_guard.jinja2" in response.text
+
+
 # =====================
 # POST /convert
 # =====================
@@ -143,6 +151,31 @@ def test_convert_reports_other_classification_failures_too():
     assert response.status_code == 502
     assert "Classification failed" in response.text
     assert 'href="/convert"' in response.text
+
+
+def test_convert_rejects_an_unknown_prompt_template():
+    """Deliberately not a Literal[...] like attack_type — checked
+    against ATTACK_PROMPT_TEMPLATE_OPTIONS directly instead, so that
+    list stays the single source of truth."""
+    with patch("monsterforge.ui.app.classify_attack") as mock_classify:
+        response = client.post("/convert", data={**RAW_ATTACK_FORM, "template_name": "attacks/bogus.jinja2"})
+
+    mock_classify.assert_not_called()
+    assert response.status_code == 422
+
+
+def test_convert_forwards_a_chosen_non_default_template():
+    chosen = "attacks/classify_attack_confidence_guard.jinja2"
+
+    with patch(
+        "monsterforge.ui.app.classify_attack", return_value=make_semantic_result(confidence=0.95),
+    ) as mock_classify:
+        response = client.post("/convert", data={**RAW_ATTACK_FORM, "template_name": chosen})
+
+    assert mock_classify.call_args.kwargs["template_name"] == chosen
+    # Surfaces on the rendered card's "Edit this classification" hidden
+    # field, so a later /review/edit round trip keeps using the same template.
+    assert f'value="{chosen}"' in response.text
 
 
 def test_convert_force_review_bypasses_high_confidence():

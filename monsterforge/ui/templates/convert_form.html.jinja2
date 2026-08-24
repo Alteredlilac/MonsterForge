@@ -86,6 +86,19 @@
       </div>
     </fieldset>
 
+    <fieldset class="mb-4">
+      <legend class="h5">Classification prompt</legend>
+      <div class="mb-3">
+        <label for="template_name" class="form-label">Prompt template</label>
+        <select class="form-select" id="template_name" name="template_name">
+          {% for option in prompt_templates %}
+          <option value="{{ option.path }}" data-description="{{ option.description }}">{{ option.label }}</option>
+          {% endfor %}
+        </select>
+        <div class="form-text" id="template_description"></div>
+      </div>
+    </fieldset>
+
     <button type="submit" class="btn btn-primary">Convert</button>
   </form>
 </div>
@@ -124,6 +137,19 @@
   attackType.addEventListener("change", updateRangeFields);
   additionalDescription.addEventListener("input", updateRangeFields);
   updateRangeFields();
+
+  // Shows the selected prompt template's description below the dropdown —
+  // stored per <option> as data-description rather than a separate lookup
+  // table in JS, so the two can never drift apart.
+  var templateSelect = document.getElementById("template_name");
+  var templateDescription = document.getElementById("template_description");
+
+  function updateTemplateDescription() {
+    templateDescription.textContent = templateSelect.selectedOptions[0].dataset.description;
+  }
+
+  templateSelect.addEventListener("change", updateTemplateDescription);
+  updateTemplateDescription();
 </script>
 </body>
 </html>
