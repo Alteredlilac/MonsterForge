@@ -8,6 +8,7 @@ rendering is already covered by test_move_card_renderer.py, since both
 the gallery and the standalone page render through the same
 move_card_fragment template and build_card_context().
 """
+import html
 import json
 
 from monsterforge.rendering.gallery_renderer import render_gallery_html
@@ -68,11 +69,18 @@ def test_render_gallery_html_produces_one_modal_per_entry():
 
 
 def test_render_gallery_html_embeds_raw_input_and_classification_and_json():
+    """
+    The JSON/raw-input/classification blocks are HTML-escaped on render
+    (the environment's autoescape applies here like everywhere else) —
+    compare against the un-escaped page text rather than the raw JSON
+    dump, which would contain literal quotes the rendered page no longer
+    does.
+    """
     samples = [make_sample("Bite")]
-    html = render_gallery_html(samples)
-    assert "1d6+3" in html
-    assert "Standard melee natural attack." in html
-    assert json.dumps(samples[0]["move_card"], indent=2) in html
+    page = render_gallery_html(samples)
+    assert "1d6+3" in page
+    assert "Standard melee natural attack." in page
+    assert json.dumps(samples[0]["move_card"], indent=2) in html.unescape(page)
 
 
 def test_render_gallery_html_mixes_accent_colors_for_different_move_types():

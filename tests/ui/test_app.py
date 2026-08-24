@@ -180,6 +180,30 @@ def test_review_approve_keeps_original_result():
     assert "BITE" in response.text.upper()
 
 
+def test_review_survives_an_apostrophe_in_the_rationale():
+    """
+    review_form.html.jinja2's hidden semantic_result_json field is
+    embedded in a single-quoted HTML attribute. Before this environment's
+    autoescape was fixed (it was silently off, same root cause as
+    rendering/'s "*.html.jinja2" gap — see move_card_renderer.py), an
+    apostrophe anywhere in the LLM's rationale broke out of that
+    attribute: a real browser would truncate the field's value at the
+    apostrophe, and posting that truncated JSON back to /review crashed
+    with an unhandled JSONDecodeError instead of a friendly error.
+    """
+    semantic_result_json = _extract_semantic_result_json(
+        _review_page_html(rationale="the creature's bite is nasty")
+    )
+
+    response = client.post("/review", data={
+        **REVIEW_HIDDEN_BASE,
+        "semantic_result_json": semantic_result_json, "decision": "approve",
+    })
+
+    assert response.status_code == 200
+    assert "BITE" in response.text.upper()
+
+
 def test_review_correct_uses_edited_fields():
     semantic_result_json = _extract_semantic_result_json(_review_page_html())
 

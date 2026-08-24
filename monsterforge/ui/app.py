@@ -27,6 +27,7 @@ import dataclasses
 import json
 from pathlib import Path
 from typing import Literal
+import jinja2
 from fastapi import FastAPI, Form, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -50,7 +51,18 @@ from monsterforge.structured_data.dnd.v3x.enums import CreatureSubtype, MoveType
 from monsterforge.validation.review import needs_review
 
 app = FastAPI()
-templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
+# NOTE:
+# Jinja2Templates(directory=...) hardcodes autoescape=jinja2.select_autoescape(),
+# whose extension check never matches "*.html.jinja2" (every template in
+# this project) — the same silent-autoescape-off gap already found in
+# rendering/move_card_renderer.py, undiscovered here until a rationale
+# containing an apostrophe broke the hidden semantic_result_json field.
+# Passing an explicit env= with autoescape=True is the only way to
+# override that default.
+templates = Jinja2Templates(env=jinja2.Environment(
+    loader=jinja2.FileSystemLoader(Path(__file__).parent / "templates"),
+    autoescape=True,
+))
 
 # NOTE:
 # raw_fields.Attack.attack_type is deliberately an unconstrained str

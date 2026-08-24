@@ -21,7 +21,14 @@ MAX_BONUS_CARDS = 3
 
 environment = jinja2.Environment(
     loader=jinja2.FileSystemLoader(str(TEMPLATE_DIR)),
-    autoescape=jinja2.select_autoescape(["html"]),
+    # NOTE:
+    # Explicit True, not select_autoescape(["html"]) — every template in
+    # this project is named "*.html.jinja2", so select_autoescape's
+    # extension check (looking for a literal ".html" ending) never
+    # matched and autoescape was silently off since MVP 0.2. Explicit
+    # True can't regress the same way regardless of what a future
+    # template is named.
+    autoescape=True,
 )
 
 
