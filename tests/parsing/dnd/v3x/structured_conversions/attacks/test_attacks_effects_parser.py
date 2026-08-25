@@ -15,7 +15,7 @@ from monsterforge.parsing.dnd.v3x.structured_conversions.attacks.attacks_effects
     get_special_attacks,
     get_attack_effects,
 )
-from monsterforge.structured_data.dnd.v3x.enums import TargetType
+from monsterforge.structured_data.dnd.v3x.enums import DamageType, TargetType
 from monsterforge.entrypoints.sample_attacks import SAMPLE_ATTACKS
 from tests.tools.generate_expected_outputs import to_plain
 from .expected_attack_effects import EXPECTED_ATTACK_EFFECTS
@@ -97,6 +97,45 @@ def test_recognized_damage_type_after_plus_with_no_dice_is_also_a_special_attack
 
     assert len(effects.damages) == 1
     assert [s.name for s in effects.special_attacks] == ["energy drain"]
+
+
+def test_bare_number_with_no_type_is_physical_damage():
+    """A bare numeric value with no dice notation and no explicit type
+    (e.g. "5") is physical damage, not a special attack — matching the
+    same default already applied to untyped dice damage ("1d6" ->
+    PHYSICAL). Regression: this used to fall through to a special
+    attack named "5"."""
+    raw_attack = RawAttack(
+        name="Slam",
+        modifier="+5",
+        attack_type="melee",
+        attack_effect="5",
+    )
+
+    effects = get_attack_effects(raw_attack)
+
+    assert len(effects.damages) == 1
+    assert effects.damages[0].damage_type == DamageType.PHYSICAL
+    assert effects.damages[0].damage_bonus == 5
+    assert effects.special_attacks == []
+
+
+def test_bare_number_after_plus_with_no_type_is_also_physical_damage():
+    """Same rule applied to a component after "plus": a bare number
+    there is also physical damage, not a special attack."""
+    raw_attack = RawAttack(
+        name="Slam",
+        modifier="+5",
+        attack_type="melee",
+        attack_effect="1d6 plus 5",
+    )
+
+    effects = get_attack_effects(raw_attack)
+
+    assert len(effects.damages) == 2
+    assert effects.damages[1].damage_type == DamageType.PHYSICAL
+    assert effects.damages[1].damage_bonus == 5
+    assert effects.special_attacks == []
 
 
 def test_get_attack_effects_matches_the_validated_golden_fixture():

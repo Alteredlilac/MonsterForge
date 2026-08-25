@@ -127,6 +127,7 @@ def _parse_damage_part(
         2d6+4
         1d8 fire
         1 fire
+        5
         1d6 Str
         1d4 Wisdom drain
     """
@@ -233,6 +234,21 @@ def _parse_damage_part(
                 damage_type=damage_type,
                 damage_bonus=damage_number,
             )
+
+    # NOTE:
+    # Bare fixed damage, no type
+    # Examples: 5, 12
+    # Defaults to PHYSICAL, mirroring the same default already applied
+    # to untyped dice damage above — an explicit type is optional, not
+    # required, for a bare numeric value to count as damage.
+
+    if part.isdigit():
+        return Damage(
+            dice_number=None,
+            dice_type=None,
+            damage_type=DamageType.PHYSICAL,
+            damage_bonus=int(part),
+        )
 
     # NOTE:
     # A bare DamageType keyword with no dice/bonus (e.g. "positive
