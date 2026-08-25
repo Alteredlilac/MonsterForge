@@ -1,6 +1,6 @@
 # Project Status
 
-Snapshot of where MonsterForge stands as of August 25, 2026.
+Snapshot of where MonsterForge stands as of August 26, 2026.
 For the system's design and long-term architecture, see [PIPELINE_ARCHITECTURE.md](./PIPELINE_ARCHITECTURE.md)
 and [DESIGN.md](../../DESIGN.md). For how the LLM layer specifically is
 structured, see [LLM_ARCHITECTURE.md](./LLM_ARCHITECTURE.md). For how a
@@ -61,7 +61,7 @@ is missing, and one combining both), selectable on first classification
 (CLI and web) and on rerun (CLI and web) from the same single source of
 truth.
 
-The current test suite contains 590 passing tests, 0 failing.
+The current test suite contains 592 passing tests, 0 failing.
 
 Persistence and a JSON API for external consumers are designed in detail
 but not yet built — see [Limitations](#limitations--not-yet-built) below.
@@ -189,7 +189,11 @@ but not yet built — see [Limitations](#limitations--not-yet-built) below.
 
 ## Test coverage
 
-**590 passing, 0 failing.** A session hardening the web review flow,
+**592 passing, 0 failing.** Two of those were added fixing a real
+parsing gap, see [Notable fixes and findings](#notable-fixes-and-findings)
+below.
+
+A session hardening the web review flow,
 fixing the Jinja2 autoescape gap, adding print support to the standalone
 card page, and building prompt-template selection/rerun added 38 tests:
 a regression test reproducing the autoescape bug live (an apostrophe in
@@ -256,6 +260,12 @@ ship:
   talents, spells, and special qualities aren't wired in
   (`transformation/dnd/v3x/converters/move_converter.py` remains an
   intentional stub for when a second source exists).
+
+- **No rate limiting on the live deployment** — the deployed web UI
+  calls the real Gemini API on a free-tier key with no billing attached,
+  so the realistic exposure is temporary quota exhaustion (the demo
+  becomes slow/unavailable for a while), not cost. Deliberately deferred
+  to ship the deployment itself first, not an oversight.
 
 All of the above is designed in detail but not yet built: persistence
 with stable card identity derived from a content fingerprint (so the
@@ -387,6 +397,13 @@ full changelog:
   D&D damage always deals at least 1 point per hit; fixed by clamping
   the dice-plus-modifier sum to a minimum of 1 in
   `damages_converter.py`'s same-damage-type branch.
+- A bare numeric attack effect with no explicit damage type (e.g. `5`)
+  fell through every branch of `_parse_damage_part()` and was treated as
+  a special attack name instead of damage — untyped dice damage (`1d6`)
+  already defaulted to `PHYSICAL`, a bare fixed number had no equivalent
+  default. Fixed to match the same default; no existing sample case
+  exercised this path, so the committed golden fixture needed no
+  regeneration.
 
 ## Documentation housekeeping
 
