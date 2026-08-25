@@ -449,7 +449,7 @@ just not yet wired to a single end-to-end `convert()` call like this.
 
 - A JSON API (`api/`) exposing the domain model to external consumers
 - Persisted review history (currently every review is stateless, CLI or web)
-- Rerun on the web form (already built for the CLI), and images served from local files instead of only web URLs
+- Images served from local files instead of only web URLs
 - Transformation versioning system
 - Support for additional RPG systems
 - Advanced balancing heuristics
