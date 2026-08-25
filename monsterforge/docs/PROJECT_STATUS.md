@@ -6,6 +6,8 @@ and [DESIGN.md](../../DESIGN.md). For how the LLM layer specifically is
 structured, see [LLM_ARCHITECTURE.md](./LLM_ARCHITECTURE.md). For how a
 `MoveCard` becomes a printable card and how that's showcased against real
 pipeline output, see [RENDERING_AND_GALLERY.md](./RENDERING_AND_GALLERY.md).
+For the conversion + human review flow over the web, live, and how to write
+a valid attack, see [WEB_UI_AND_REVIEW.md](./WEB_UI_AND_REVIEW.md).
 
 ## In short
 
@@ -37,7 +39,9 @@ produced), or rerun the classification — optionally with a different
 prompt template — and review the new result under the same menu.
 
 That same conversion-and-review flow is now also reachable over the web
-(FastAPI + Bootstrap, no framework changes needed on the pipeline side),
+(FastAPI + Bootstrap, no framework changes needed on the pipeline side) —
+**[try it live](https://monsterforge-tohp.onrender.com/convert)** (free-tier
+hosting: the first request after inactivity can take ~30–50s to wake up) —
 not just the CLI — with a few things the CLI still doesn't have: an
 optional image URL for the card, friendlier error messages instead of a
 raw crash on malformed input, and a way to revisit and correct a card's
@@ -161,7 +165,8 @@ but not yet built — see [Limitations](#limitations--not-yet-built) below.
   printing (see [RENDERING_AND_GALLERY.md](./RENDERING_AND_GALLERY.md)).
 
 - **The conversion + review flow over the web** (`ui/`, FastAPI +
-  Bootstrap): `GET`/`POST /convert` collects a raw attack and classifies
+  Bootstrap — see [WEB_UI_AND_REVIEW.md](./WEB_UI_AND_REVIEW.md)):
+  `GET`/`POST /convert` collects a raw attack and classifies
   it; `POST /review` handles approve/correct/reject/rerun; `POST
   /review/edit` reopens review for an already-rendered card without
   reclassifying — closing a gap the CLI still has, where a

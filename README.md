@@ -42,6 +42,12 @@ to produce consistent and explainable outputs.
 
 ## Demo
 
+**[Try it live](https://monsterforge-tohp.onrender.com/convert)** — enter a D&D 3.x attack and watch
+it become a MoveCard, human review included. Free-tier hosting: the first request after a period of
+inactivity can take ~30–50s to wake up.
+
+![Filling in the live conversion form and getting back a rendered MoveCard](./monsterforge/docs/images/readme/demo_web_1.gif)
+
 **[Browse the MoveCard gallery](https://alteredlilac.github.io/MonsterForge/)** — every card the
 project has produced against the real Gemini API, browsable in one page, each
 with a drill-down into its raw input, LLM classification, and JSON. See
@@ -491,6 +497,7 @@ This project is designed to demonstrate real-world software engineering patterns
 - **[monsterforge/docs/PROJECT_STATUS.md](./monsterforge/docs/PROJECT_STATUS.md)** — current state: what's built, test coverage, known limitations
 - **[monsterforge/docs/MVP_ZERO.md](./monsterforge/docs/MVP_ZERO.md)** — case study: what the first working vertical slice (Attack → MoveCard) demonstrates about the project's engineering approach
 - **[monsterforge/docs/RENDERING_AND_GALLERY.md](./monsterforge/docs/RENDERING_AND_GALLERY.md)** — case study: turning a MoveCard into a printable card, and browsing real pipeline output in a gallery
+- **[monsterforge/docs/WEB_UI_AND_REVIEW.md](./monsterforge/docs/WEB_UI_AND_REVIEW.md)** — case study: the conversion + human review flow over the web, live, including how to write a valid attack
 - **[monsterforge/docs/PIPELINE_ARCHITECTURE.md](./monsterforge/docs/PIPELINE_ARCHITECTURE.md)** — full pipeline schema and architectural decisions
 - **[monsterforge/docs/LLM_ARCHITECTURE.md](./monsterforge/docs/LLM_ARCHITECTURE.md)** — how the LLM client layer is structured
 
