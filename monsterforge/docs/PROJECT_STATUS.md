@@ -1,6 +1,6 @@
 # Project Status
 
-Snapshot of where MonsterForge stands as of August 24, 2026.
+Snapshot of where MonsterForge stands as of August 25, 2026.
 For the system's design and long-term architecture, see [PIPELINE_ARCHITECTURE.md](./PIPELINE_ARCHITECTURE.md)
 and [DESIGN.md](../../DESIGN.md). For how the LLM layer specifically is
 structured, see [LLM_ARCHITECTURE.md](./LLM_ARCHITECTURE.md). For how a
@@ -42,9 +42,22 @@ not just the CLI — with a few things the CLI still doesn't have: an
 optional image URL for the card, friendlier error messages instead of a
 raw crash on malformed input, and a way to revisit and correct a card's
 classification even after it was auto-approved, which previously had no
-correction path at all.
+correction path at all. Rerun (reclassify with an optional note and/or
+a different prompt template, then review the new result) now works on
+both channels — the web version lands on the same review form/route as
+Approve/Correct/Reject, not a separate one, and on any failure falls
+back to the classification that was already in effect rather than
+losing the reviewer's place.
 
-The current test suite contains 552 passing tests, 0 failing.
+Which prompt template classifies an attack is now a real choice, not
+just a hardcoded default: four curated variants exist (the baseline,
+one that keeps the LLM from re-describing the creature in the attack's
+own description, one that pushes confidence down when key information
+is missing, and one combining both), selectable on first classification
+(CLI and web) and on rerun (CLI and web) from the same single source of
+truth.
+
+The current test suite contains 590 passing tests, 0 failing.
 
 Persistence and a JSON API for external consumers are designed in detail
 but not yet built — see [Limitations](#limitations--not-yet-built) below.
@@ -134,7 +147,11 @@ but not yet built — see [Limitations](#limitations--not-yet-built) below.
   section has a deterministic size regardless of content — free text
   (the LLM-generated description in particular) is capped rather than
   letting the card grow, matching a physical card's fixed footprint.
-  See [RENDERING_AND_GALLERY.md](./RENDERING_AND_GALLERY.md).
+  Both the standalone card page and the web UI print at the card's real
+  ~63×88mm size (a shared `@page`/`transform: scale()` partial, working
+  on both A4 and US Letter without needing to detect which is active)
+  — the gallery deliberately doesn't. See
+  [RENDERING_AND_GALLERY.md](./RENDERING_AND_GALLERY.md).
 
 - **A static gallery of every card produced against the real API**: one
   page, a clickable entry per sample, each opening a raw-input /
@@ -145,18 +162,43 @@ but not yet built — see [Limitations](#limitations--not-yet-built) below.
 
 - **The conversion + review flow over the web** (`ui/`, FastAPI +
   Bootstrap): `GET`/`POST /convert` collects a raw attack and classifies
-  it; `POST /review` handles approve/correct/reject; `POST /review/edit`
-  reopens review for an already-rendered card without reclassifying —
-  closing a gap the CLI still has, where a high-confidence but wrong
-  classification has no correction path once the JSON is printed. Every
-  rendered card can also be printed at its real ~63×88mm size (a CSS
-  `@page`/`transform: scale()` pair that works on both A4 and US Letter
-  without needing to detect which is active) and carries an optional,
-  user-supplied image URL end to end.
+  it; `POST /review` handles approve/correct/reject/rerun; `POST
+  /review/edit` reopens review for an already-rendered card without
+  reclassifying — closing a gap the CLI still has, where a
+  high-confidence but wrong classification has no correction path once
+  the JSON is printed. Name is required, a ranged/ranged touch attack
+  needs a resolvable range (either a structured value/unit or prose
+  already stating one), and a range/unit given explicitly overrides
+  whatever the LLM returns for it rather than trusting its own
+  reconstruction of a value that was already known. Every rendered card
+  carries an optional, user-supplied image URL end to end.
+
+- **Choosing which prompt template classifies an attack** (CLI and
+  web, first classification and rerun alike): four curated variants —
+  the baseline, one keeping the LLM from re-describing the creature in
+  the attack's own description, one that lowers confidence when key
+  information is missing, and one combining both — defined once
+  (`llm/semantic_classification/attacks.py`'s
+  `ATTACK_PROMPT_TEMPLATE_OPTIONS`) and validated against that same
+  list everywhere a choice is offered, never a second hardcoded copy.
 
 ## Test coverage
 
-**552 passing, 0 failing.** A set of 9 pre-existing failures (unrelated
+**590 passing, 0 failing.** A session hardening the web review flow,
+fixing the Jinja2 autoescape gap, adding print support to the standalone
+card page, and building prompt-template selection/rerun added 38 tests:
+a regression test reproducing the autoescape bug live (an apostrophe in
+an LLM rationale corrupting a hidden form field), coverage for the new
+mandatory-name/structured-range/melee-disables-range behavior on
+`/convert`, the `UnknownAttackRange` bounce-back on both `/convert` and
+`/review`, the four prompt-template variants' rendered output (and an
+integrity check that every curated template path actually exists on
+disk), the CLI's and web's template-choice prompts, and rerun's five
+outcomes (successful reclassification, note appended, unknown template,
+model unavailable, and any other classification failure — all three
+failure cases verified to leave the original classification untouched).
+
+A set of 9 pre-existing failures (unrelated
 to the attack pipeline itself — stale tests in `tests/domain/`,
 `tests/rules/dnd/v3x/`, and `tests/structured_data/dnd/v3x/`, left over
 from earlier field/behavior changes elsewhere in the codebase that the
@@ -313,15 +355,33 @@ full changelog:
   `rendering/`'s Jinja2 environment never actually enabling autoescape
   for any of its `*.html.jinja2`-suffixed templates (`select_autoescape`
   checks for a literal `.html` extension, which none of these filenames
-  end in). Fixed locally for the affected field; the broader gap across
-  the rest of `rendering/` is real but untouched, since fixing it
-  environment-wide risks changing output nothing has verified against
-  it yet.
+  end in). First fixed locally for the affected field only; a later
+  session found the identical gap independently in `ui/`'s own,
+  separately-built Jinja2 environment (Starlette's `Jinja2Templates`
+  hits the same extension check) — reproduced live with an apostrophe
+  in an LLM-generated rationale breaking a hidden field and crashing
+  `/review` with an unhandled `JSONDecodeError`. Both environments now
+  set `autoescape=True` explicitly rather than relying on
+  `select_autoescape()`, closing the gap for good instead of per field.
 - A first attempt at shrinking an oversized card to fit the screen used
   pure CSS (`calc(80vh / 815px)` as a `scale()` argument) — confirmed to
   have no effect in a real browser test, since cross-browser support for
   dividing mixed CSS units into a plain number isn't reliable yet.
   Replaced with a small vanilla JS snippet instead.
+- FastAPI's `Form(...)` (required) treats an empty string exactly like a
+  missing field — a legitimately blank attack modifier reaching
+  `/review` produced a hard 422 "Field required" on every decision,
+  including Reject, instead of being accepted as the empty value it
+  actually is. Fixed by defaulting those fields to `Form("")` instead of
+  `Form(...)`, reserved for fields that must never be blank
+  (`semantic_result_json`, `decision`).
+- A dice-based damage roll with a negative modifier large enough to
+  offset its own average (e.g. `1d4-2`: average 2, minus 2 = 0) rendered
+  as "0 PHYSICAL DAMAGE" on the card — found by inspecting real gallery
+  output, not something the original algorithm design had considered.
+  D&D damage always deals at least 1 point per hit; fixed by clamping
+  the dice-plus-modifier sum to a minimum of 1 in
+  `damages_converter.py`'s same-damage-type branch.
 
 ## Documentation housekeeping
 
