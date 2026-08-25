@@ -14,7 +14,11 @@ Covers:
 """
 from unittest.mock import patch
 from monsterforge.parsing.dnd.v3x.raw_fields.attacks import Attack as RawAttack
-from monsterforge.llm.semantic_classification.attacks import AttackSemanticResult, SemanticContextInput
+from monsterforge.llm.semantic_classification.attacks import (
+    AttackSemanticResult,
+    ATTACK_PROMPT_TEMPLATE_OPTIONS,
+    SemanticContextInput,
+)
 from monsterforge.structured_data.dnd.v3x.effect_mechanics import EffectRange
 from monsterforge.structured_data.dnd.v3x.enums import MoveType, UnitSystem
 from monsterforge.validation.enums import ValidationStatus
@@ -179,13 +183,14 @@ def test_rerun_classification_appends_note_to_existing_additional_description():
 
 def test_rerun_classification_note_becomes_description_when_none_existed():
     context = SemanticContextInput(additional_description=None, creature_description=None, creature_subtype=None)
+    chosen_option = ATTACK_PROMPT_TEMPLATE_OPTIONS[2]
 
     with patch("monsterforge.entrypoints._review_input.classify_attack", return_value=make_semantic_result()), \
-         patch("builtins.input", side_effect=["first note ever", "attacks/other.jinja2"]):
+         patch("builtins.input", side_effect=["first note ever", "3"]):
         new_context, _, new_template = _rerun_classification(RAW_ATTACK, context, TEMPLATE_NAME)
 
     assert new_context.additional_description == "first note ever"
-    assert new_template == "attacks/other.jinja2"
+    assert new_template == chosen_option.path
 
 
 def test_rerun_classification_blank_note_leaves_additional_description_untouched():
@@ -201,12 +206,14 @@ def test_rerun_classification_blank_note_leaves_additional_description_untouched
 
 
 def test_rerun_classification_failure_returns_none():
-    """A bad template path (or any classify_attack failure) must not
-    crash the review session — the caller keeps its prior state."""
+    """Any classify_attack failure (a model error, a network issue —
+    an unknown template path can no longer reach this point, since
+    prompt_for_template_choice() validates it first) must not crash the
+    review session — the caller keeps its prior state."""
     with patch(
         "monsterforge.entrypoints._review_input.classify_attack",
-        side_effect=RuntimeError("template not found"),
-    ), patch("builtins.input", side_effect=["", "bogus/path.jinja2"]):
+        side_effect=RuntimeError("boom"),
+    ), patch("builtins.input", side_effect=["", ""]):
         result = _rerun_classification(RAW_ATTACK, SEMANTIC_CONTEXT, TEMPLATE_NAME)
 
     assert result is None
@@ -288,7 +295,7 @@ def test_prompt_for_human_review_failed_rerun_keeps_original_result_and_reprompt
         side_effect=[
             "re",             # choose rerun
             "",               # no note
-            "bad/template",   # bad template
+            "",               # keep current template
             "a",              # after the failed rerun, approve the original result
             "", "",
         ],

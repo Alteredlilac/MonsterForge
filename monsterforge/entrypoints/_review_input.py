@@ -22,6 +22,7 @@ from monsterforge.structured_data.dnd.v3x.enums import MoveType, UnitSystem
 from monsterforge.validation.enums import ValidationStatus
 from monsterforge.validation.review import HumanReview
 from ._llm_model_selection import call_llm_with_model_fallback
+from ._template_selection_input import prompt_for_template_choice
 
 
 # =====================
@@ -120,8 +121,7 @@ def _rerun_classification(
     Reclassify raw_attack with an optional extra note appended to
     additional_description and/or a different template. Returns None
     (leaving the caller's state unchanged) if the reclassification
-    itself fails — e.g. an unknown template path — rather than crashing
-    the review session over a typo.
+    itself fails rather than crashing the review session.
     """
     note = input("Rerun note, appended to additional_description (optional): ").strip()
 
@@ -132,7 +132,7 @@ def _rerun_classification(
         )
         semantic_context = dataclasses.replace(semantic_context, additional_description=additional_description)
 
-    template_name = input(f"Template [{current_template_name}]: ").strip() or current_template_name
+    template_name = prompt_for_template_choice(current=current_template_name)
 
     print("Reclassifying...")
 
