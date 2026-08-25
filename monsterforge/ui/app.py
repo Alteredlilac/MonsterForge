@@ -189,6 +189,7 @@ def _review_form_context(
         "image_uri": image_uri,
         "move_types": [move_type.value for move_type in MoveType],
         "unit_systems": [unit.value for unit in UnitSystem],
+        "prompt_templates": ATTACK_PROMPT_TEMPLATE_OPTIONS,
         "is_melee": is_melee(raw_attack),
         "error_message": error_message,
     }
@@ -437,6 +438,8 @@ def review(
         range_unit: str = Form(""),
         assigned_llm_score: str = Form(""),
         edit_note: str = Form(""),
+        rerun_note: str = Form(""),
+        rerun_template_name: str = Form(""),
         ) -> HTMLResponse:
     raw_attack = RawAttack(
         name=raw_attack_name,
@@ -454,6 +457,60 @@ def review(
 
     if decision == "reject":
         return _message_page("No card produced: the classification was rejected.")
+
+    if decision == "rerun":
+        # NOTE:
+        # Mirrors _review_input.py's CLI rerun, but as one HTTP round
+        # trip instead of a loop inside the same process: a fresh
+        # classify_attack() call, an optional note appended to
+        # additional_description, and optionally a different template.
+        # On any failure, re-shows review_form.html.jinja2 with the
+        # ORIGINAL (pre-rerun) classification untouched plus an error
+        # banner — same principle as the UnknownAttackRange bounce-back
+        # below: a failed action here must not discard the reviewer's
+        # already-reviewed state.
+        if rerun_template_name not in {option.path for option in ATTACK_PROMPT_TEMPLATE_OPTIONS}:
+            return templates.TemplateResponse(
+                request, "review_form.html.jinja2",
+                _review_form_context(
+                    raw_attack, semantic_context, original_result, template_name, image_uri,
+                    error_message=f"Unknown prompt template: {rerun_template_name!r}.",
+                ),
+            )
+
+        rerun_context = semantic_context
+        if rerun_note.strip():
+            combined_description = (
+                f"{semantic_context.additional_description}\n{rerun_note}"
+                if semantic_context.additional_description else rerun_note
+            )
+            rerun_context = dataclasses.replace(semantic_context, additional_description=combined_description)
+
+        try:
+            new_result = classify_attack(
+                raw_attack=raw_attack,
+                additional_description=rerun_context.additional_description,
+                creature_description=rerun_context.creature_description,
+                creature_subtype=rerun_context.creature_subtype,
+                template_name=rerun_template_name,
+            )
+        except ModelUnavailableError as exc:
+            error_message = f"The configured LLM model is unavailable: {exc}"
+        except Exception as exc:
+            error_message = f"Rerun failed: {exc}"
+        else:
+            return templates.TemplateResponse(
+                request, "review_form.html.jinja2",
+                _review_form_context(raw_attack, rerun_context, new_result, rerun_template_name, image_uri),
+            )
+
+        return templates.TemplateResponse(
+            request, "review_form.html.jinja2",
+            _review_form_context(
+                raw_attack, semantic_context, original_result, template_name, image_uri,
+                error_message=error_message,
+            ),
+        )
 
     if decision == "correct":
         if not name.strip():

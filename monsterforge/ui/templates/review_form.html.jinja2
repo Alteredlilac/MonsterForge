@@ -96,15 +96,32 @@
       </div>
     </fieldset>
 
+    <fieldset class="mb-4">
+      <legend class="h5">Rerun (used only if you click "Rerun")</legend>
+      <div class="mb-3">
+        <label for="rerun_note" class="form-label">Note, appended to Additional description</label>
+        <textarea class="form-control" id="rerun_note" name="rerun_note" rows="2"></textarea>
+      </div>
+      <div class="mb-3">
+        <label for="rerun_template_name" class="form-label">Prompt template for rerun</label>
+        <select class="form-select" id="rerun_template_name" name="rerun_template_name">
+          {% for option in prompt_templates %}
+          <option value="{{ option.path }}" {{ "selected" if option.path == template_name else "" }}>{{ option.label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </fieldset>
+
     <!--
-      formnovalidate on Approve/Reject: the correction fieldset above
-      (name/description/move_type/range) is used only if Correct is
-      clicked — HTML5 required on the name field must not block Approve
-      or Reject just because a field that decision ignores is blank.
+      formnovalidate on Approve/Reject/Rerun: the correction fieldset
+      above (name/description/move_type/range) is used only if Correct
+      is clicked — HTML5 required on the name field must not block the
+      other three decisions just because a field they ignore is blank.
     -->
     <button type="submit" name="decision" value="approve" class="btn btn-success me-2" formnovalidate>Approve</button>
     <button type="submit" name="decision" value="correct" class="btn btn-primary me-2">Correct</button>
-    <button type="submit" name="decision" value="reject" class="btn btn-danger" formnovalidate>Reject</button>
+    <button type="submit" name="decision" value="reject" class="btn btn-danger me-2" formnovalidate>Reject</button>
+    <button type="submit" name="decision" value="rerun" class="btn btn-secondary" formnovalidate>Rerun</button>
   </form>
 </div>
 </body>

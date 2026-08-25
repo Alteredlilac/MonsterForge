@@ -363,6 +363,98 @@ def test_review_reject_produces_no_card():
     assert 'href="/convert"' in response.text
 
 
+def test_review_rerun_reclassifies_and_shows_the_new_result():
+    """Mirrors _review_input.py's CLI rerun: a real second
+    classify_attack() call, landing back on the review form (not a
+    rendered card) with the new classification."""
+    semantic_result_json = _extract_semantic_result_json(_review_page_html())
+    chosen_template = "attacks/classify_attack_confidence_guard.jinja2"
+
+    with patch(
+        "monsterforge.ui.app.classify_attack",
+        return_value=make_semantic_result(confidence=0.2, description="reclassified description"),
+    ) as mock_classify:
+        response = client.post("/review", data={
+            **REVIEW_HIDDEN_BASE,
+            "semantic_result_json": semantic_result_json, "decision": "rerun",
+            "rerun_template_name": chosen_template,
+        })
+
+    assert response.status_code == 200
+    assert "Human Review Requested" in response.text
+    assert "reclassified description" in response.text
+    assert mock_classify.call_args.kwargs["template_name"] == chosen_template
+
+
+def test_review_rerun_appends_note_to_additional_description():
+    semantic_result_json = _extract_semantic_result_json(
+        _review_page_html(rationale="original rationale")
+    )
+
+    with patch(
+        "monsterforge.ui.app.classify_attack", return_value=make_semantic_result(),
+    ) as mock_classify:
+        client.post("/review", data={
+            **REVIEW_HIDDEN_BASE,
+            "semantic_result_json": semantic_result_json, "decision": "rerun",
+            "rerun_template_name": TEMPLATE_NAME, "rerun_note": "double-check this one",
+        })
+
+    assert mock_classify.call_args.kwargs["additional_description"] == "double-check this one"
+
+
+def test_review_rerun_unknown_template_keeps_the_original_result():
+    semantic_result_json = _extract_semantic_result_json(
+        _review_page_html(description="original description")
+    )
+
+    with patch("monsterforge.ui.app.classify_attack") as mock_classify:
+        response = client.post("/review", data={
+            **REVIEW_HIDDEN_BASE,
+            "semantic_result_json": semantic_result_json, "decision": "rerun",
+            "rerun_template_name": "attacks/bogus.jinja2",
+        })
+
+    mock_classify.assert_not_called()
+    assert response.status_code == 200
+    assert "original description" in response.text
+    assert "Unknown prompt template" in response.text
+
+
+def test_review_rerun_model_unavailable_keeps_the_original_result():
+    semantic_result_json = _extract_semantic_result_json(
+        _review_page_html(description="original description")
+    )
+
+    with patch("monsterforge.ui.app.classify_attack", side_effect=ModelUnavailableError("gone")):
+        response = client.post("/review", data={
+            **REVIEW_HIDDEN_BASE,
+            "semantic_result_json": semantic_result_json, "decision": "rerun",
+            "rerun_template_name": TEMPLATE_NAME,
+        })
+
+    assert response.status_code == 200
+    assert "original description" in response.text
+    assert "unavailable" in response.text.lower()
+
+
+def test_review_rerun_classification_failure_keeps_the_original_result():
+    semantic_result_json = _extract_semantic_result_json(
+        _review_page_html(description="original description")
+    )
+
+    with patch("monsterforge.ui.app.classify_attack", side_effect=RuntimeError("boom")):
+        response = client.post("/review", data={
+            **REVIEW_HIDDEN_BASE,
+            "semantic_result_json": semantic_result_json, "decision": "rerun",
+            "rerun_template_name": TEMPLATE_NAME,
+        })
+
+    assert response.status_code == 200
+    assert "original description" in response.text
+    assert "Rerun failed" in response.text
+
+
 def test_review_approve_carries_image_uri_through_to_the_card():
     semantic_result_json = _extract_semantic_result_json(_review_page_html())
 
