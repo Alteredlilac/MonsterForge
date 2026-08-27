@@ -18,7 +18,7 @@ from pathlib import Path
 
 from monsterforge.rendering.gallery_renderer import render_gallery_html
 
-INPUT_PATH = Path(__file__).parent / "output" / "real_pipeline_conversion_samples_with_context.json"
+INPUT_PATH = Path(__file__).parent / "output" / "real_pipeline_conversion_samples_with_context_160char_blank_fixed_damage_fixed.json"
 OUTPUT_DIR = Path(__file__).parent / "output" / "gallery"
 OUTPUT_PATH = OUTPUT_DIR / "gallery.html"
 

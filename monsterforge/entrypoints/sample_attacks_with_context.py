@@ -468,7 +468,7 @@ SAMPLE_ATTACKS_WITH_CONTEXT = [
     {  # 55: Longbow, ranged, 1d8/x3
         "raw_attack": SAMPLE_ATTACKS[55],
         "context": {
-            "additional_description": None,
+            "additional_description": "The longbow has a range increment of 100 feet.",
             "creature_description": "A skilled archer favoring the longbow for its range and stopping power.",
             "creature_subtype": None,
         },

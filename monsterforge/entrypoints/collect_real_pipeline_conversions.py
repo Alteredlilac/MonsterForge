@@ -57,7 +57,7 @@ from ._llm_response_capture import classify_with_raw_response
 DELAY_SECONDS = 5
 
 OUTPUT_DIR = Path(__file__).parent / "output"
-OUTPUT_PATH = OUTPUT_DIR / "real_pipeline_conversion_samples_with_context.json"
+OUTPUT_PATH = OUTPUT_DIR / "real_pipeline_conversion_samples_with_context_160char_blank_fixed_damage_fixed.json"
 
 
 # =====================

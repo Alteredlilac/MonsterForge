@@ -27,7 +27,7 @@ from pathlib import Path
 
 from monsterforge.rendering.move_card_renderer import render_move_card_html
 
-INPUT_PATH = Path(__file__).parent / "output" / "real_pipeline_conversion_samples_with_context.json"
+INPUT_PATH = Path(__file__).parent / "output" / "real_pipeline_conversion_samples_with_context_160char_blank_fixed_damage_fixed.json"
 OUTPUT_DIR = Path(__file__).parent / "output" / "rendered_cards"
 
 
