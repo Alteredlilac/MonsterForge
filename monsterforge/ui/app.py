@@ -38,6 +38,7 @@ from monsterforge.parsing.dnd.v3x.structured_conversions.attacks.attacks_convert
     raw_to_structured_attack,
 )
 from monsterforge.transformation.dnd.v3x.converters.attacks_converter import attack_converter
+from monsterforge.entrypoints.sample_attacks_web_seed import SAMPLE_ATTACKS_WEB_SEED
 from monsterforge.pipeline.attack_pipeline import is_blank_attack
 from monsterforge.llm.clients.gemini import ModelUnavailableError
 from monsterforge.llm.semantic_classification.attacks import (
@@ -263,6 +264,7 @@ def show_convert_form(request: Request) -> HTMLResponse:
         "attack_types": ATTACK_TYPE_OPTIONS,
         "unit_systems": [unit.value for unit in UnitSystem],
         "prompt_templates": ATTACK_PROMPT_TEMPLATE_OPTIONS,
+        "sample_attacks": SAMPLE_ATTACKS_WEB_SEED,
     })
 
 

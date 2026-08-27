@@ -65,6 +65,17 @@ def test_show_convert_form_lists_prompt_templates():
     assert "attacks/classify_attack_confidence_guard.jinja2" in response.text
 
 
+def test_show_convert_form_embeds_sample_attacks_for_auto_fill():
+    """The Auto-fill button and its JS both depend on a sampleAttacks
+    array being embedded on the page -- a missing/renamed context key
+    would silently break the button with no server-side error."""
+    response = client.get("/convert")
+
+    assert response.status_code == 200
+    assert 'id="auto_fill_button"' in response.text
+    assert "var sampleAttacks = [" in response.text
+
+
 # =====================
 # POST /convert
 # =====================
