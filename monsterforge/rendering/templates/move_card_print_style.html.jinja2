@@ -79,6 +79,20 @@
     earlier session, not something to change for print's sake alone.
   */
   @media print {
+    /*
+      NOTE:
+      Browsers omit background colors/images from printed output by
+      default (an ink-saving default, not a bug here) unless the page
+      opts in explicitly -- the person would otherwise need to find and
+      enable "Background graphics" in their own print dialog, easy to
+      miss. * (not just .card) because print-color-adjust's inheritance
+      across all the card's colored children (header, art, type badge,
+      resource/range boxes) isn't reliably consistent between browsers.
+    */
+    * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
     .controls-row {
       display: none;
     }
