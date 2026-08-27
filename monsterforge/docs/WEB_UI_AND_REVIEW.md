@@ -34,7 +34,7 @@ card reopens the same review form without reclassifying.
 
 ## What it demonstrates
 
-![The live form being filled in, a review step, and the resulting card](./images/readme/demo_web_2.gif)
+![The live form being filled in, a review step, and the resulting card](./images/readme/demo_web_3.gif)
 
 - **Confidence-gated human review as a real, usable step**, not just a
   design on paper — the reviewer sees the raw attack, the full context sent

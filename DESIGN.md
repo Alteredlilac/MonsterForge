@@ -130,19 +130,19 @@ To this, add the average hit die value multiplied by the number of hit dice
 - Negative modifiers count as 0
 
 | D&D CHARACTERISTIC | BODY CHARACTERISTIC |
-|---------------------|----------------------|
-| Strength             | Attack                |
-| Dexterity            | Speed                 |
-| Constitution         | Defense               |
-| Dexterity*           | Defense (undead)      |
+|--------------------|---------------------|
+| Strength           | Attack              |
+| Dexterity          | Speed               |
+| Constitution       | Defense             |
+| Dexterity*         | Defense (undead)    |
 
 * For undead, Defense uses Dexterity instead of Constitution
 
 | D&D CHARACTERISTIC | SPIRIT CHARACTERISTIC |
-|---------------------|------------------------|
-| Intelligence         | Power                   |
-| Wisdom                | Ward                    |
-| Charisma              | Flow                    |
+|--------------------|-----------------------|
+| Intelligence       | Power                 |
+| Wisdom             | Ward                  |
+| Charisma           | Flow                  |
 
 For some monsters, use Charisma to determine Power and Intelligence to determine Flow.
 
@@ -151,14 +151,16 @@ Incorporeal creatures have no Attack or Defense.
 #### Conversion example -> Wolf:
 
 | D&D CHARACTERISTIC   | BODY CHARACTERISTIC    |
-|-----------------------|--------------------------|
-| - Strength = 13        | - Attack = 1              |
-| - Dexterity = 15       | - Speed = 2               |
-| - Constitution = 15    | - Defense = 2             |
+|----------------------|------------------------|
+| - Strength = 13      | - Attack = 1           |
+| - Dexterity = 15     | - Speed = 2            |
+| - Constitution = 15  | - Defense = 2          |
+
 | D&D CHARACTERISTIC   | SPIRIT CHARACTERISTIC  |
-| - Intelligence = 2     | - Power = 0                |
-| - Wisdom = 12          | - Ward = 1                 |
-| - Charisma = 6         | - Flow = 0                 |
+|----------------------|------------------------|
+| - Intelligence = 2   | - Power = 0            |
+| - Wisdom = 12        | - Ward = 1             |
+| - Charisma = 6       | - Flow = 0             |
 
 -----------------
 
@@ -169,11 +171,12 @@ Incorporeal creatures have no Attack or Defense.
 
 #### Conversion example -> Wolf:
 
-| D&D AC                        | ARMOR                                 |
+| D&D AC                         | ARMOR                                   |
 |--------------------------------|-----------------------------------------|
 | Total AC = 14                  | 14 - 2 (Dexterity value) - 10 = 2       |
-| D&D AC                        | TALISMAN                              |
-| --------                       | -----------                             |
+
+| D&D AC                         | TALISMAN                                |
+|--------------------------------|-----------------------------------------|
 | Spell Resistance = 0           | 0                                       |
 
 -----------------
@@ -360,6 +363,18 @@ uses.
 
 - damage becomes an average like HP -> 1d6 = 3 damage
 
+#### CreatureCard mockup (Wolf example)
+
+![Draft mockup of a CreatureCard for the Wolf example, showing Life, Protection, Interpretation, Body, and Spirit values assembled onto one card](./monsterforge/docs/images/readme/CreatureCard_Draft.png)
+
+This is a design mockup only, not a real pipeline output — a static
+HTML/CSS draft showing how the Wolf's numbers derived above (LIFE 23,
+ARMOR 2, TALISMAN 0, the six Interpretation values, STAMINA 1, MANA 0,
+BODY/SPIRIT) would look assembled onto a single card, matching the same
+visual style and colors already established for `MoveCard` rendering.
+Unlike `MoveCard`, `CreatureCard` has no conversion pipeline or
+rendering template built yet.
+
 ----------------
 
 # CLASSIFICATION RULES FOR ATTACKS, TALENTS, SPECIAL QUALITIES AND SPELLS
@@ -383,23 +398,23 @@ validator/corrector.
 
 Type: Physical / Magical
 
-Attack cards = methods of attack
-Defense cards = methods of defense
-Special cards = other methods
+- Attack cards = methods of attack
+- Defense cards = methods of defense
+- Special cards = other methods
 
 Attack, defense, and special can each be: Active (requires doing
 something) or Passive (always in effect or automatic).
 
 Examples:
-Attack-active = punch
-Attack-passive = fire aura
-Defense-active = parry
-Defense-passive = toughness
-Special-active = mega jump
-Special-passive = regeneration
+- Attack-active = punch
+- Attack-passive = fire aura
+- Defense-active = parry
+- Defense-passive = toughness
+- Special-active = mega jump
+- Special-passive = regeneration
 
 So:
-
+```text
 Type
  ↓
 Main Category
@@ -411,8 +426,10 @@ Effect
 Target
  ↓
 Resource
+```
 
 example:
+```json
 {
  "type": "Physical",
  "category": "Special",
@@ -421,14 +438,14 @@ example:
  "target": "Self",
  "resource": "None"
 }
-
+```
 These two must be added:
-
+```text
 "duration": "Instant / Temporary / Permanent"
 "usage": "Unlimited / Daily / Limited / Situational"
 explanation: (limited, e.g. every 1d4 rounds as for breath weapons;
 situational, e.g. sneak attack)
-
+```
 And then these 3 must be added for the card:
 - Name
 - Description
@@ -609,7 +626,7 @@ Deals extra damage when the target is caught off guard.
 The flow is not D&D -> card,
 
 but:
-
+```text
 D&D Monster
       |
       v
@@ -617,6 +634,7 @@ Monster Intermediate Representation
       |
       v
 Card Object
+```
 
 This way it's extensible.
 
@@ -665,7 +683,7 @@ A move can derive from:
 
 ### Examples
 MOVE
-
+```text
 Bite
 
 Type: Physical
@@ -674,22 +692,21 @@ Usage: Unlimited
 
 Effect:
 Deals 3 damage to a single target.
-
+```
 ---
 
 MOVE
-
+```text
 Breath Weapon
 
 Type: Magical
 Category: Attack
 
-Usage:
-Limited
+Usage: Limited
 
 Effect:
 Deals 18 area damage.
-
+```
 ---
 
 ITEM card -> Represents a possessed or equipped item.
@@ -703,7 +720,7 @@ Can derive from:
 ### Examples
 
 ITEM
-
+```text
 Flaming Sword
 
 Type:
@@ -711,14 +728,14 @@ Weapon
 
 Effect:
 +2 fire damage on physical attacks.
-
+```
 ---
 
 ## STRUCTURE OF AN ENTITY
 example: Dragon
 
 DRAGON'S DECK
-
+```text
 [CREATURE CARD]
 
 Red Dragon
@@ -739,7 +756,7 @@ Spells
 Dragon's Crown
 Ancient Treasure
 Magic Amulet
-
+```
 ## SIMPLIFIED GAME PHILOSOPHY
 
 The system separates:
@@ -748,7 +765,7 @@ The system separates:
 - Customization = Item cards: "What do you own?"
 
 ## PIPELINE FOR ENTITY CREATION
-
+```text
 D&D / Pathfinder Database
 
         |
@@ -772,14 +789,14 @@ Creature Card       Move Cards       Item Cards
                          |
                          v
                  Entity's Deck
-
+```
 ----------------
 
 ## FINAL NOTE ON "BALANCING"
 - Balancing requires playtesting, while this system helps maintain a
   consistent distribution of values and preserve relative power ratios.
 
-The system guarantees:
+**The system guarantees:**
 - numeric consistency
 - relative proportions
 - normalization

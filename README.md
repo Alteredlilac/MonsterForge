@@ -40,13 +40,7 @@ to produce consistent and explainable outputs.
 
 ---
 
-## Demo
-
-**[Try it live](https://monsterforge-tohp.onrender.com/convert)** — enter a D&D 3.x attack and watch
-it become a MoveCard, human review included. Free-tier hosting: the first request after a period of
-inactivity can take ~30–50s to wake up.
-
-![Filling in the live conversion form and getting back a rendered MoveCard](./monsterforge/docs/images/readme/demo_web_1.gif)
+## Gallery
 
 **[Browse the MoveCard gallery](https://alteredlilac.github.io/MonsterForge/)** — every card the
 project has produced against the real Gemini API, browsable in one page, each
@@ -76,6 +70,16 @@ classification, JSON, and rendered card:
 
 The CLI entry points (see [Example Usage](#example-usage)) produce the same
 data a rendered card draws from, as JSON.
+
+---
+
+## Demo
+
+**[Try it live](https://monsterforge-tohp.onrender.com/convert)** — enter a D&D 3.x attack and watch
+it become a MoveCard, human review included. Free-tier hosting: the first request after a period of
+inactivity can take ~30–50s to wake up.
+
+![Filling in the live conversion form and getting back a rendered MoveCard](./monsterforge/docs/images/readme/demo_web_3.gif)
 
 ---
 
