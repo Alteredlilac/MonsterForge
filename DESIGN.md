@@ -171,13 +171,13 @@ Incorporeal creatures have no Attack or Defense.
 
 #### Conversion example -> Wolf:
 
-| D&D AC                         | ARMOR                                   |
-|--------------------------------|-----------------------------------------|
-| Total AC = 14                  | 14 - 2 (Dexterity value) - 10 = 2       |
+| D&D AC         | ARMOR                              |
+|----------------|-------------------------------------|
+| Total AC = 14  | 14 - 2 (Dexterity value) - 10 = 2  |
 
-| D&D AC                         | TALISMAN                                |
-|--------------------------------|-----------------------------------------|
-| Spell Resistance = 0           | 0                                       |
+| D&D AC                | TALISMAN |
+|------------------------|----------|
+| Spell Resistance = 0   | 0        |
 
 -----------------
 
@@ -336,12 +336,12 @@ Caster level/5 = Mana (minimum 1 if it has a caster level, otherwise 0)
   ability to use a specific attack card multiple times (e.g. bite)
 - for magical abilities with limited uses (in that case there is a
   maximum-uses limit)
+-----------------
 
 ##### design note
-The maximum number of attacks per turn is capped at 4 to keep the game
+- The maximum number of attacks per turn is capped at 4 to keep the game
 fast. Any additional attacks are converted into bonuses or extra ability
 uses.
------------------
 
 - bias towards non-zero skills -> intentional and acknowledged
 
@@ -362,6 +362,7 @@ uses.
   SPEED as speed and special methods as cards
 
 - damage becomes an average like HP -> 1d6 = 3 damage
+-----------------
 
 #### CreatureCard mockup (Wolf example)
 
