@@ -1,6 +1,22 @@
 # MonsterForge — RPG Data Transformation Engine
 
-A Python-based pipeline that transforms semi-structured RPG data into normalized, game entities through deterministic rules and LLM-assisted classification.
+A typed, multi-stage data transformation pipeline, combining
+deterministic parsing and calculation with LLM-assisted semantic
+classification, applied to a concrete case: converting D&D
+3.5/Pathfinder stat blocks into structured card entities.
+
+---
+
+## Why This Project
+
+This project is designed to demonstrate real-world software engineering patterns applied to a non-trivial domain:
+
+- data pipeline design (ETL)
+- transformation of semi-structured data
+- domain modeling
+- integration of deterministic and AI-driven components
+- human-in-the-loop system design
+- end-to-end software architecture
 
 ---
 
@@ -480,18 +496,6 @@ Planned:
 - requests / BeautifulSoup
 - SQLite / SQLAlchemy
 
----
-
-## Why This Project
-
-This project is designed to demonstrate real-world software engineering patterns applied to a non-trivial domain:
-
-- data pipeline design (ETL)
-- transformation of semi-structured data
-- domain modeling
-- integration of deterministic and AI-driven components
-- human-in-the-loop system design
-- end-to-end software architecture
 
 ---
 
