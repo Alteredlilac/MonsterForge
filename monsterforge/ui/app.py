@@ -29,7 +29,7 @@ from pathlib import Path
 from typing import Literal
 import jinja2
 from fastapi import FastAPI, Form, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
 from monsterforge.parsing.dnd.v3x.raw_fields.attacks import Attack as RawAttack
 from monsterforge.parsing.dnd.v3x.structured_conversions.attacks.attacks_converter import (
@@ -257,6 +257,14 @@ def _render_card(
 # =====================
 # ROUTES
 # =====================
+FAVICON_PATH = Path(__file__).resolve().parents[1] / "docs" / "images" / "Web" / "favicon.png"
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon() -> FileResponse:
+    return FileResponse(FAVICON_PATH)
+
+
 @app.get("/convert", response_class=HTMLResponse)
 def show_convert_form(request: Request) -> HTMLResponse:
     return templates.TemplateResponse(request, "convert_form.html.jinja2", {
