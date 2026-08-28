@@ -1,6 +1,6 @@
 # Project Status
 
-Snapshot of where MonsterForge stands as of August 26, 2026.
+Snapshot of where MonsterForge stands as of August 27, 2026.
 For the system's design and long-term architecture, see [PIPELINE_ARCHITECTURE.md](./PIPELINE_ARCHITECTURE.md)
 and [DESIGN.md](../../DESIGN.md). For how the LLM layer specifically is
 structured, see [LLM_ARCHITECTURE.md](./LLM_ARCHITECTURE.md). For how a
@@ -61,7 +61,12 @@ is missing, and one combining both), selectable on first classification
 (CLI and web) and on rerun (CLI and web) from the same single source of
 truth.
 
-The current test suite contains 592 passing tests, 0 failing.
+The live form also has an Auto-fill button now: one click populates every
+field with a random real attack (100 curated samples, no new API call
+needed), plus a Clear Form button — both meant to make the live deployment
+faster to try for someone who just found the link.
+
+The current test suite contains 600 passing tests, 0 failing.
 
 Persistence and a JSON API for external consumers are designed in detail
 but not yet built — see [Limitations](#limitations--not-yet-built) below.
@@ -187,11 +192,24 @@ but not yet built — see [Limitations](#limitations--not-yet-built) below.
   `ATTACK_PROMPT_TEMPLATE_OPTIONS`) and validated against that same
   list everywhere a choice is offered, never a second hardcoded copy.
 
+- **An Auto-fill button on `/convert`**: picks one of 100 curated attack
+  samples (64 real attacks adapted from the existing test fixtures, 36
+  new invented magical ones covering less-represented damage types and
+  creature subtypes) and populates every field, firing the same
+  change/input events the form's own range/template logic already
+  listens for. A Clear Form button resets natively. Both are meant to
+  make trying the live deployment faster for a first-time visitor, not
+  a feature of the conversion pipeline itself.
+
 ## Test coverage
 
-**592 passing, 0 failing.** Two of those were added fixing a real
-parsing gap, see [Notable fixes and findings](#notable-fixes-and-findings)
-below.
+**600 passing, 0 failing.** 8 of those cover the Auto-fill dataset and
+button: dataset integrity (exact form-field keys, valid `attack_type`/
+`creature_subtype` values, every case's `attack_effect` running through
+the real deterministic parser without error, not just checked for
+shape) and that `GET /convert` actually embeds the button and its data.
+Before that, 2 were added fixing a real parsing gap, see
+[Notable fixes and findings](#notable-fixes-and-findings) below.
 
 A session hardening the web review flow,
 fixing the Jinja2 autoescape gap, adding print support to the standalone
@@ -404,6 +422,23 @@ full changelog:
   default. Fixed to match the same default; no existing sample case
   exercised this path, so the committed golden fixture needed no
   regeneration.
+- `render_gallery.py` and `render_sample_cards.py` had been reading
+  from the oldest of four collected datasets since 2026-08-17 — the
+  one predating the 160-character description cap and the blank-attack
+  fix, and, by the time this was noticed, also predating the
+  dice-damage-minimum-1 fix above, so the public gallery still showed
+  two cards as "0 PHYSICAL DAMAGE" days after that bug was fixed in
+  code. Neither render script recomputes anything; they just render
+  whatever JSON they're pointed at. Fixed by collecting a fresh dataset
+  against the real API (one attack needed added range context to
+  resolve on this run) and pointing both scripts at it.
+- Printed cards (the standalone page and the web UI's Print button)
+  came out at the right physical size but with no background colors or
+  card art — browsers omit background colors/images from printed
+  output by default (an ink-saving default, not a bug in this
+  project's own CSS) unless the page explicitly opts in. Fixed with
+  `print-color-adjust: exact` (plus the `-webkit-` prefix) in the
+  shared print stylesheet.
 
 ## Documentation housekeeping
 
