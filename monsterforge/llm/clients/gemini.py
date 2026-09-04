@@ -55,7 +55,8 @@ class ModelUnavailableError(RuntimeError):
 
 
 class GeminiClient:
-    def __init__(self, llm_model:str):
+    def __init__(self, llm_model: str):
+        """Build a Gemini client authenticated from GEMINI_API_KEY, with retry configured for transient API errors."""
         self.model_name = llm_model
         self._load_api_key()
         self._client = genai.Client(
@@ -69,14 +70,15 @@ class GeminiClient:
             ),
         )
 
-
-    def _load_api_key(self)-> None:
+    def _load_api_key(self) -> None:
+        """Read GEMINI_API_KEY from the environment, raising if it's missing."""
         self._api_key = os.getenv("GEMINI_API_KEY")
 
         if not self._api_key:
-                raise ValueError("Missing GEMINI_API_KEY in environment")
+            raise ValueError("Missing GEMINI_API_KEY in environment")
 
-    def change_llm_model(self, model_name:str)-> None:
+    def change_llm_model(self, model_name: str) -> None:
+        """Switch the model used by subsequent generate_text() calls."""
         # NOTE:
         # google-genai's Client is not bound to a single model the way
         # google-generativeai's GenerativeModel was — the model name is
@@ -86,6 +88,17 @@ class GeminiClient:
         self.model_name = model_name
 
     def generate_text(self, question: str) -> str:
+        """
+        Generate text from the configured model.
+
+        Raises:
+            ModelUnavailableError:
+                If the configured model doesn't exist or is no longer
+                available to this API key/account.
+            RuntimeError:
+                For any other Gemini API failure (rate limits, invalid
+                arguments...).
+        """
         try:
             response = self._client.models.generate_content(
                 model=self.model_name, contents=question,
@@ -108,6 +121,7 @@ class GeminiClient:
             raise RuntimeError(f"Gemini API error: {exc}") from exc
 
     def list_text_models(self) -> list[str]:
+        """List model names that support text generation (generateContent)."""
         return [
             m.name
             for m in self._client.models.list()
