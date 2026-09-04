@@ -6,14 +6,16 @@ import datetime
 import sqlalchemy as sa
 
 from monsterforge.db.cards import Card, Deck
-from monsterforge.db.enums import CardType, EntityType
-from monsterforge.db.pipeline import RawField, StructuredData
-from monsterforge.db.reference_data import Game
+from monsterforge.db.enums import CardType, EntityType, EventStatus, EventType
+from monsterforge.db.pipeline import ClassificationEvent, RawField, StructuredData
+from monsterforge.db.reference_data import Actor, Game
+from monsterforge.validation.enums import ValidationStatus
 
 
 def _make_structured_data(db_session):
     game = Game(name="D&D 3.x")
-    db_session.add(game)
+    actor = Actor(actor_name="llm", authority=0)
+    db_session.add_all([game, actor])
     db_session.commit()
 
     raw_field = RawField(
@@ -23,7 +25,18 @@ def _make_structured_data(db_session):
     db_session.add(raw_field)
     db_session.commit()
 
-    structured = StructuredData(raw_field_id=raw_field.id, entity_type=EntityType.ATTACK, name="Bite", data={})
+    event = ClassificationEvent(
+        raw_field_id=raw_field.id, event_type=EventType.LLM_RUN, result={},
+        actor_id=actor.id, decision=ValidationStatus.AUTO_APPROVED,
+        status=EventStatus.ACTIVE, created_at=datetime.datetime(2026, 9, 4),
+    )
+    db_session.add(event)
+    db_session.commit()
+
+    structured = StructuredData(
+        raw_field_id=raw_field.id, classification_event_id=event.id,
+        entity_type=EntityType.ATTACK, name="Bite", data={},
+    )
     db_session.add(structured)
     db_session.commit()
     return structured

@@ -33,6 +33,21 @@ def _make_raw_field(db_session, game):
     return raw_field
 
 
+def _make_classification_event(db_session, raw_field, actor):
+    event = ClassificationEvent(
+        raw_field_id=raw_field.id,
+        event_type=EventType.LLM_RUN,
+        result={},
+        actor_id=actor.id,
+        decision=ValidationStatus.AUTO_APPROVED,
+        status=EventStatus.ACTIVE,
+        created_at=datetime.datetime(2026, 9, 4),
+    )
+    db_session.add(event)
+    db_session.commit()
+    return event
+
+
 def test_raw_field_round_trips_with_no_page(db_session):
     game, _actor = _make_game_and_actor(db_session)
 
@@ -184,11 +199,13 @@ def test_classification_event_rejects_an_unknown_raw_field_id(db_session):
 
 
 def test_structured_data_round_trips_and_requires_a_raw_field(db_session):
-    game, _actor = _make_game_and_actor(db_session)
+    game, actor = _make_game_and_actor(db_session)
     raw_field = _make_raw_field(db_session, game)
+    event = _make_classification_event(db_session, raw_field, actor)
 
     structured = StructuredData(
         raw_field_id=raw_field.id,
+        classification_event_id=event.id,
         entity_type=EntityType.ATTACK,
         name="Bite",
         data={"move_type": "physical"},
@@ -199,11 +216,17 @@ def test_structured_data_round_trips_and_requires_a_raw_field(db_session):
     result = db_session.query(StructuredData).one()
     assert result.entity_type == EntityType.ATTACK
     assert result.name == "Bite"
+    assert result.classification_event_id == event.id
 
 
 def test_structured_data_rejects_an_unknown_raw_field_id(db_session):
+    game, actor = _make_game_and_actor(db_session)
+    raw_field = _make_raw_field(db_session, game)
+    event = _make_classification_event(db_session, raw_field, actor)
+
     db_session.add(StructuredData(
         raw_field_id="does-not-exist",
+        classification_event_id=event.id,
         entity_type=EntityType.ATTACK,
         name="Bite",
         data={},
@@ -213,3 +236,46 @@ def test_structured_data_rejects_an_unknown_raw_field_id(db_session):
         assert False, "expected an IntegrityError on an unknown raw_field_id"
     except sa.exc.IntegrityError:
         db_session.rollback()
+
+
+def test_structured_data_rejects_an_unknown_classification_event_id(db_session):
+    game, _actor = _make_game_and_actor(db_session)
+    raw_field = _make_raw_field(db_session, game)
+
+    db_session.add(StructuredData(
+        raw_field_id=raw_field.id,
+        classification_event_id="does-not-exist",
+        entity_type=EntityType.ATTACK,
+        name="Bite",
+        data={},
+    ))
+    try:
+        db_session.commit()
+        assert False, "expected an IntegrityError on an unknown classification_event_id"
+    except sa.exc.IntegrityError:
+        db_session.rollback()
+
+
+def test_structured_data_supports_multiple_versions_for_the_same_raw_field(db_session):
+    """Versioning check: a reclassification produces a new structured_data
+    row instead of overwriting the existing one — both remain queryable,
+    only classification_event_id tells them apart."""
+    game, actor = _make_game_and_actor(db_session)
+    raw_field = _make_raw_field(db_session, game)
+    first_event = _make_classification_event(db_session, raw_field, actor)
+    second_event = _make_classification_event(db_session, raw_field, actor)
+
+    db_session.add_all([
+        StructuredData(
+            raw_field_id=raw_field.id, classification_event_id=first_event.id,
+            entity_type=EntityType.ATTACK, name="Bite", data={"move_type": "physical"},
+        ),
+        StructuredData(
+            raw_field_id=raw_field.id, classification_event_id=second_event.id,
+            entity_type=EntityType.ATTACK, name="Bite", data={"move_type": "magical"},
+        ),
+    ])
+    db_session.commit()
+
+    versions = db_session.query(StructuredData).filter_by(raw_field_id=raw_field.id).all()
+    assert {v.classification_event_id for v in versions} == {first_event.id, second_event.id}

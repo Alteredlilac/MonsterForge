@@ -165,8 +165,19 @@ class StructuredData(Base):
     # Not nullable, and no alternative page_id: every structured_data row
     # always derives from a raw_field, never directly from a page —
     # raw_fields is the mandatory intermediate stage for every data kind,
-    # not just Attack.
+    # not just Attack. Kept alongside classification_event_id below for
+    # convenient direct queries, even though it's also reachable by
+    # joining through that event.
     raw_field_id: Mapped[str] = mapped_column(sa.Text, sa.ForeignKey("raw_fields.id"))
+    # NOTE:
+    # The real derivation link: which classification produced this row.
+    # A raw_field can have more than one structured_data row over time —
+    # each reclassification/correction produces a new one instead of
+    # updating an existing row (same append-only philosophy as
+    # classification_events, extended one stage further down the
+    # pipeline) — so raw_field_id alone can no longer identify "the"
+    # structured_data for a given attempt.
+    classification_event_id: Mapped[str] = mapped_column(sa.Text, sa.ForeignKey("classification_events.id"))
     entity_type: Mapped[EntityType] = mapped_column(
         sa.Enum(EntityType, values_callable=lambda x: [e.value for e in x], native_enum=False)
     )
