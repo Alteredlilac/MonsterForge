@@ -1,6 +1,6 @@
 # Project Status
 
-Snapshot of where MonsterForge stands as of August 27, 2026.
+Snapshot of where MonsterForge stands as of September 4, 2026.
 For the system's design and long-term architecture, see [PIPELINE_ARCHITECTURE.md](./PIPELINE_ARCHITECTURE.md)
 and [DESIGN.md](../../DESIGN.md). For how the LLM layer specifically is
 structured, see [LLM_ARCHITECTURE.md](./LLM_ARCHITECTURE.md). For how a
@@ -66,7 +66,7 @@ field with a random real attack (100 curated samples, no new API call
 needed), plus a Clear Form button — both meant to make the live deployment
 faster to try for someone who just found the link.
 
-The current test suite contains 600 passing tests, 0 failing.
+The current test suite contains 602 passing tests, 0 failing.
 
 Persistence and a JSON API for external consumers are designed in detail
 but not yet built — see [Limitations](#limitations--not-yet-built) below.
@@ -203,7 +203,11 @@ but not yet built — see [Limitations](#limitations--not-yet-built) below.
 
 ## Test coverage
 
-**600 passing, 0 failing.** 8 of those cover the Auto-fill dataset and
+**602 passing, 0 failing.** 2 of those cover the Gemini client's
+migration to the `google-genai` SDK (model switching no longer rebuilds
+the client; model listing filters by generation-capability) — see
+[Notable fixes and findings](#notable-fixes-and-findings) below for the
+migration itself. Before that, 8 cover the Auto-fill dataset and
 button: dataset integrity (exact form-field keys, valid `attack_type`/
 `creature_subtype` values, every case's `attack_effect` running through
 the real deterministic parser without error, not just checked for
@@ -439,6 +443,17 @@ full changelog:
   project's own CSS) unless the page explicitly opts in. Fixed with
   `print-color-adjust: exact` (plus the `-webkit-` prefix) in the
   shared print stylesheet.
+- The Gemini client was migrated from the deprecated
+  `google-generativeai` package to `google-genai`, the SDK Google is
+  consolidating around. The migration surfaced a real resilience gap:
+  a 65-case real-API verification run failed on 56 of 65 cases with
+  transient `503` "model overloaded" errors — the old SDK's retry
+  behavior had apparently been absorbing these silently, while the new
+  SDK does not retry by default. Fixed by explicitly configuring HTTP
+  retry (exponential backoff), which brought a second full run down to
+  4 errors; the remaining 4 (the same transient condition, not a new
+  bug) resolved on a single manual retry pass, logged in the collected
+  dataset rather than silently overwritten.
 
 ## Documentation housekeeping
 

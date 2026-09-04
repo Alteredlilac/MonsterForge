@@ -482,8 +482,8 @@ just not yet wired to a single end-to-end `convert()` call like this.
 Currently used:
 
 - Python
-- `google-generativeai` (Gemini API — deprecated upstream in favor of
-  `google-genai`; migration planned, not yet done, see
+- `google-genai` (Gemini API — migrated from the now-deprecated
+  `google-generativeai`, see
   [PROJECT_STATUS.md](./monsterforge/docs/PROJECT_STATUS.md))
 - FastAPI + `uvicorn` (the `ui/` web form) + `python-multipart` (HTML form parsing)
 - Jinja2 (LLM prompts, HTML/CSS card + gallery templates, and the `ui/` web form)
