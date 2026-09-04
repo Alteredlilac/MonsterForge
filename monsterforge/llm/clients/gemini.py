@@ -2,7 +2,7 @@
 Gemini LLM Client
 
 Simple client to interact with Google Gemini models through the
-Google Generative AI API.
+Google Gen AI SDK (google-genai).
 
 This module provides a lightweight interface for text generation
 used by the application, such as AI-assisted content generation
@@ -19,19 +19,24 @@ Flow:
 INIT → GENERATE → (OPTIONAL) SWITCH MODEL
 
 Example:
-    client = GeminiClient(llm_model="gemini-1.5-flash")
+    client = GeminiClient(llm_model="gemini-flash-lite-latest")
 
     description = client.generate_text(
         "Create a fantasy description for an undead creature"
     )
 
-    client.change_llm_model("gemini-1.5-pro")
+    client.change_llm_model("gemini-2.5-pro")
 """
 
 from dotenv import load_dotenv
 import os
-import google.generativeai as genai
-from google.api_core.exceptions import GoogleAPIError, NotFound
+from google import genai
+from google.genai import errors, types
+from monsterforge.config.llm_settings import (
+    RETRY_ATTEMPTS,
+    RETRY_INITIAL_DELAY_SECONDS,
+    RETRY_MAX_DELAY_SECONDS,
+)
 
 load_dotenv()
 
@@ -53,8 +58,16 @@ class GeminiClient:
     def __init__(self, llm_model:str):
         self.model_name = llm_model
         self._load_api_key()
-        genai.configure(api_key=self._api_key)
-        self.model = genai.GenerativeModel(self.model_name)
+        self._client = genai.Client(
+            api_key=self._api_key,
+            http_options=types.HttpOptions(
+                retry_options=types.HttpRetryOptions(
+                    attempts=RETRY_ATTEMPTS,
+                    initial_delay=RETRY_INITIAL_DELAY_SECONDS,
+                    max_delay=RETRY_MAX_DELAY_SECONDS,
+                )
+            ),
+        )
 
 
     def _load_api_key(self)-> None:
@@ -62,32 +75,41 @@ class GeminiClient:
 
         if not self._api_key:
                 raise ValueError("Missing GEMINI_API_KEY in environment")
-        
+
     def change_llm_model(self, model_name:str)-> None:
+        # NOTE:
+        # google-genai's Client is not bound to a single model the way
+        # google-generativeai's GenerativeModel was — the model name is
+        # passed per call to generate_content(). Switching models is
+        # therefore just updating this attribute, no client/model object
+        # to rebuild.
         self.model_name = model_name
-        self.model = genai.GenerativeModel(self.model_name)
-      
+
     def generate_text(self, question: str) -> str:
         try:
-            response = self.model.generate_content(question)
+            response = self._client.models.generate_content(
+                model=self.model_name, contents=question,
+            )
             return getattr(response, "text", "")
-        except NotFound as exc:
+        except errors.APIError as exc:
             # NOTE:
-            # Gemini raises NotFound both when a model doesn't exist at
-            # all and when it exists but is "no longer available to new
-            # users" for this account/tier — a restriction
+            # google-genai raises a single APIError for every API failure,
+            # distinguished by .code rather than by exception subclass
+            # (unlike the old SDK's separate NotFound/GoogleAPIError
+            # hierarchy). Code 404 covers both a model that doesn't exist
+            # at all and one that exists but is "no longer available to
+            # new users" for this account/tier — a restriction
             # list_text_models() doesn't surface, so it can only be
             # detected here, at actual generation time.
-            raise ModelUnavailableError(
-                f"Model {self.model_name!r} is not available: {exc}"
-            ) from exc
-        except GoogleAPIError as exc:
+            if exc.code == 404:
+                raise ModelUnavailableError(
+                    f"Model {self.model_name!r} is not available: {exc}"
+                ) from exc
             raise RuntimeError(f"Gemini API error: {exc}") from exc
-        
+
     def list_text_models(self) -> list[str]:
-        models = genai.list_models()
         return [
             m.name
-            for m in models
-            if "generateContent" in m.supported_generation_methods
+            for m in self._client.models.list()
+            if "generateContent" in (m.supported_actions or [])
         ]
