@@ -66,3 +66,13 @@ class EntityType(str, Enum):
 # model and converter today (structured_data/dnd/v3x/attacks.py). Expect
 # this to grow as more structured_data types are actually built.
 
+
+# =====================
+# CARD TYPE
+# =====================
+class CardType(str, Enum):
+    """Which of domain/entity.py's three card lists a cards row belongs to."""
+
+    CREATURE_CARD = "creature_card"
+    MOVE_CARD = "move_card"
+    ITEM_CARD = "item_card"
