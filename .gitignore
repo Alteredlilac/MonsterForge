@@ -4,6 +4,9 @@
 # env file
 .env
 
+# SQLite database file
+*.db
+
 # personal files
 PROJECT_NOTES.md
 
