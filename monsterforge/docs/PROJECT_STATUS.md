@@ -1,13 +1,14 @@
 # Project Status
 
-Snapshot of where MonsterForge stands as of September 4, 2026.
+Snapshot of where MonsterForge stands as of September 5, 2026.
 For the system's design and long-term architecture, see [PIPELINE_ARCHITECTURE.md](./PIPELINE_ARCHITECTURE.md)
 and [DESIGN.md](../../DESIGN.md). For how the LLM layer specifically is
 structured, see [LLM_ARCHITECTURE.md](./LLM_ARCHITECTURE.md). For how a
 `MoveCard` becomes a printable card and how that's showcased against real
 pipeline output, see [RENDERING_AND_GALLERY.md](./RENDERING_AND_GALLERY.md).
 For the conversion + human review flow over the web, live, and how to write
-a valid attack, see [WEB_UI_AND_REVIEW.md](./WEB_UI_AND_REVIEW.md).
+a valid attack, see [WEB_UI_AND_REVIEW.md](./WEB_UI_AND_REVIEW.md). For how
+classifications are cached and persisted, see [PERSISTENCE.md](./PERSISTENCE.md).
 
 ## In short
 
@@ -66,10 +67,18 @@ field with a random real attack (100 curated samples, no new API call
 needed), plus a Clear Form button — both meant to make the live deployment
 faster to try for someone who just found the link.
 
-The current test suite contains 602 passing tests, 0 failing.
+The web form's classifications are now cached and persisted: a SQLite
+database (via SQLAlchemy) keeps an append-only log of every LLM
+classification and human review decision, keyed by a deterministic
+fingerprint of the attack's mechanical fields. Submitting the exact same
+attack twice returns the identical card, with the second submission
+making no LLM call at all — verified against the live deployment, not
+just locally. See [PERSISTENCE.md](./PERSISTENCE.md) for what that
+design demonstrates. The CLI doesn't use this cache yet, and a JSON API
+for external consumers is still just a stub — see
+[Limitations](#limitations--not-yet-built) below.
 
-Persistence and a JSON API for external consumers are designed in detail
-but not yet built — see [Limitations](#limitations--not-yet-built) below.
+The current test suite contains 660 passing tests, 0 failing.
 
 ## What works today
 
@@ -201,9 +210,32 @@ but not yet built — see [Limitations](#limitations--not-yet-built) below.
   make trying the live deployment faster for a first-time visitor, not
   a feature of the conversion pipeline itself.
 
+- **Persistence and a fingerprint cache for the web form** (SQLite +
+  SQLAlchemy — see [PERSISTENCE.md](./PERSISTENCE.md)): every LLM
+  classification and human review decision is kept as its own row in an
+  append-only log, not overwritten. A deterministic fingerprint of an
+  attack's mechanical fields (deliberately excluding free-text context,
+  which would make the cache miss almost every time) lets a repeat
+  submission return the already-saved card directly — no LLM call, no
+  new database row. An inconsistent state (an active classification
+  with no saved card behind it) fails loudly with a specific error
+  instead of silently reclassifying. The CLI doesn't use this cache yet
+  — only `/convert`/`/review` do.
+
 ## Test coverage
 
-**602 passing, 0 failing.** 2 of those cover the Gemini client's
+**660 passing, 0 failing.** 58 of those cover the persistence layer
+end to end: 34 integrity tests for the database schema itself (every
+table round-trips, enum values are stored as their string value rather
+than their Python name, foreign-key constraints are actually enforced —
+SQLite disables that by default), 21 for the repository functions in
+`pipeline/attack_repository.py` (fingerprint determinism, get-or-create
+idempotency, the append-only event log's activate/archive behavior,
+both anomaly branches of the missing-card check), and 3 for the web
+wiring itself (a repeat submission triggering no second classification
+call, a previously-rejected attack recognized without reclassifying,
+and the missing-card anomaly surfaced through the actual HTTP route).
+Before that, 2 cover the Gemini client's
 migration to the `google-genai` SDK (model switching no longer rebuilds
 the client; model listing filters by generation-capability) — see
 [Notable fixes and findings](#notable-fixes-and-findings) below for the
@@ -269,14 +301,15 @@ ship:
 - **`FullAttack`** — only a single `Attack` converts; multiple/iterative
   attacks aren't handled yet.
 
-- **Persistence** — no database; every conversion is computed fresh,
-  with no stable/deterministic card IDs across runs.
+- **Persistence is web-only** — `/convert`/`/review` cache and persist
+  every classification (see [PERSISTENCE.md](./PERSISTENCE.md)), but the
+  CLI (`entrypoints/convert_attack_cli.py`) still computes every
+  conversion fresh, with no stable card id across runs. Deliberately
+  deferred to a broader CLI pass rather than wired in isolation now.
 
 - **JSON API for external consumers** — `api/` is still an empty stub;
   the pipeline is reachable via the CLI or the human-facing web form
-  (`ui/`), not as machine-readable JSON over HTTP. Deliberately planned
-  for after persistence exists (see below) — an API returning ephemeral,
-  non-cacheable conversions has little value on its own.
+  (`ui/`), not as machine-readable JSON over HTTP.
 
 - **Other `MoveCard` sources** — only attacks produce move cards today;
   talents, spells, and special qualities aren't wired in
@@ -289,17 +322,12 @@ ship:
   becomes slow/unavailable for a while), not cost. Deliberately deferred
   to ship the deployment itself first, not an oversight.
 
-All of the above is designed in detail but not yet built: persistence
-with stable card identity derived from a content fingerprint (so the
-same attack always resolves to the same card, even across separate
-runs), and the JSON API above. Rendering a `MoveCard` into a printable
-card, a confidence-gated human review step for low-confidence LLM
-classifications, and that whole flow exposed over the web — all
-originally part of this same "later" bucket — have since moved out of
-it and are built; see [RENDERING_AND_GALLERY.md](./RENDERING_AND_GALLERY.md)
-for the former. The review flow's history still isn't persisted
-anywhere (CLI or web) — that lands together with the fingerprint work
-above.
+The JSON API above is the one item in this list still without a
+concrete design — everything else that was once in this same "later"
+bucket (rendering, human review, the web flow, persistence with stable
+card identity) has since moved out of it and is built, at least for the
+web channel; see [RENDERING_AND_GALLERY.md](./RENDERING_AND_GALLERY.md)
+and [PERSISTENCE.md](./PERSISTENCE.md).
 
 ## Notable fixes and findings
 
