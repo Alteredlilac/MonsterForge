@@ -19,8 +19,23 @@ def db_session():
     process-level engine from db.session.get_engine(). Used by
     tests/db/, tests/pipeline/, and tests/ui/, hence living at the
     project root rather than duplicated in any one package's conftest.
+
+    check_same_thread=False + StaticPool: FastAPI's TestClient
+    (tests/ui/) runs route handlers in a different OS thread than the
+    test itself. check_same_thread=False alone isn't enough — SQLite's
+    default pool for a ":memory:" URL (SingletonThreadPool) hands out a
+    separate connection per thread, and each ":memory:" connection is
+    its own empty database, so the route's thread would see a
+    completely different, unseeded database than the one this fixture
+    just set up. StaticPool forces a single shared connection for the
+    whole engine regardless of which thread asks for it — the standard
+    pairing for this exact FastAPI+SQLAlchemy+TestClient combination.
     """
-    engine = sa.create_engine("sqlite:///:memory:")
+    engine = sa.create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=sa.pool.StaticPool,
+    )
     enable_foreign_keys(engine)
     Base.metadata.create_all(engine)
     session = Session(engine)

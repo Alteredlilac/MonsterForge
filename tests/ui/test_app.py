@@ -10,6 +10,7 @@ import html
 import re
 from unittest.mock import patch
 from fastapi.testclient import TestClient
+from monsterforge.db.cards import Card
 from monsterforge.llm.clients.gemini import ModelUnavailableError
 from monsterforge.llm.semantic_classification.attacks import AttackSemanticResult
 from monsterforge.structured_data.dnd.v3x.effect_mechanics import EffectRange
@@ -33,18 +34,32 @@ def make_semantic_result(**overrides):
     return AttackSemanticResult(**defaults)
 
 
-def _extract_semantic_result_json(page_html: str) -> str:
+def _extract_hidden_field(page_html: str, field_name: str) -> str:
     """
-    Matches the field in either of its two rendered forms: single-quoted
-    and raw (review_form.html.jinja2) or double-quoted and HTML-entity-
-    escaped (move_card_with_edit.html.jinja2, which escapes it to keep
-    the embedded JSON's own quotes from breaking the attribute).
-    html.unescape() is a no-op on already-plain text, so it's safe to
-    apply unconditionally regardless of which form matched.
+    Matches a hidden input's value in either of its two rendered forms:
+    single-quoted and raw (review_form.html.jinja2) or double-quoted and
+    HTML-entity-escaped (move_card_with_edit.html.jinja2, which escapes
+    it to keep an embedded value's own quotes from breaking the
+    attribute). html.unescape() is a no-op on already-plain text, so
+    it's safe to apply unconditionally regardless of which form matched.
     """
-    match = re.search(r"name=\"semantic_result_json\" value=(['\"])(.*?)\1", page_html)
-    assert match is not None, "page did not include the expected hidden field"
+    match = re.search(rf"name=\"{field_name}\" value=(['\"])(.*?)\1", page_html)
+    assert match is not None, f"page did not include the expected hidden field {field_name!r}"
     return html.unescape(match.group(2))
+
+
+def _extract_semantic_result_json(page_html: str) -> str:
+    return _extract_hidden_field(page_html, "semantic_result_json")
+
+
+def _extract_review_ids(page_html: str) -> dict:
+    """raw_field_id/classification_event_id, needed on every /review and
+    /review/edit POST since the database wiring — extracted from a prior
+    /convert (or /review) response the same way semantic_result_json is."""
+    return {
+        "raw_field_id": _extract_hidden_field(page_html, "raw_field_id"),
+        "classification_event_id": _extract_hidden_field(page_html, "classification_event_id"),
+    }
 
 
 # =====================
@@ -294,10 +309,11 @@ def _review_page_html(confidence=0.3, **result_overrides):
 
 
 def test_review_approve_keeps_original_result():
-    semantic_result_json = _extract_semantic_result_json(_review_page_html())
+    page_html = _review_page_html()
+    semantic_result_json = _extract_semantic_result_json(page_html)
 
     response = client.post("/review", data={
-        **REVIEW_HIDDEN_BASE,
+        **REVIEW_HIDDEN_BASE, **_extract_review_ids(page_html),
         "semantic_result_json": semantic_result_json, "decision": "approve",
     })
 
@@ -316,12 +332,11 @@ def test_review_survives_an_apostrophe_in_the_rationale():
     apostrophe, and posting that truncated JSON back to /review crashed
     with an unhandled JSONDecodeError instead of a friendly error.
     """
-    semantic_result_json = _extract_semantic_result_json(
-        _review_page_html(rationale="the creature's bite is nasty")
-    )
+    page_html = _review_page_html(rationale="the creature's bite is nasty")
+    semantic_result_json = _extract_semantic_result_json(page_html)
 
     response = client.post("/review", data={
-        **REVIEW_HIDDEN_BASE,
+        **REVIEW_HIDDEN_BASE, **_extract_review_ids(page_html),
         "semantic_result_json": semantic_result_json, "decision": "approve",
     })
 
@@ -330,10 +345,11 @@ def test_review_survives_an_apostrophe_in_the_rationale():
 
 
 def test_review_correct_uses_edited_fields():
-    semantic_result_json = _extract_semantic_result_json(_review_page_html())
+    page_html = _review_page_html()
+    semantic_result_json = _extract_semantic_result_json(page_html)
 
     response = client.post("/review", data={
-        **REVIEW_HIDDEN_BASE,
+        **REVIEW_HIDDEN_BASE, **_extract_review_ids(page_html),
         "semantic_result_json": semantic_result_json, "decision": "correct",
         "name": "Bite", "description": "A hand-corrected bite.", "move_type": "magical",
         "range_value": "", "range_unit": "metric",
@@ -344,15 +360,16 @@ def test_review_correct_uses_edited_fields():
 
 
 def test_review_correct_with_a_range_value_builds_effect_range():
-    semantic_result_json = _extract_semantic_result_json(
-        _review_page_html(move_range=EffectRange(effect_range=10, range_unit_system=UnitSystem.IMPERIAL))
+    page_html = _review_page_html(
+        move_range=EffectRange(effect_range=10, range_unit_system=UnitSystem.IMPERIAL)
     )
+    semantic_result_json = _extract_semantic_result_json(page_html)
 
     # Just confirming the route accepts and processes a numeric range
     # value without error — the rendered card reduces range to a badge,
     # not asserted here in detail (already covered by rendering's own tests).
     response = client.post("/review", data={
-        **REVIEW_HIDDEN_BASE,
+        **REVIEW_HIDDEN_BASE, **_extract_review_ids(page_html),
         "semantic_result_json": semantic_result_json, "decision": "correct",
         "name": "Bite", "description": "A ranged bite.", "move_type": "physical",
         "range_value": "60", "range_unit": "metric",
@@ -362,10 +379,11 @@ def test_review_correct_with_a_range_value_builds_effect_range():
 
 
 def test_review_reject_produces_no_card():
-    semantic_result_json = _extract_semantic_result_json(_review_page_html())
+    page_html = _review_page_html()
+    semantic_result_json = _extract_semantic_result_json(page_html)
 
     response = client.post("/review", data={
-        **REVIEW_HIDDEN_BASE,
+        **REVIEW_HIDDEN_BASE, **_extract_review_ids(page_html),
         "semantic_result_json": semantic_result_json, "decision": "reject",
     })
 
@@ -378,7 +396,8 @@ def test_review_rerun_reclassifies_and_shows_the_new_result():
     """Mirrors _review_input.py's CLI rerun: a real second
     classify_attack() call, landing back on the review form (not a
     rendered card) with the new classification."""
-    semantic_result_json = _extract_semantic_result_json(_review_page_html())
+    page_html = _review_page_html()
+    semantic_result_json = _extract_semantic_result_json(page_html)
     chosen_template = "attacks/classify_attack_confidence_guard.jinja2"
 
     with patch(
@@ -386,7 +405,7 @@ def test_review_rerun_reclassifies_and_shows_the_new_result():
         return_value=make_semantic_result(confidence=0.2, description="reclassified description"),
     ) as mock_classify:
         response = client.post("/review", data={
-            **REVIEW_HIDDEN_BASE,
+            **REVIEW_HIDDEN_BASE, **_extract_review_ids(page_html),
             "semantic_result_json": semantic_result_json, "decision": "rerun",
             "rerun_template_name": chosen_template,
         })
@@ -398,15 +417,14 @@ def test_review_rerun_reclassifies_and_shows_the_new_result():
 
 
 def test_review_rerun_appends_note_to_additional_description():
-    semantic_result_json = _extract_semantic_result_json(
-        _review_page_html(rationale="original rationale")
-    )
+    page_html = _review_page_html(rationale="original rationale")
+    semantic_result_json = _extract_semantic_result_json(page_html)
 
     with patch(
         "monsterforge.ui.app.classify_attack", return_value=make_semantic_result(),
     ) as mock_classify:
         client.post("/review", data={
-            **REVIEW_HIDDEN_BASE,
+            **REVIEW_HIDDEN_BASE, **_extract_review_ids(page_html),
             "semantic_result_json": semantic_result_json, "decision": "rerun",
             "rerun_template_name": TEMPLATE_NAME, "rerun_note": "double-check this one",
         })
@@ -415,13 +433,12 @@ def test_review_rerun_appends_note_to_additional_description():
 
 
 def test_review_rerun_unknown_template_keeps_the_original_result():
-    semantic_result_json = _extract_semantic_result_json(
-        _review_page_html(description="original description")
-    )
+    page_html = _review_page_html(description="original description")
+    semantic_result_json = _extract_semantic_result_json(page_html)
 
     with patch("monsterforge.ui.app.classify_attack") as mock_classify:
         response = client.post("/review", data={
-            **REVIEW_HIDDEN_BASE,
+            **REVIEW_HIDDEN_BASE, **_extract_review_ids(page_html),
             "semantic_result_json": semantic_result_json, "decision": "rerun",
             "rerun_template_name": "attacks/bogus.jinja2",
         })
@@ -433,13 +450,12 @@ def test_review_rerun_unknown_template_keeps_the_original_result():
 
 
 def test_review_rerun_model_unavailable_keeps_the_original_result():
-    semantic_result_json = _extract_semantic_result_json(
-        _review_page_html(description="original description")
-    )
+    page_html = _review_page_html(description="original description")
+    semantic_result_json = _extract_semantic_result_json(page_html)
 
     with patch("monsterforge.ui.app.classify_attack", side_effect=ModelUnavailableError("gone")):
         response = client.post("/review", data={
-            **REVIEW_HIDDEN_BASE,
+            **REVIEW_HIDDEN_BASE, **_extract_review_ids(page_html),
             "semantic_result_json": semantic_result_json, "decision": "rerun",
             "rerun_template_name": TEMPLATE_NAME,
         })
@@ -450,13 +466,12 @@ def test_review_rerun_model_unavailable_keeps_the_original_result():
 
 
 def test_review_rerun_classification_failure_keeps_the_original_result():
-    semantic_result_json = _extract_semantic_result_json(
-        _review_page_html(description="original description")
-    )
+    page_html = _review_page_html(description="original description")
+    semantic_result_json = _extract_semantic_result_json(page_html)
 
     with patch("monsterforge.ui.app.classify_attack", side_effect=RuntimeError("boom")):
         response = client.post("/review", data={
-            **REVIEW_HIDDEN_BASE,
+            **REVIEW_HIDDEN_BASE, **_extract_review_ids(page_html),
             "semantic_result_json": semantic_result_json, "decision": "rerun",
             "rerun_template_name": TEMPLATE_NAME,
         })
@@ -467,10 +482,11 @@ def test_review_rerun_classification_failure_keeps_the_original_result():
 
 
 def test_review_approve_carries_image_uri_through_to_the_card():
-    semantic_result_json = _extract_semantic_result_json(_review_page_html())
+    page_html = _review_page_html()
+    semantic_result_json = _extract_semantic_result_json(page_html)
 
     response = client.post("/review", data={
-        **REVIEW_HIDDEN_BASE,
+        **REVIEW_HIDDEN_BASE, **_extract_review_ids(page_html),
         "semantic_result_json": semantic_result_json, "decision": "approve",
         "image_uri": "https://example.com/bite.png",
     })
@@ -498,7 +514,7 @@ def test_review_edit_reopens_the_review_form_without_reclassifying():
 
     with patch("monsterforge.ui.app.classify_attack") as mock_classify:
         response = client.post("/review/edit", data={
-            **REVIEW_HIDDEN_BASE,
+            **REVIEW_HIDDEN_BASE, **_extract_review_ids(card_html),
             "semantic_result_json": semantic_result_json,
         })
 
@@ -512,14 +528,15 @@ def test_review_edit_then_correct_updates_the_card():
         card_html = client.post("/convert", data=RAW_ATTACK_FORM).text
 
     semantic_result_json = _extract_semantic_result_json(card_html)
+    card_ids = _extract_review_ids(card_html)
     review_html = client.post("/review/edit", data={
-        **REVIEW_HIDDEN_BASE,
+        **REVIEW_HIDDEN_BASE, **card_ids,
         "semantic_result_json": semantic_result_json,
     }).text
     semantic_result_json_again = _extract_semantic_result_json(review_html)
 
     response = client.post("/review", data={
-        **REVIEW_HIDDEN_BASE,
+        **REVIEW_HIDDEN_BASE, **_extract_review_ids(review_html),
         "semantic_result_json": semantic_result_json_again, "decision": "correct",
         "name": "Bite", "description": "Edited after the fact.", "move_type": "physical",
         "range_value": "", "range_unit": "metric",
@@ -530,12 +547,13 @@ def test_review_edit_then_correct_updates_the_card():
 
 
 def test_review_correct_rejects_a_negative_range_value():
-    semantic_result_json = _extract_semantic_result_json(
-        _review_page_html(move_range=EffectRange(effect_range=10, range_unit_system=UnitSystem.IMPERIAL))
+    page_html = _review_page_html(
+        move_range=EffectRange(effect_range=10, range_unit_system=UnitSystem.IMPERIAL)
     )
+    semantic_result_json = _extract_semantic_result_json(page_html)
 
     response = client.post("/review", data={
-        **REVIEW_HIDDEN_BASE,
+        **REVIEW_HIDDEN_BASE, **_extract_review_ids(page_html),
         "semantic_result_json": semantic_result_json, "decision": "correct",
         "name": "Bite", "description": "A ranged bite.", "move_type": "physical",
         "range_value": "-10", "range_unit": "metric",
@@ -563,10 +581,11 @@ def test_review_page_shows_range_fields_for_a_ranged_attack():
 
 
 def test_review_correct_can_fix_the_name():
-    semantic_result_json = _extract_semantic_result_json(_review_page_html())
+    page_html = _review_page_html()
+    semantic_result_json = _extract_semantic_result_json(page_html)
 
     response = client.post("/review", data={
-        **REVIEW_HIDDEN_BASE,
+        **REVIEW_HIDDEN_BASE, **_extract_review_ids(page_html),
         "semantic_result_json": semantic_result_json, "decision": "correct",
         "name": "Fixed Name", "description": "A vicious bite.", "move_type": "physical",
         "range_value": "", "range_unit": "metric",
@@ -580,10 +599,11 @@ def test_review_correct_with_a_blank_name_is_rejected():
     """Server-side backstop for the same rule the review form enforces
     client-side (required + formnovalidate on Approve/Reject) — a
     non-browser client could still submit a blank name on Correct."""
-    semantic_result_json = _extract_semantic_result_json(_review_page_html())
+    page_html = _review_page_html()
+    semantic_result_json = _extract_semantic_result_json(page_html)
 
     response = client.post("/review", data={
-        **REVIEW_HIDDEN_BASE,
+        **REVIEW_HIDDEN_BASE, **_extract_review_ids(page_html),
         "semantic_result_json": semantic_result_json, "decision": "correct",
         "name": "", "description": "A vicious bite.", "move_type": "physical",
         "range_value": "", "range_unit": "metric",
@@ -604,7 +624,7 @@ def test_review_survives_a_blank_modifier():
     semantic_result_json = _extract_semantic_result_json(response.text)
 
     review_response = client.post("/review", data={
-        **REVIEW_HIDDEN_BASE, "raw_attack_modifier": "",
+        **REVIEW_HIDDEN_BASE, **_extract_review_ids(response.text), "raw_attack_modifier": "",
         "semantic_result_json": semantic_result_json, "decision": "approve",
     })
 
@@ -638,11 +658,12 @@ def test_review_approve_with_an_unresolvable_range_bounces_back_to_review():
     range fields in review (they're optional there, unlike /convert) —
     arguably more likely to happen this way than via the direct
     /convert path this scenario was first found through."""
-    semantic_result_json = _extract_semantic_result_json(_review_page_html(move_range=None))
+    page_html = _review_page_html(move_range=None)
+    semantic_result_json = _extract_semantic_result_json(page_html)
     hidden = {**REVIEW_HIDDEN_BASE, "raw_attack_name": "Arco", "raw_attack_attack_type": "ranged"}
 
     response = client.post("/review", data={
-        **hidden,
+        **hidden, **_extract_review_ids(page_html),
         "semantic_result_json": semantic_result_json, "decision": "approve",
     })
 
@@ -662,3 +683,53 @@ def test_convert_malformed_dice_still_dead_ends_instead_of_bouncing_back():
     assert response.status_code == 422
     assert "Could not build the card" in response.text
     assert "Human Review Requested" not in response.text
+
+
+# =====================
+# FINGERPRINT CACHE
+# =====================
+def test_convert_same_attack_twice_is_a_cache_hit():
+    """The whole point of the fingerprint: no second LLM call, and the
+    same saved card served both times (stable identity, not recomputed)."""
+    with patch("monsterforge.ui.app.classify_attack", return_value=make_semantic_result(confidence=0.95)) as mock_classify:
+        first = client.post("/convert", data=RAW_ATTACK_FORM)
+        second = client.post("/convert", data=RAW_ATTACK_FORM)
+
+    assert first.status_code == 200
+    assert second.status_code == 200
+    assert mock_classify.call_count == 1
+    assert _extract_review_ids(first.text) == _extract_review_ids(second.text)
+
+
+def test_convert_a_previously_rejected_attack_shows_a_message_without_reclassifying():
+    with patch("monsterforge.ui.app.classify_attack", return_value=make_semantic_result(confidence=0.3)) as mock_classify:
+        review_page = client.post("/convert", data=RAW_ATTACK_FORM)
+
+        reject_response = client.post("/review", data={
+            **REVIEW_HIDDEN_BASE, **_extract_review_ids(review_page.text),
+            "semantic_result_json": _extract_semantic_result_json(review_page.text), "decision": "reject",
+        })
+        assert "No card produced" in reject_response.text
+
+        second = client.post("/convert", data=RAW_ATTACK_FORM)
+
+    assert mock_classify.call_count == 1
+    assert second.status_code == 422
+    assert "previously rejected" in second.text.lower()
+
+
+def test_convert_reports_a_missing_saved_card_instead_of_silently_reclassifying(seeded_db_session):
+    """InconsistentActiveClassificationError's whole reason to exist: an
+    active event whose card was somehow never saved must be reported
+    loudly, not silently reclassified as if nothing had happened."""
+    with patch("monsterforge.ui.app.classify_attack", return_value=make_semantic_result(confidence=0.95)) as mock_classify:
+        client.post("/convert", data=RAW_ATTACK_FORM)
+
+        seeded_db_session.query(Card).delete()
+        seeded_db_session.commit()
+
+        second = client.post("/convert", data=RAW_ATTACK_FORM)
+
+    assert mock_classify.call_count == 1  # still not reclassified
+    assert second.status_code == 500
+    assert "Could not load the saved card" in second.text

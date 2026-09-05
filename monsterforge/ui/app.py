@@ -33,6 +33,9 @@ from fastapi import Depends, FastAPI, Form, Request
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
+from monsterforge.config import validation_settings
+from monsterforge.db.enums import CardType
+from monsterforge.db.pipeline import ClassificationEvent, RawField
 from monsterforge.db.seed import seed_reference_data
 from monsterforge.db.session import create_all_tables, get_session
 from monsterforge.parsing.dnd.v3x.raw_fields.attacks import Attack as RawAttack
@@ -44,6 +47,21 @@ from monsterforge.parsing.dnd.v3x.structured_conversions.attacks.attacks_convert
 from monsterforge.transformation.dnd.v3x.converters.attacks_converter import attack_converter
 from monsterforge.entrypoints.sample_attacks_web_seed import SAMPLE_ATTACKS_WEB_SEED
 from monsterforge.pipeline.attack_pipeline import is_blank_attack
+from monsterforge.pipeline.attack_repository import (
+    InconsistentActiveClassificationError,
+    activate_classification_event,
+    compute_fingerprint,
+    find_existing_card,
+    get_default_game,
+    get_human_actor,
+    get_llm_actor,
+    get_or_create_raw_field,
+    record_human_review,
+    record_llm_run,
+    save_card,
+    save_structured_data,
+)
+from monsterforge.llm.client import get_llm_client
 from monsterforge.llm.clients.gemini import ModelUnavailableError
 from monsterforge.llm.semantic_classification.attacks import (
     ATTACK_PROMPT_TEMPLATE,
@@ -57,7 +75,8 @@ from monsterforge.rendering.move_card_renderer import render_move_card_html_with
 from monsterforge.serialization.domain_to_json import card_to_json
 from monsterforge.structured_data.dnd.v3x.effect_mechanics import EffectRange
 from monsterforge.structured_data.dnd.v3x.enums import CreatureSubtype, MoveType, UnitSystem
-from monsterforge.validation.review import needs_review
+from monsterforge.validation.enums import ValidationStatus
+from monsterforge.validation.review import HumanReview, needs_review
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
@@ -195,11 +214,19 @@ def _review_form_context(
         semantic_result: AttackSemanticResult,
         template_name: str,
         image_uri: str,
+        raw_field_id: str,
+        classification_event_id: str,
         error_message: str | None = None) -> dict:
     """Shared template context for review_form.html.jinja2, built by
     a fresh /convert classification, a revisit via /review/edit, or a
     bounce-back from a failed card build (error_message set — see
-    UnknownAttackRange handling in convert()/review())."""
+    UnknownAttackRange handling in convert()/review()).
+
+    raw_field_id/classification_event_id identify which raw_fields row
+    and which specific LLM_RUN classification_events row a decision
+    made on this form is about — carried as hidden fields the same way
+    raw_attack/semantic_result already are, since there's no
+    server-side session to hold onto them instead."""
     return {
         "raw_attack": raw_attack,
         "semantic_context": semantic_context,
@@ -207,6 +234,8 @@ def _review_form_context(
         "semantic_result_json": _semantic_result_to_json(semantic_result),
         "template_name": template_name,
         "image_uri": image_uri,
+        "raw_field_id": raw_field_id,
+        "classification_event_id": classification_event_id,
         "move_types": [move_type.value for move_type in MoveType],
         "unit_systems": [unit.value for unit in UnitSystem],
         "prompt_templates": ATTACK_PROMPT_TEMPLATE_OPTIONS,
@@ -229,11 +258,22 @@ def _message_page(message: str, status_code: int = 200) -> HTMLResponse:
 # CARD RENDERING
 # =====================
 def _render_card(
+        session: Session,
+        raw_field: RawField,
+        classification_event: ClassificationEvent,
         raw_attack: RawAttack,
         semantic_result: AttackSemanticResult,
         semantic_context: SemanticContextInput,
         template_name: str,
         image_uri: str) -> HTMLResponse:
+    """Build the final card, persist it as structured_data/cards for
+    `classification_event`, and activate that event — all three only on
+    success. Activation happens here, after the save, deliberately not
+    left to the caller: if it happened before (or the caller activated
+    it up front), a mid-build failure like UnknownAttackRange would
+    leave raw_field pointing at an ACTIVE event with no saved card, the
+    exact anomaly find_existing_card() exists to catch on a later
+    fingerprint hit."""
     try:
         structured_attack = raw_to_structured_attack(raw_attack, semantic_result)
         move_card = attack_converter(structured_attack, attack_image_uri=image_uri or None)
@@ -257,6 +297,13 @@ def _render_card(
 
     card_data = json.loads(card_to_json(move_card))
 
+    structured_data = save_structured_data(
+        session, raw_field=raw_field, classification_event=classification_event,
+        structured_attack=structured_attack,
+    )
+    save_card(session, structured_data=structured_data, card_data=card_data, card_type=CardType.MOVE_CARD)
+    activate_classification_event(session, raw_field=raw_field, event=classification_event)
+
     edit_form_fields = {
         "raw_attack_name": raw_attack.name,
         "raw_attack_modifier": raw_attack.modifier,
@@ -267,10 +314,49 @@ def _render_card(
         "creature_subtype": semantic_context.creature_subtype.value if semantic_context.creature_subtype else "",
         "template_name": template_name,
         "image_uri": image_uri,
+        "raw_field_id": raw_field.id,
+        "classification_event_id": classification_event.id,
         "semantic_result_json": _semantic_result_to_json(semantic_result),
     }
 
     return HTMLResponse(render_move_card_html_with_edit(card_data, "/review/edit", edit_form_fields))
+
+
+def _serve_cached_card(
+        session: Session,
+        raw_field: RawField,
+        active_event: ClassificationEvent,
+        template_name: str,
+        image_uri: str) -> HTMLResponse:
+    """Serve an already-saved card for `raw_field`'s active event —
+    the fingerprint cache hit path. No LLM call, no new database row,
+    no raw_to_structured_attack()/attack_converter() recomputation: the
+    saved card content is passed straight to the renderer as-is.
+
+    Raises:
+        InconsistentActiveClassificationError:
+            Propagated from find_existing_card() if the active event has
+            no saved card — the caller reports this as an error rather
+            than silently reclassifying.
+    """
+    _structured_data, card = find_existing_card(session, active_event)
+
+    edit_form_fields = {
+        "raw_attack_name": raw_field.data["name"],
+        "raw_attack_modifier": raw_field.data["modifier"],
+        "raw_attack_attack_type": raw_field.data["attack_type"],
+        "raw_attack_attack_effect": raw_field.data["attack_effect"],
+        "additional_description": raw_field.data.get("additional_description") or "",
+        "creature_description": raw_field.data.get("creature_description") or "",
+        "creature_subtype": raw_field.data.get("creature_subtype") or "",
+        "template_name": template_name,
+        "image_uri": image_uri,
+        "raw_field_id": raw_field.id,
+        "classification_event_id": active_event.id,
+        "semantic_result_json": json.dumps(active_event.result),
+    }
+
+    return HTMLResponse(render_move_card_html_with_edit(card.content, "/review/edit", edit_form_fields))
 
 
 # =====================
@@ -310,6 +396,7 @@ def convert(
         range_value: str = Form(""),
         range_unit: str = Form(""),
         template_name: str = Form(ATTACK_PROMPT_TEMPLATE),
+        session: Session = Depends(get_db_session),
         ) -> HTMLResponse:
     raw_attack = RawAttack(name=name, modifier=modifier, attack_type=attack_type, attack_effect=attack_effect)
 
@@ -356,6 +443,27 @@ def convert(
             ),
         )
 
+    # NOTE:
+    # get_or_create_raw_field() is always called, never conditioned on a
+    # separate "does an active result exist?" check first — see its own
+    # docstring for why (a raw_field can already exist for this
+    # fingerprint with no active event yet, and checking a different way
+    # around risks an IntegrityError on fingerprint's UNIQUE constraint).
+    fingerprint = compute_fingerprint(raw_attack, semantic_context.creature_subtype, explicit_range)
+    raw_field = get_or_create_raw_field(
+        session, game_id=get_default_game(session).id, raw_attack=raw_attack,
+        semantic_context=semantic_context, fingerprint=fingerprint,
+    )
+
+    if raw_field.current_classification_event_id is not None:
+        active_event = session.get(ClassificationEvent, raw_field.current_classification_event_id)
+        if active_event.decision == ValidationStatus.REJECTED:
+            return _message_page("This attack was previously rejected.", status_code=422)
+        try:
+            return _serve_cached_card(session, raw_field, active_event, template_name, image_uri)
+        except InconsistentActiveClassificationError as exc:
+            return _message_page(f"Could not load the saved card: {exc}", status_code=500)
+
     try:
         semantic_result = classify_attack(
             raw_attack=raw_attack,
@@ -385,19 +493,41 @@ def convert(
     # but not for a web server handling concurrent requests: mutating it
     # here could leak "always review" into an unrelated request that
     # never asked for it.
-    if force_review or needs_review(confidence=semantic_result.confidence):
+    requires_review = force_review or needs_review(confidence=semantic_result.confidence)
+
+    # decision is resolved here, before the row is even written, and
+    # never changed afterward — classification_events' append-only rule
+    # (see db/pipeline.py) allows only `status` to change post-write.
+    llm_event = record_llm_run(
+        session, raw_field=raw_field, semantic_result=semantic_result, actor=get_llm_actor(session),
+        prompt_name=template_name, model_name=get_llm_client().model_name,
+        confidence_threshold=validation_settings.CONFIDENCE_THRESHOLD,
+        decision=None if requires_review else ValidationStatus.AUTO_APPROVED,
+    )
+
+    if requires_review:
+        # Deliberately not activated: PENDING until a human decides, in
+        # /review — activating an unresolved event here would make an
+        # unreviewed result look like the raw_field's current one.
         return templates.TemplateResponse(
             request, "review_form.html.jinja2",
-            _review_form_context(raw_attack, semantic_context, semantic_result, template_name, image_uri),
+            _review_form_context(
+                raw_attack, semantic_context, semantic_result, template_name, image_uri,
+                raw_field_id=raw_field.id, classification_event_id=llm_event.id,
+            ),
         )
 
     try:
-        return _render_card(raw_attack, semantic_result, semantic_context, template_name, image_uri)
+        return _render_card(
+            session, raw_field, llm_event, raw_attack, semantic_result, semantic_context,
+            template_name, image_uri,
+        )
     except UnknownAttackRange as exc:
         return templates.TemplateResponse(
             request, "review_form.html.jinja2",
             _review_form_context(
                 raw_attack, semantic_context, semantic_result, template_name, image_uri,
+                raw_field_id=raw_field.id, classification_event_id=llm_event.id,
                 error_message=f"Could not build the card: {exc} Provide a range below and try again.",
             ),
         )
@@ -414,6 +544,8 @@ def edit_review(
         creature_description: str = Form(""),
         creature_subtype: str = Form(""),
         image_uri: str = Form(""),
+        raw_field_id: str = Form(...),
+        classification_event_id: str = Form(...),
         semantic_result_json: str = Form(...),
         template_name: str = Form(...),
         ) -> HTMLResponse:
@@ -435,8 +567,15 @@ def edit_review(
 
     return templates.TemplateResponse(
         request, "review_form.html.jinja2",
-        _review_form_context(raw_attack, semantic_context, semantic_result, template_name, image_uri),
+        _review_form_context(
+            raw_attack, semantic_context, semantic_result, template_name, image_uri,
+            raw_field_id=raw_field_id, classification_event_id=classification_event_id,
+        ),
     )
+
+
+def _parse_assigned_llm_score(raw_value: str) -> float | None:
+    return float(raw_value) if raw_value.strip() else None
 
 
 @app.post("/review", response_class=HTMLResponse)
@@ -457,6 +596,8 @@ def review(
         creature_description: str = Form(""),
         creature_subtype: str = Form(""),
         image_uri: str = Form(""),
+        raw_field_id: str = Form(...),
+        classification_event_id: str = Form(...),
         template_name: str = Form(...),
         semantic_result_json: str = Form(...),
         decision: str = Form(...),
@@ -469,6 +610,7 @@ def review(
         edit_note: str = Form(""),
         rerun_note: str = Form(""),
         rerun_template_name: str = Form(""),
+        session: Session = Depends(get_db_session),
         ) -> HTMLResponse:
     raw_attack = RawAttack(
         name=raw_attack_name,
@@ -478,13 +620,18 @@ def review(
     )
     semantic_context = _semantic_context_from_form(additional_description, creature_description, creature_subtype)
     original_result = _semantic_result_from_json(semantic_result_json)
-
-    # NOTE:
-    # assigned_llm_score/edit_note are accepted for parity with the CLI's
-    # HumanReview, but MVP 1 has no persistence layer either (same as
-    # MVP 0.5) — they're read here and then discarded, not stored.
+    raw_field = session.get(RawField, raw_field_id)
+    referenced_event = session.get(ClassificationEvent, classification_event_id)
 
     if decision == "reject":
+        review_event = record_human_review(
+            session, raw_field=raw_field, referenced_event=referenced_event,
+            review=HumanReview(status=ValidationStatus.REJECTED, result=None,
+                                assigned_llm_score=_parse_assigned_llm_score(assigned_llm_score),
+                                edit_note=edit_note or None),
+            actor=get_human_actor(session),
+        )
+        activate_classification_event(session, raw_field=raw_field, event=review_event)
         return _message_page("No card produced: the classification was rejected.")
 
     if decision == "rerun":
@@ -497,12 +644,15 @@ def review(
         # ORIGINAL (pre-rerun) classification untouched plus an error
         # banner — same principle as the UnknownAttackRange bounce-back
         # below: a failed action here must not discard the reviewer's
-        # already-reviewed state.
+        # already-reviewed state. No fingerprint check on this branch —
+        # rerun is a deliberate manual retry, always a new attempt, never
+        # deduplicated against the cache (see compute_fingerprint()).
         if rerun_template_name not in {option.path for option in ATTACK_PROMPT_TEMPLATE_OPTIONS}:
             return templates.TemplateResponse(
                 request, "review_form.html.jinja2",
                 _review_form_context(
                     raw_attack, semantic_context, original_result, template_name, image_uri,
+                    raw_field_id=raw_field_id, classification_event_id=classification_event_id,
                     error_message=f"Unknown prompt template: {rerun_template_name!r}.",
                 ),
             )
@@ -528,15 +678,25 @@ def review(
         except Exception as exc:
             error_message = f"Rerun failed: {exc}"
         else:
+            new_event = record_llm_run(
+                session, raw_field=raw_field, semantic_result=new_result, actor=get_llm_actor(session),
+                prompt_name=rerun_template_name, model_name=get_llm_client().model_name,
+                confidence_threshold=validation_settings.CONFIDENCE_THRESHOLD,
+                decision=None, rerun_note=rerun_note or None,
+            )
             return templates.TemplateResponse(
                 request, "review_form.html.jinja2",
-                _review_form_context(raw_attack, rerun_context, new_result, rerun_template_name, image_uri),
+                _review_form_context(
+                    raw_attack, rerun_context, new_result, rerun_template_name, image_uri,
+                    raw_field_id=raw_field_id, classification_event_id=new_event.id,
+                ),
             )
 
         return templates.TemplateResponse(
             request, "review_form.html.jinja2",
             _review_form_context(
                 raw_attack, semantic_context, original_result, template_name, image_uri,
+                raw_field_id=raw_field_id, classification_event_id=classification_event_id,
                 error_message=error_message,
             ),
         )
@@ -558,16 +718,30 @@ def review(
             move_type=MoveType(move_type),
             move_range=corrected_range,
         )
+        review_status = ValidationStatus.CORRECTED
     else:
         final_result = original_result
+        review_status = ValidationStatus.APPROVED
+
+    review_event = record_human_review(
+        session, raw_field=raw_field, referenced_event=referenced_event,
+        review=HumanReview(status=review_status, result=final_result,
+                            assigned_llm_score=_parse_assigned_llm_score(assigned_llm_score),
+                            edit_note=edit_note or None),
+        actor=get_human_actor(session),
+    )
 
     try:
-        return _render_card(raw_attack, final_result, semantic_context, template_name, image_uri)
+        return _render_card(
+            session, raw_field, review_event, raw_attack, final_result, semantic_context,
+            template_name, image_uri,
+        )
     except UnknownAttackRange as exc:
         return templates.TemplateResponse(
             request, "review_form.html.jinja2",
             _review_form_context(
                 raw_attack, semantic_context, final_result, template_name, image_uri,
+                raw_field_id=raw_field_id, classification_event_id=classification_event_id,
                 error_message=f"Could not build the card: {exc} Provide a range below and try again.",
             ),
         )
