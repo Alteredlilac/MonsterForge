@@ -18,6 +18,7 @@ from monsterforge.pipeline.attack_repository import (
     get_human_actor,
     get_llm_actor,
     get_or_create_raw_field,
+    list_saved_cards,
     record_human_review,
     record_llm_run,
     save_card,
@@ -41,6 +42,16 @@ def _make_raw_field(session, raw_attack=BITE, context=EMPTY_CONTEXT):
         session, game_id=get_default_game(session).id, raw_attack=raw_attack,
         semantic_context=context, fingerprint=fingerprint,
     )
+
+
+def _build_and_save_card(session, raw_field, event, raw_attack, result):
+    structured_attack = raw_to_structured_attack(raw_attack, result)
+    move_card = attack_converter(structured_attack)
+    card_data = json.loads(card_to_json(move_card))
+    structured_data = save_structured_data(session, raw_field=raw_field, classification_event=event,
+                                            structured_attack=structured_attack)
+    save_card(session, structured_data=structured_data, card_data=card_data, card_type=CardType.MOVE_CARD)
+    return card_data
 
 
 # =====================
@@ -290,6 +301,128 @@ def test_find_existing_card_raises_when_active_event_has_no_structured_data(seed
 
     with pytest.raises(InconsistentActiveClassificationError):
         find_existing_card(seeded_db_session, event)
+
+
+# =====================
+# LIST_SAVED_CARDS
+# =====================
+def test_list_saved_cards_includes_an_auto_approved_result(seeded_db_session):
+    raw_field = _make_raw_field(seeded_db_session)
+    result = AttackSemanticResult(description="A bite.", move_type=MoveType.PHYSICAL, move_range=None,
+                                   confidence=0.95, rationale="Clear.")
+    event = record_llm_run(seeded_db_session, raw_field=raw_field, semantic_result=result,
+                            actor=get_llm_actor(seeded_db_session), prompt_name="classify_attack.jinja2",
+                            model_name="gemini-flash-lite-latest", confidence_threshold=0.7,
+                            decision=ValidationStatus.AUTO_APPROVED)
+    activate_classification_event(seeded_db_session, raw_field=raw_field, event=event)
+    card_data = _build_and_save_card(seeded_db_session, raw_field, event, BITE, result)
+
+    entries = list_saved_cards(seeded_db_session)
+
+    assert len(entries) == 1
+    entry = entries[0]
+    assert entry["raw_field_id"] == raw_field.id
+    assert entry["case"]["name"] == "Bite"
+    assert entry["context"]["creature_subtype"] is None
+    assert entry["move_card"]["id"] == card_data["id"]
+    assert entry["classification_result"]["confidence"] == 0.95
+    assert entry["classification_result"]["rationale"] == "Clear."
+    assert entry["classification_result"]["description"] == "A bite."
+    assert entry["assigned_llm_score"] is None
+    assert entry["edit_note"] is None
+    assert entry["revision_count"] == 1
+
+
+def test_list_saved_cards_pulls_confidence_and_rationale_from_the_referenced_llm_run(seeded_db_session):
+    """A HUMAN_REVIEW event's own confidence/rationale are NULL (see
+    db/pipeline.py) — the library must walk back to the LLM_RUN it
+    references to show the classifier's real confidence, not None."""
+    raw_field = _make_raw_field(seeded_db_session)
+    result = AttackSemanticResult(description="Uncertain.", move_type=MoveType.PHYSICAL, move_range=None,
+                                   confidence=0.4, rationale="Low confidence.")
+    llm_event = record_llm_run(seeded_db_session, raw_field=raw_field, semantic_result=result,
+                                actor=get_llm_actor(seeded_db_session), prompt_name="classify_attack.jinja2",
+                                model_name="gemini-flash-lite-latest", confidence_threshold=0.7, decision=None)
+    approve = HumanReview(status=ValidationStatus.APPROVED, result=result, assigned_llm_score=0.6,
+                           edit_note="Looks fine.")
+    review_event = record_human_review(seeded_db_session, raw_field=raw_field, referenced_event=llm_event,
+                                        review=approve, actor=get_human_actor(seeded_db_session))
+    activate_classification_event(seeded_db_session, raw_field=raw_field, event=review_event)
+    _build_and_save_card(seeded_db_session, raw_field, review_event, BITE, result)
+
+    entries = list_saved_cards(seeded_db_session)
+
+    assert len(entries) == 1
+    entry = entries[0]
+    assert entry["classification_result"]["confidence"] == 0.4
+    assert entry["classification_result"]["rationale"] == "Low confidence."
+    assert entry["assigned_llm_score"] == 0.6
+    assert entry["edit_note"] == "Looks fine."
+    assert entry["revision_count"] == 2  # the LLM_RUN plus the HUMAN_REVIEW
+
+
+def test_list_saved_cards_skips_a_rejected_raw_field(seeded_db_session):
+    raw_field = _make_raw_field(seeded_db_session)
+    result = AttackSemanticResult(description="Uncertain.", move_type=MoveType.PHYSICAL, move_range=None,
+                                   confidence=0.4, rationale="Low.")
+    llm_event = record_llm_run(seeded_db_session, raw_field=raw_field, semantic_result=result,
+                                actor=get_llm_actor(seeded_db_session), prompt_name="classify_attack.jinja2",
+                                model_name="gemini-flash-lite-latest", confidence_threshold=0.7, decision=None)
+    reject = HumanReview(status=ValidationStatus.REJECTED, result=None)
+    reject_event = record_human_review(seeded_db_session, raw_field=raw_field, referenced_event=llm_event,
+                                        review=reject, actor=get_human_actor(seeded_db_session))
+    activate_classification_event(seeded_db_session, raw_field=raw_field, event=reject_event)
+
+    assert list_saved_cards(seeded_db_session) == []
+
+
+def test_list_saved_cards_skips_a_raw_field_with_no_active_event(seeded_db_session):
+    _make_raw_field(seeded_db_session)  # never classified
+
+    assert list_saved_cards(seeded_db_session) == []
+
+
+def test_list_saved_cards_skips_an_active_event_with_no_saved_card(seeded_db_session):
+    """The InconsistentActiveClassificationError anomaly find_existing_card()
+    raises for a single lookup must not break this bulk listing — the
+    anomalous raw_field is skipped silently, not raised."""
+    raw_field = _make_raw_field(seeded_db_session)
+    result = AttackSemanticResult(description="A bite.", move_type=MoveType.PHYSICAL, move_range=None,
+                                   confidence=0.95, rationale="Clear.")
+    event = record_llm_run(seeded_db_session, raw_field=raw_field, semantic_result=result,
+                            actor=get_llm_actor(seeded_db_session), prompt_name="classify_attack.jinja2",
+                            model_name="gemini-flash-lite-latest", confidence_threshold=0.7,
+                            decision=ValidationStatus.AUTO_APPROVED)
+    activate_classification_event(seeded_db_session, raw_field=raw_field, event=event)
+    # deliberately never call save_structured_data()/save_card()
+
+    assert list_saved_cards(seeded_db_session) == []
+
+
+def test_list_saved_cards_orders_most_recently_created_raw_field_first(seeded_db_session):
+    bite_field = _make_raw_field(seeded_db_session, raw_attack=BITE)
+    bite_result = AttackSemanticResult(description="A bite.", move_type=MoveType.PHYSICAL, move_range=None,
+                                        confidence=0.9, rationale="Clear.")
+    bite_event = record_llm_run(seeded_db_session, raw_field=bite_field, semantic_result=bite_result,
+                                 actor=get_llm_actor(seeded_db_session), prompt_name="classify_attack.jinja2",
+                                 model_name="gemini-flash-lite-latest", confidence_threshold=0.7,
+                                 decision=ValidationStatus.AUTO_APPROVED)
+    activate_classification_event(seeded_db_session, raw_field=bite_field, event=bite_event)
+    _build_and_save_card(seeded_db_session, bite_field, bite_event, BITE, bite_result)
+
+    claw_field = _make_raw_field(seeded_db_session, raw_attack=CLAW)
+    claw_result = AttackSemanticResult(description="A claw.", move_type=MoveType.PHYSICAL, move_range=None,
+                                        confidence=0.9, rationale="Clear.")
+    claw_event = record_llm_run(seeded_db_session, raw_field=claw_field, semantic_result=claw_result,
+                                 actor=get_llm_actor(seeded_db_session), prompt_name="classify_attack.jinja2",
+                                 model_name="gemini-flash-lite-latest", confidence_threshold=0.7,
+                                 decision=ValidationStatus.AUTO_APPROVED)
+    activate_classification_event(seeded_db_session, raw_field=claw_field, event=claw_event)
+    _build_and_save_card(seeded_db_session, claw_field, claw_event, CLAW, claw_result)
+
+    entries = list_saved_cards(seeded_db_session)
+
+    assert [entry["raw_field_id"] for entry in entries] == [claw_field.id, bite_field.id]
 
 
 def test_find_existing_card_raises_when_structured_data_has_no_card(seeded_db_session):

@@ -281,6 +281,81 @@ def find_existing_card(session: Session, event: ClassificationEvent) -> tuple[St
     return structured_data, card
 
 
+def list_saved_cards(session: Session) -> list[dict]:
+    """
+    Build one gallery-shaped entry per raw_field with a resolved,
+    card-backed active classification event, most recent first.
+
+    Rules:
+    - A raw_field with no active event yet, or whose active event was
+      REJECTED (no card exists for a rejection), is skipped.
+    - A raw_field whose active event has no saved card behind it
+      (InconsistentActiveClassificationError) is skipped rather than
+      raised: this is a read-only browsing view, one broken row must
+      not break the whole listing.
+    - classification_result is the LLM_RUN event's own result dict
+      (description/move_type/move_range/confidence/rationale, see
+      semantic_result_to_dict()): the active event's own result if it
+      is an LLM_RUN, or the LLM_RUN it references if the active event
+      is a HUMAN_REVIEW — a HUMAN_REVIEW's own confidence/rationale are
+      NULL (see db/pipeline.py), so its result alone would lose them.
+    - assigned_llm_score/edit_note come straight from the active event
+      (populated only for HUMAN_REVIEW/MANUAL_CORRECTION) — None when
+      the active event is an auto-approved LLM_RUN with no human
+      review at all.
+    - revision_count is the total number of classification_events rows
+      for the raw_field, regardless of type — every LLM run, rerun, and
+      human decision counts.
+    """
+    raw_fields = (
+        session.query(RawField)
+        .filter(RawField.current_classification_event_id.isnot(None))
+        .order_by(RawField.created_at.desc())
+        .all()
+    )
+
+    entries = []
+    for raw_field in raw_fields:
+        active_event = session.get(ClassificationEvent, raw_field.current_classification_event_id)
+        if active_event.decision == ValidationStatus.REJECTED:
+            continue
+
+        try:
+            _structured_data, card = find_existing_card(session, active_event)
+        except InconsistentActiveClassificationError:
+            continue
+
+        origin = active_event
+        if active_event.event_type == EventType.HUMAN_REVIEW and active_event.referenced_event_id:
+            origin = session.get(ClassificationEvent, active_event.referenced_event_id)
+
+        revision_count = (
+            session.query(ClassificationEvent).filter_by(raw_field_id=raw_field.id).count()
+        )
+
+        entries.append({
+            "raw_field_id": raw_field.id,
+            "case": {
+                "name": raw_field.data["name"],
+                "modifier": raw_field.data["modifier"],
+                "attack_type": raw_field.data["attack_type"],
+                "attack_effect": raw_field.data["attack_effect"],
+            },
+            "context": {
+                "additional_description": raw_field.data.get("additional_description"),
+                "creature_description": raw_field.data.get("creature_description"),
+                "creature_subtype": raw_field.data.get("creature_subtype"),
+            },
+            "raw_response": None,
+            "classification_result": origin.result,
+            "assigned_llm_score": active_event.assigned_llm_score,
+            "edit_note": active_event.edit_note,
+            "revision_count": revision_count,
+            "move_card": card.content,
+        })
+    return entries
+
+
 def save_structured_data(
         session: Session, *,
         raw_field: RawField,
