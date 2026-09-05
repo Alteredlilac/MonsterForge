@@ -29,6 +29,11 @@ class Card(Base):
     # Promoted from the content blob below — every domain Card already
     # has its own name field (domain/cards.py::Card.name).
     name: Mapped[str] = mapped_column(sa.Text)
+    # Same promotion, same reason: domain/cards.py::Card.image_uri is a
+    # base field on every card, not something specific to MoveCard —
+    # worth being able to list/filter cards by whether they have art
+    # without parsing content. Nullable: most cards have no art today.
+    image_uri: Mapped[str | None] = mapped_column(sa.Text, nullable=True)
     content: Mapped[dict] = mapped_column(sa.JSON)  # JSON or HTML
 
 

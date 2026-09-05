@@ -445,6 +445,7 @@ def save_card(
         structured_data_id=structured_data.id,
         card_type=card_type,
         name=card_data["name"],
+        image_uri=card_data.get("image_uri"),
         content=card_data,
     )
     session.add(card)

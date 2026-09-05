@@ -50,6 +50,7 @@ def test_card_round_trips_with_a_valid_structured_data(db_session):
         structured_data_id=structured.id,
         card_type=CardType.MOVE_CARD,
         name="Bite",
+        image_uri="https://example.com/bite.png",
         content={"move_type": "physical", "description": "A vicious bite."},
     )
     db_session.add(card)
@@ -58,7 +59,17 @@ def test_card_round_trips_with_a_valid_structured_data(db_session):
     result = db_session.query(Card).one()
     assert result.card_type == CardType.MOVE_CARD
     assert result.name == "Bite"
+    assert result.image_uri == "https://example.com/bite.png"
     assert result.content["description"] == "A vicious bite."
+
+
+def test_card_image_uri_defaults_to_none(db_session):
+    """Most cards have no art today — image_uri must not be required."""
+    structured = _make_structured_data(db_session)
+    db_session.add(Card(structured_data_id=structured.id, card_type=CardType.MOVE_CARD, name="Bite", content={}))
+    db_session.commit()
+
+    assert db_session.query(Card).one().image_uri is None
 
 
 def test_card_rejects_an_unknown_structured_data_id(db_session):

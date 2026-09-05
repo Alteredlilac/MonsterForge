@@ -418,9 +418,9 @@ def view_saved_card(raw_field_id: str, session: Session = Depends(get_db_session
         origin_event = session.get(ClassificationEvent, active_event.referenced_event_id)
     template_name = origin_event.prompt_name or ATTACK_PROMPT_TEMPLATE
 
-    # Not stored anywhere on raw_field -- already sitting in the saved
-    # card's own content.
-    image_uri = card.content.get("image_uri") or ""
+    # Not stored anywhere on raw_field -- it's the saved card's own
+    # column (promoted from its content, see db/cards.py).
+    image_uri = card.image_uri or ""
 
     return _serve_cached_card(session, raw_field, active_event, template_name, image_uri)
 
