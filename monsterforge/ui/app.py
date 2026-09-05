@@ -47,6 +47,7 @@ from monsterforge.llm.semantic_classification.attacks import (
     AttackSemanticResult,
     SemanticContextInput,
     classify_attack,
+    semantic_result_to_dict,
 )
 from monsterforge.rendering.move_card_renderer import render_move_card_html_with_edit
 from monsterforge.serialization.domain_to_json import card_to_json
@@ -89,19 +90,7 @@ def _semantic_result_to_json(result: AttackSemanticResult) -> str:
     """Serialize an AttackSemanticResult for a hidden form field, to
     survive the round trip from POST /convert to POST /review — there's
     no server-side session to hold onto it instead."""
-    return json.dumps({
-        "description": result.description,
-        "move_type": result.move_type.value,
-        "move_range": (
-            {
-                "effect_range": result.move_range.effect_range,
-                "range_unit_system": result.move_range.range_unit_system.value,
-            }
-            if result.move_range else None
-        ),
-        "confidence": result.confidence,
-        "rationale": result.rationale,
-    })
+    return json.dumps(semantic_result_to_dict(result))
 
 
 def _semantic_result_from_json(text: str) -> AttackSemanticResult:

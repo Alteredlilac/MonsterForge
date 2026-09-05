@@ -163,6 +163,25 @@ class AttackSemanticResult:
 # metadata required by the processing pipeline.
 
 
+def semantic_result_to_dict(result: AttackSemanticResult) -> dict:
+    """Flatten an AttackSemanticResult into a plain dict, ready for JSON
+    encoding — a hidden form field, a database JSON column, or any other
+    consumer that needs the plain-data shape rather than the dataclass."""
+    return {
+        "description": result.description,
+        "move_type": result.move_type.value,
+        "move_range": (
+            {
+                "effect_range": result.move_range.effect_range,
+                "range_unit_system": result.move_range.range_unit_system.value,
+            }
+            if result.move_range else None
+        ),
+        "confidence": result.confidence,
+        "rationale": result.rationale,
+    }
+
+
 # =====================
 # CONTEXT INPUT
 # =====================

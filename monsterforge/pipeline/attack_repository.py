@@ -16,14 +16,19 @@ import json
 
 from sqlalchemy.orm import Session
 
-from monsterforge.db.enums import RawKind
-from monsterforge.db.pipeline import RawField
+from monsterforge.db.enums import EventStatus, EventType, RawKind
+from monsterforge.db.pipeline import ClassificationEvent, RawField
 from monsterforge.db.reference_data import Actor, Game
 from monsterforge.db.seed import DND_GAME_NAME, HUMAN_REVIEWER_ACTOR_NAME, LLM_ACTOR_NAME
-from monsterforge.llm.semantic_classification.attacks import SemanticContextInput
+from monsterforge.llm.semantic_classification.attacks import (
+    AttackSemanticResult,
+    SemanticContextInput,
+    semantic_result_to_dict,
+)
 from monsterforge.parsing.dnd.v3x.raw_fields.attacks import Attack as RawAttack
 from monsterforge.structured_data.dnd.v3x.effect_mechanics import EffectRange
 from monsterforge.structured_data.dnd.v3x.enums import CreatureSubtype
+from monsterforge.validation.enums import ValidationStatus
 
 
 class InconsistentActiveClassificationError(ValueError):
@@ -139,3 +144,70 @@ def get_or_create_raw_field(
     session.add(raw_field)
     session.commit()
     return raw_field
+
+
+def record_llm_run(
+        session: Session, *,
+        raw_field: RawField,
+        semantic_result: AttackSemanticResult,
+        actor: Actor,
+        prompt_name: str,
+        model_name: str,
+        confidence_threshold: float,
+        decision: ValidationStatus | None,
+        rerun_note: str | None = None) -> ClassificationEvent:
+    """
+    Record one LLM classification attempt as a new append-only event.
+
+    `decision` must already be resolved by the caller before this is
+    called — AUTO_APPROVED if no review is needed, None if the result
+    is awaiting one. decision is fixed at creation time and never
+    changes afterward, unlike `status` (the one deliberate exception to
+    classification_events' append-only rule — see db/pipeline.py). The
+    event starts PENDING regardless of `decision`: activating it (making
+    it the raw_field's current result) is a separate step, see
+    activate_classification_event().
+    """
+    event = ClassificationEvent(
+        raw_field_id=raw_field.id,
+        event_type=EventType.LLM_RUN,
+        prompt_name=prompt_name,
+        model_name=model_name,
+        confidence=semantic_result.confidence,
+        confidence_threshold_at_time=confidence_threshold,
+        rerun_note=rerun_note,
+        result=semantic_result_to_dict(semantic_result),
+        actor_id=actor.id,
+        decision=decision,
+        status=EventStatus.PENDING,
+        created_at=datetime.datetime.now(),
+    )
+    session.add(event)
+    session.commit()
+    return event
+
+
+def activate_classification_event(
+        session: Session, *,
+        raw_field: RawField,
+        event: ClassificationEvent) -> None:
+    """
+    Mark `event` as the current/valid result for `raw_field`.
+
+    Archives whatever event was previously active for this raw_field
+    (if any), sets `event.status = ACTIVE`, and points
+    `raw_field.current_classification_event_id` at it. Called for every
+    resolved outcome, including a REJECTED human review — status tracks
+    "the most recently resolved state for this raw_field", not only "a
+    usable result"; callers must check `event.decision` separately
+    before treating an active event as something to build a card from.
+    """
+    previous_active_id = raw_field.current_classification_event_id
+    if previous_active_id is not None:
+        previous_active = session.get(ClassificationEvent, previous_active_id)
+        if previous_active is not None:
+            previous_active.status = EventStatus.ARCHIVED
+
+    event.status = EventStatus.ACTIVE
+    raw_field.current_classification_event_id = event.id
+    session.commit()
