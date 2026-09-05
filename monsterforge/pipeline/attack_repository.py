@@ -10,13 +10,17 @@ SQLAlchemy session rather than opening its own, so both ui/app.py
 (today) and, later, attack_pipeline.py itself (MVP 1.3) can call the
 same functions without duplicating logic.
 """
+import datetime
 import hashlib
 import json
 
 from sqlalchemy.orm import Session
 
+from monsterforge.db.enums import RawKind
+from monsterforge.db.pipeline import RawField
 from monsterforge.db.reference_data import Actor, Game
 from monsterforge.db.seed import DND_GAME_NAME, HUMAN_REVIEWER_ACTOR_NAME, LLM_ACTOR_NAME
+from monsterforge.llm.semantic_classification.attacks import SemanticContextInput
 from monsterforge.parsing.dnd.v3x.raw_fields.attacks import Attack as RawAttack
 from monsterforge.structured_data.dnd.v3x.effect_mechanics import EffectRange
 from monsterforge.structured_data.dnd.v3x.enums import CreatureSubtype
@@ -79,3 +83,59 @@ def get_llm_actor(session: Session) -> Actor:
 def get_human_actor(session: Session) -> Actor:
     """Return the seeded actor row representing the human reviewer (see db/seed.py)."""
     return session.query(Actor).filter_by(actor_name=HUMAN_REVIEWER_ACTOR_NAME).one()
+
+
+def get_or_create_raw_field(
+        session: Session, *,
+        game_id: str,
+        raw_attack: RawAttack,
+        semantic_context: SemanticContextInput,
+        fingerprint: str) -> RawField:
+    """
+    Look up an existing raw_fields row by fingerprint, or create one.
+
+    Rules:
+    - Same fingerprint always means the same submission (see
+      compute_fingerprint()'s own rules for exactly which fields that
+      covers) — an existing row is returned unchanged, never
+      re-validated field by field.
+    - Always called first, never conditioned on another lookup: this is
+      the only place that decides whether a raw_field for this
+      fingerprint already exists. Calling it only after a separate
+      "cache hit" check found nothing would risk an IntegrityError on
+      fingerprint's UNIQUE constraint whenever a row already exists but
+      has no active classification event yet (e.g. an earlier attempt
+      interrupted before any event was activated).
+    - page_id stays None: every caller of this repository submits an
+      attack by hand through the web form, never from a scraped page.
+    - The new row's data blob combines the raw attack's own fields with
+      the submission's semantic context in one blob, not two — both
+      answer "what was submitted," reused unchanged across every
+      classification attempt for this row.
+    """
+    existing = session.query(RawField).filter_by(fingerprint=fingerprint).first()
+    if existing is not None:
+        return existing
+
+    raw_field = RawField(
+        page_id=None,
+        game_id=game_id,
+        raw_kind=RawKind.ATTACK,
+        name=raw_attack.name,
+        fingerprint=fingerprint,
+        data={
+            "name": raw_attack.name,
+            "modifier": raw_attack.modifier,
+            "attack_type": raw_attack.attack_type,
+            "attack_effect": raw_attack.attack_effect,
+            "additional_description": semantic_context.additional_description,
+            "creature_description": semantic_context.creature_description,
+            "creature_subtype": (
+                semantic_context.creature_subtype.value if semantic_context.creature_subtype else None
+            ),
+        },
+        created_at=datetime.datetime.now(),
+    )
+    session.add(raw_field)
+    session.commit()
+    return raw_field

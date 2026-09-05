@@ -2,6 +2,7 @@
 Tests for db.pipeline: RawField, ClassificationEvent, StructuredData.
 """
 import datetime
+import uuid
 
 import sqlalchemy as sa
 
@@ -19,12 +20,13 @@ def _make_game_and_actor(db_session):
     return game, actor
 
 
-def _make_raw_field(db_session, game):
+def _make_raw_field(db_session, game, fingerprint=None):
     raw_field = RawField(
         page_id=None,
         game_id=game.id,
         raw_kind="attack",
         name="Bite",
+        fingerprint=fingerprint or str(uuid.uuid4()),
         data={"name": "Bite", "modifier": "+7", "attack_type": "melee", "attack_effect": "1d6+3"},
         created_at=datetime.datetime(2026, 9, 4),
     )
@@ -58,6 +60,21 @@ def test_raw_field_round_trips_with_no_page(db_session):
     assert result.name == "Bite"
     assert result.data["attack_effect"] == "1d6+3"
     assert result.current_classification_event_id is None
+
+
+def test_raw_field_fingerprint_must_be_unique(db_session):
+    game, _actor = _make_game_and_actor(db_session)
+    _make_raw_field(db_session, game, fingerprint="same-fingerprint")
+
+    db_session.add(RawField(
+        page_id=None, game_id=game.id, raw_kind="attack", name="Claw",
+        fingerprint="same-fingerprint", data={}, created_at=datetime.datetime(2026, 9, 4),
+    ))
+    try:
+        db_session.commit()
+        assert False, "expected an IntegrityError on a duplicate fingerprint"
+    except sa.exc.IntegrityError:
+        db_session.rollback()
 
 
 def test_classification_event_round_trips_for_an_llm_run(db_session):

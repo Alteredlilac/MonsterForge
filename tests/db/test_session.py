@@ -3,6 +3,7 @@ Tests for db.session: get_engine()/get_session(), create_all_tables(),
 enable_foreign_keys().
 """
 import datetime
+import uuid
 
 import sqlalchemy as sa
 from sqlalchemy.orm import Session
@@ -64,7 +65,7 @@ def test_enable_foreign_keys_rejects_an_invalid_foreign_key(monkeypatch):
     session = db_session_module.get_session()
     session.add(RawField(
         page_id=None, game_id="does-not-exist", raw_kind="attack",
-        name="Bite", data={}, created_at=datetime.datetime(2026, 9, 4),
+        name="Bite", fingerprint=str(uuid.uuid4()), data={}, created_at=datetime.datetime(2026, 9, 4),
     ))
     try:
         session.commit()
@@ -86,7 +87,7 @@ def test_engine_without_enable_foreign_keys_does_not_enforce_them():
 
     session.add(RawField(
         page_id=None, game_id="does-not-exist", raw_kind="attack",
-        name="Bite", data={}, created_at=datetime.datetime(2026, 9, 4),
+        name="Bite", fingerprint=str(uuid.uuid4()), data={}, created_at=datetime.datetime(2026, 9, 4),
     ))
     session.commit()  # no error: FK enforcement is off without the pragma
 

@@ -2,6 +2,7 @@
 Tests for db.cards: Card, Deck.
 """
 import datetime
+import uuid
 
 import sqlalchemy as sa
 
@@ -20,7 +21,7 @@ def _make_structured_data(db_session):
 
     raw_field = RawField(
         page_id=None, game_id=game.id, raw_kind="attack", name="Bite",
-        data={}, created_at=datetime.datetime(2026, 9, 4),
+        fingerprint=str(uuid.uuid4()), data={}, created_at=datetime.datetime(2026, 9, 4),
     )
     db_session.add(raw_field)
     db_session.commit()

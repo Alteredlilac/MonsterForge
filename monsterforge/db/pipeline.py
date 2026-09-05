@@ -44,6 +44,14 @@ class RawField(Base):
     # name without parsing JSON (e.g. RawAttack.name).
     name: Mapped[str] = mapped_column(sa.Text)
     # NOTE:
+    # Deterministic cache key (see pipeline/attack_repository.py::
+    # compute_fingerprint()) used to look up an already-classified
+    # submission and skip a redundant LLM call. UNIQUE, same pattern as
+    # pages.url: the application checks for an existing row before
+    # inserting (get_or_create_raw_field()), the DB-level constraint is
+    # a safety net, not the primary mechanism.
+    fingerprint: Mapped[str] = mapped_column(sa.Text, unique=True, index=True)
+    # NOTE:
     # Holds both the raw object's own fields (name/modifier/attack_type/
     # attack_effect for an Attack) and the submission's stable semantic
     # context (additional_description/creature_description/
