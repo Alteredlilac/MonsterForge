@@ -830,3 +830,49 @@ def test_library_search_input_retains_the_query():
     response = client.get("/library/cards", params={"q": "Bite"})
 
     assert 'value="Bite"' in response.text
+
+
+def test_library_shows_the_corrected_classification_not_the_original():
+    """The bug this guards against: the LLM proposed move_type=physical
+    (make_semantic_result()'s default); a human corrected it to magical.
+    The library's Classification tab must show the corrected value that
+    the saved card actually renders, not the LLM's pre-correction one."""
+    page_html = _review_page_html()
+    client.post("/review", data={
+        **REVIEW_HIDDEN_BASE, **_extract_review_ids(page_html),
+        "semantic_result_json": _extract_semantic_result_json(page_html), "decision": "correct",
+        "name": "Bite", "description": "A vicious bite.", "move_type": "magical",
+        "range_value": "", "range_unit": "metric",
+    })
+
+    response = client.get("/library/cards")
+    unescaped = html.unescape(response.text)
+
+    assert '"move_type": "magical"' in unescaped
+
+
+def test_library_history_highlights_the_field_a_correction_changed():
+    page_html = _review_page_html()  # LLM proposed move_type=physical (default)
+    client.post("/review", data={
+        **REVIEW_HIDDEN_BASE, **_extract_review_ids(page_html),
+        "semantic_result_json": _extract_semantic_result_json(page_html), "decision": "correct",
+        "name": "Bite", "description": "A vicious bite.", "move_type": "magical",
+        "range_value": "", "range_unit": "metric",
+    })
+
+    response = client.get("/library/cards")
+
+    assert '<span class="history-changed">magical</span>' in response.text
+    # The LLM_RUN entry is first in the history, nothing to compare
+    # against yet, so its own move_type is never flagged as changed.
+    assert '<span class="">physical</span>' in response.text
+
+
+def test_library_shows_history_for_a_saved_card():
+    with patch("monsterforge.ui.app.classify_attack", return_value=make_semantic_result(confidence=0.95)):
+        client.post("/convert", data=RAW_ATTACK_FORM)
+
+    response = client.get("/library/cards")
+
+    assert "llm_run" in response.text
+    assert '<span class="badge bg-success">active</span>' in response.text

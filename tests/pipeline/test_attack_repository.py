@@ -18,6 +18,7 @@ from monsterforge.pipeline.attack_repository import (
     get_human_actor,
     get_llm_actor,
     get_or_create_raw_field,
+    list_classification_events,
     list_saved_cards,
     record_human_review,
     record_llm_run,
@@ -304,6 +305,95 @@ def test_find_existing_card_raises_when_active_event_has_no_structured_data(seed
 
 
 # =====================
+# LIST_CLASSIFICATION_EVENTS
+# =====================
+def test_list_classification_events_orders_oldest_first_and_flags_the_active_one(seeded_db_session):
+    raw_field = _make_raw_field(seeded_db_session)
+    result = AttackSemanticResult(description="Uncertain.", move_type=MoveType.PHYSICAL, move_range=None,
+                                   confidence=0.4, rationale="Low.")
+    llm_event = record_llm_run(seeded_db_session, raw_field=raw_field, semantic_result=result,
+                                actor=get_llm_actor(seeded_db_session), prompt_name="classify_attack.jinja2",
+                                model_name="gemini-flash-lite-latest", confidence_threshold=0.7, decision=None)
+    approve = HumanReview(status=ValidationStatus.APPROVED, result=result, assigned_llm_score=0.6,
+                           edit_note="Looks fine.")
+    review_event = record_human_review(seeded_db_session, raw_field=raw_field, referenced_event=llm_event,
+                                        review=approve, actor=get_human_actor(seeded_db_session))
+    activate_classification_event(seeded_db_session, raw_field=raw_field, event=review_event)
+
+    events = list_classification_events(seeded_db_session, raw_field.id)
+
+    assert [event["event_type"] for event in events] == ["llm_run", "human_review"]
+    assert events[0]["is_active"] is False
+    assert events[1]["is_active"] is True
+
+
+def test_list_classification_events_includes_llm_run_detail_fields(seeded_db_session):
+    raw_field = _make_raw_field(seeded_db_session)
+    result = AttackSemanticResult(description="A bite.", move_type=MoveType.PHYSICAL, move_range=None,
+                                   confidence=0.9, rationale="Clear.")
+    record_llm_run(seeded_db_session, raw_field=raw_field, semantic_result=result,
+                    actor=get_llm_actor(seeded_db_session), prompt_name="classify_attack.jinja2",
+                    model_name="gemini-flash-lite-latest", confidence_threshold=0.7,
+                    decision=ValidationStatus.AUTO_APPROVED)
+
+    events = list_classification_events(seeded_db_session, raw_field.id)
+
+    assert len(events) == 1
+    event = events[0]
+    assert event["actor_name"] == "llm"
+    assert event["prompt_name"] == "classify_attack.jinja2"
+    assert event["result"]["confidence"] == 0.9
+    assert event["result"]["rationale"] == "Clear."
+    assert event["decision"] == "auto_approved"
+
+
+def test_list_classification_events_includes_human_review_detail_fields(seeded_db_session):
+    raw_field = _make_raw_field(seeded_db_session)
+    result = AttackSemanticResult(description="A bite.", move_type=MoveType.PHYSICAL, move_range=None,
+                                   confidence=0.9, rationale="Clear.")
+    llm_event = record_llm_run(seeded_db_session, raw_field=raw_field, semantic_result=result,
+                                actor=get_llm_actor(seeded_db_session), prompt_name="classify_attack.jinja2",
+                                model_name="gemini-flash-lite-latest", confidence_threshold=0.7, decision=None)
+    approve = HumanReview(status=ValidationStatus.APPROVED, result=result, assigned_llm_score=0.6,
+                           edit_note="Looks fine.")
+    record_human_review(seeded_db_session, raw_field=raw_field, referenced_event=llm_event,
+                         review=approve, actor=get_human_actor(seeded_db_session))
+
+    events = list_classification_events(seeded_db_session, raw_field.id)
+
+    review_summary = events[1]
+    assert review_summary["actor_name"] == "human_reviewer"
+    assert review_summary["assigned_llm_score"] == 0.6
+    assert review_summary["edit_note"] == "Looks fine."
+    # An approval passes the same AttackSemanticResult through unchanged,
+    # so its own result still carries the original confidence/rationale.
+    assert review_summary["result"]["rationale"] == "Clear."
+
+
+def test_list_classification_events_result_reflects_a_correction_not_the_original(seeded_db_session):
+    """The exact scenario a real correction needs: a CORRECTED review's
+    own result must show the corrected values, not the originating
+    LLM_RUN's pre-correction answer — two different rows, two
+    different results, by design."""
+    raw_field = _make_raw_field(seeded_db_session)
+    original = AttackSemanticResult(description="A shock.", move_type=MoveType.MAGICAL, move_range=None,
+                                     confidence=0.9, rationale="Elemental damage implies magic.")
+    llm_event = record_llm_run(seeded_db_session, raw_field=raw_field, semantic_result=original,
+                                actor=get_llm_actor(seeded_db_session), prompt_name="classify_attack.jinja2",
+                                model_name="gemini-flash-lite-latest", confidence_threshold=0.7, decision=None)
+    corrected = AttackSemanticResult(description="A shock.", move_type=MoveType.PHYSICAL, move_range=None,
+                                      confidence=0.9, rationale="Elemental damage implies magic.")
+    correct = HumanReview(status=ValidationStatus.CORRECTED, result=corrected)
+    record_human_review(seeded_db_session, raw_field=raw_field, referenced_event=llm_event,
+                         review=correct, actor=get_human_actor(seeded_db_session))
+
+    events = list_classification_events(seeded_db_session, raw_field.id)
+
+    assert events[0]["result"]["move_type"] == "magical"  # the LLM's own answer, unchanged in its own row
+    assert events[1]["result"]["move_type"] == "physical"  # the reviewer's correction
+
+
+# =====================
 # LIST_SAVED_CARDS
 # =====================
 def test_list_saved_cards_includes_an_auto_approved_result(seeded_db_session):
@@ -331,12 +421,13 @@ def test_list_saved_cards_includes_an_auto_approved_result(seeded_db_session):
     assert entry["assigned_llm_score"] is None
     assert entry["edit_note"] is None
     assert entry["revision_count"] == 1
+    assert len(entry["events"]) == 1
 
 
-def test_list_saved_cards_pulls_confidence_and_rationale_from_the_referenced_llm_run(seeded_db_session):
-    """A HUMAN_REVIEW event's own confidence/rationale are NULL (see
-    db/pipeline.py) — the library must walk back to the LLM_RUN it
-    references to show the classifier's real confidence, not None."""
+def test_list_saved_cards_shows_confidence_and_rationale_for_an_approved_review(seeded_db_session):
+    """An APPROVED review passes the same AttackSemanticResult through
+    unchanged, so the active (HUMAN_REVIEW) event's own result still
+    carries the original LLM confidence/rationale."""
     raw_field = _make_raw_field(seeded_db_session)
     result = AttackSemanticResult(description="Uncertain.", move_type=MoveType.PHYSICAL, move_range=None,
                                    confidence=0.4, rationale="Low confidence.")
@@ -359,6 +450,32 @@ def test_list_saved_cards_pulls_confidence_and_rationale_from_the_referenced_llm
     assert entry["assigned_llm_score"] == 0.6
     assert entry["edit_note"] == "Looks fine."
     assert entry["revision_count"] == 2  # the LLM_RUN plus the HUMAN_REVIEW
+
+
+def test_list_saved_cards_shows_the_corrected_values_not_the_original(seeded_db_session):
+    """The bug this guards against: a CORRECTED review's saved card
+    reflects the corrected classification, so the library must read
+    move_type/description/move_range from the active (HUMAN_REVIEW)
+    event's own result, not from the LLM_RUN it references — otherwise
+    the library would show a stale, pre-correction move_type that
+    doesn't match what the card actually renders."""
+    raw_field = _make_raw_field(seeded_db_session)
+    original = AttackSemanticResult(description="A shock.", move_type=MoveType.MAGICAL, move_range=None,
+                                     confidence=0.9, rationale="Elemental damage implies magic.")
+    llm_event = record_llm_run(seeded_db_session, raw_field=raw_field, semantic_result=original,
+                                actor=get_llm_actor(seeded_db_session), prompt_name="classify_attack.jinja2",
+                                model_name="gemini-flash-lite-latest", confidence_threshold=0.7, decision=None)
+    corrected = AttackSemanticResult(description="A shock.", move_type=MoveType.PHYSICAL, move_range=None,
+                                      confidence=0.9, rationale="Elemental damage implies magic.")
+    correct = HumanReview(status=ValidationStatus.CORRECTED, result=corrected)
+    review_event = record_human_review(seeded_db_session, raw_field=raw_field, referenced_event=llm_event,
+                                        review=correct, actor=get_human_actor(seeded_db_session))
+    activate_classification_event(seeded_db_session, raw_field=raw_field, event=review_event)
+    _build_and_save_card(seeded_db_session, raw_field, review_event, BITE, corrected)
+
+    entries = list_saved_cards(seeded_db_session)
+
+    assert entries[0]["classification_result"]["move_type"] == "physical"
 
 
 def test_list_saved_cards_skips_a_rejected_raw_field(seeded_db_session):

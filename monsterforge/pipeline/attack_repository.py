@@ -282,6 +282,57 @@ def find_existing_card(session: Session, event: ClassificationEvent) -> tuple[St
     return structured_data, card
 
 
+def list_classification_events(session: Session, raw_field_id: str) -> list[dict]:
+    """
+    Build one summary dict per classification_events row for a raw_field,
+    oldest first — the full history a card's current state was built
+    from, not just its currently active result.
+
+    Rules:
+    - actor_name is resolved here (not left as a bare actor_id), the
+      same presentation-shaped-summary spirit as list_saved_cards()'s
+      own entries.
+    - result is this event's own recorded classification (description/
+      move_type/move_range/confidence/rationale, see
+      semantic_result_to_dict()) — an empty dict for a REJECTED review,
+      which records no classification (see record_human_review()). This
+      is what actually changed at each step: an LLM_RUN's own answer, or
+      a human review's approved-as-is or corrected values, so a
+      CORRECTED row's result can be compared against the LLM_RUN it
+      references to see exactly what a reviewer changed.
+    - is_active flags the row currently pointed at by the raw_field's
+      current_classification_event_id, independent of chronological
+      position — a rerun can sit PENDING, never activated, so "active"
+      is not simply "the newest row".
+    """
+    raw_field = session.get(RawField, raw_field_id)
+    events = (
+        session.query(ClassificationEvent)
+        .filter_by(raw_field_id=raw_field_id)
+        .order_by(ClassificationEvent.created_at.asc())
+        .all()
+    )
+
+    summaries = []
+    for event in events:
+        actor = session.get(Actor, event.actor_id)
+        summaries.append({
+            "event_type": event.event_type.value,
+            "status": event.status.value,
+            "decision": event.decision.value if event.decision else None,
+            "actor_name": actor.actor_name,
+            "created_at": event.created_at.isoformat(),
+            "is_active": event.id == raw_field.current_classification_event_id,
+            "result": event.result,
+            "prompt_name": event.prompt_name,
+            "model_name": event.model_name,
+            "rerun_note": event.rerun_note,
+            "assigned_llm_score": event.assigned_llm_score,
+            "edit_note": event.edit_note,
+        })
+    return summaries
+
+
 def list_saved_cards(session: Session, *, query: str | None = None) -> list[dict]:
     """
     Build one gallery-shaped entry per raw_field with a resolved,
@@ -298,19 +349,25 @@ def list_saved_cards(session: Session, *, query: str | None = None) -> list[dict
       (InconsistentActiveClassificationError) is skipped rather than
       raised: this is a read-only browsing view, one broken row must
       not break the whole listing.
-    - classification_result is the LLM_RUN event's own result dict
+    - classification_result is the active event's own result dict
       (description/move_type/move_range/confidence/rationale, see
-      semantic_result_to_dict()): the active event's own result if it
-      is an LLM_RUN, or the LLM_RUN it references if the active event
-      is a HUMAN_REVIEW — a HUMAN_REVIEW's own confidence/rationale are
-      NULL (see db/pipeline.py), so its result alone would lose them.
+      semantic_result_to_dict()) — always the currently active values,
+      which for a CORRECTED review are the corrected ones, not the
+      originating LLM_RUN's pre-correction answer. confidence/rationale
+      are always present here even on a HUMAN_REVIEW row: a correction
+      only ever replaces description/move_type/move_range (see
+      ui/app.py's "correct" branch), never confidence/rationale, so
+      they're carried through from the original classification either
+      way. (REJECTED reviews, whose result is an empty dict, are
+      already filtered out above.)
     - assigned_llm_score/edit_note come straight from the active event
       (populated only for HUMAN_REVIEW/MANUAL_CORRECTION) — None when
       the active event is an auto-approved LLM_RUN with no human
       review at all.
-    - revision_count is the total number of classification_events rows
-      for the raw_field, regardless of type — every LLM run, rerun, and
-      human decision counts.
+    - revision_count/events come from list_classification_events(): the
+      total number of classification_events rows for the raw_field
+      (every LLM run, rerun, and human decision counts) and their full
+      chronological detail, for the library's per-card history tab.
     """
     fields_query = session.query(RawField).filter(RawField.current_classification_event_id.isnot(None))
     if query:
@@ -330,13 +387,7 @@ def list_saved_cards(session: Session, *, query: str | None = None) -> list[dict
         except InconsistentActiveClassificationError:
             continue
 
-        origin = active_event
-        if active_event.event_type == EventType.HUMAN_REVIEW and active_event.referenced_event_id:
-            origin = session.get(ClassificationEvent, active_event.referenced_event_id)
-
-        revision_count = (
-            session.query(ClassificationEvent).filter_by(raw_field_id=raw_field.id).count()
-        )
+        events = list_classification_events(session, raw_field.id)
 
         entries.append({
             "raw_field_id": raw_field.id,
@@ -352,10 +403,11 @@ def list_saved_cards(session: Session, *, query: str | None = None) -> list[dict
                 "creature_subtype": raw_field.data.get("creature_subtype"),
             },
             "raw_response": None,
-            "classification_result": origin.result,
+            "classification_result": active_event.result,
             "assigned_llm_score": active_event.assigned_llm_score,
             "edit_note": active_event.edit_note,
-            "revision_count": revision_count,
+            "revision_count": len(events),
+            "events": events,
             "move_card": card.content,
         })
     return entries

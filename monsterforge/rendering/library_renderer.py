@@ -23,6 +23,69 @@ from monsterforge.rendering.move_card_renderer import build_card_context, enviro
 _fragment_template = environment.get_template("move_card_fragment.html.jinja2")
 
 
+def _format_move_range(move_range: dict | None) -> str:
+    if not move_range:
+        return "—"
+    return f"{move_range['effect_range']} {move_range['range_unit_system']}"
+
+
+def _build_history_entry(event: dict, previous_result: dict | None) -> dict:
+    """
+    Format one pipeline.attack_repository.list_classification_events()
+    summary for display: a one-line header (type/decision/actor/when),
+    the three fields a human correction can actually change
+    (description/move_type/move_range) each flagged as changed when it
+    differs from `previous_result` (the chronologically preceding
+    event's own result — None for the very first event, so nothing is
+    flagged there), and a JSON block of the remaining, type-specific
+    fields: an LLM_RUN's prompt_name/model_name/rerun_note/confidence/
+    rationale, or a HUMAN_REVIEW/MANUAL_CORRECTION's
+    assigned_llm_score/edit_note.
+    """
+    result = event["result"] or {}
+    has_previous = previous_result is not None
+    baseline = previous_result or {}
+
+    def _changed(key: str) -> bool:
+        return has_previous and result.get(key) != baseline.get(key)
+
+    if event["event_type"] == "llm_run":
+        extra = {
+            "prompt_name": event["prompt_name"], "model_name": event["model_name"],
+            "rerun_note": event["rerun_note"], "confidence": result.get("confidence"),
+            "rationale": result.get("rationale"),
+        }
+    else:
+        extra = {"assigned_llm_score": event["assigned_llm_score"], "edit_note": event["edit_note"]}
+
+    return {
+        "event_type": event["event_type"],
+        "decision": event["decision"] or "pending",
+        "actor_name": event["actor_name"],
+        "created_at": event["created_at"],
+        "is_active": event["is_active"],
+        "description": result.get("description"),
+        "description_changed": _changed("description"),
+        "move_type": result.get("move_type"),
+        "move_type_changed": _changed("move_type"),
+        "move_range": _format_move_range(result.get("move_range")),
+        "move_range_changed": _changed("move_range"),
+        "extra_json": json.dumps(extra, indent=2),
+    }
+
+
+def _build_history(events: list[dict]) -> list[dict]:
+    """Build display entries for every classification event, oldest
+    first, each compared against the one immediately before it (None
+    for the first, so nothing is flagged as changed there)."""
+    history = []
+    previous_result = None
+    for event in events:
+        history.append(_build_history_entry(event, previous_result))
+        previous_result = event["result"] or {}
+    return history
+
+
 def _build_library_entry(index: int, entry: dict) -> dict:
     move_card = entry["move_card"]
     card_html = _fragment_template.render(**build_card_context(move_card))
@@ -52,6 +115,7 @@ def _build_library_entry(index: int, entry: dict) -> dict:
         "classification_confidence_json": json.dumps(classification_confidence, indent=2),
         "human_review_json": json.dumps(human_review, indent=2) if human_review is not None else None,
         "move_card_json": json.dumps(move_card, indent=2),
+        "history": _build_history(entry["events"]),
     }
 
 
@@ -61,7 +125,8 @@ def render_library_html(entries: list[dict], query: str = "") -> str:
 
     Each entry is expected to have the shape that function builds:
     {"raw_field_id", "case", "context", "classification_result",
-    "assigned_llm_score", "edit_note", "revision_count", "move_card"}.
+    "assigned_llm_score", "edit_note", "revision_count", "events",
+    "move_card"}.
 
     query is redisplayed in the search box and drives a "no results"
     message distinct from "nothing saved at all" when entries is empty

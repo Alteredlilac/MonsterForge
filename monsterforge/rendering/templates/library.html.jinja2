@@ -76,6 +76,26 @@
     font-size: 0.85rem;
     margin-bottom: 1rem;
   }
+  .history-header {
+    color: #2a2015;
+    font-size: 0.85rem;
+  }
+  .history-fields {
+    color: #2a2015;
+    font-size: 0.85rem;
+  }
+  /* NOTE:
+     Highlights exactly the field a human correction changed, relative
+     to the immediately preceding event in the history — a classic
+     highlighter-pen yellow, distinct from the green "active" badge and
+     high-contrast against the modal's light background. */
+  .history-changed {
+    background-color: #fff3a0;
+    color: #2a2015;
+    padding: 0 3px;
+    border-radius: 3px;
+    font-weight: bold;
+  }
   .terminal {
     background: #282c34;
     border-radius: 8px;
@@ -192,6 +212,9 @@
           <li class="nav-item">
             <button class="nav-link card-tab-trigger" data-bs-toggle="tab" data-bs-target="#card-{{ entry.index }}" type="button">Card</button>
           </li>
+          <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#history-{{ entry.index }}" type="button">History</button>
+          </li>
         </ul>
         <div class="tab-content pt-3">
           <div class="tab-pane fade show active" id="raw-{{ entry.index }}">
@@ -216,6 +239,23 @@
             <div class="modal-card-wrapper">
               {{ entry.card_html | safe }}
             </div>
+          </div>
+          <div class="tab-pane fade" id="history-{{ entry.index }}">
+            <p class="tab-description">Every LLM run and human decision recorded for this attack, oldest first — not just the currently active result.</p>
+            {% for event in entry.history %}
+            <div class="mb-3">
+              <p class="history-header mb-1">
+                <strong>{{ event.event_type }}</strong> — {{ event.decision }} — {{ event.actor_name }} — {{ event.created_at }}
+                {% if event.is_active %}<span class="badge bg-success">active</span>{% endif %}
+              </p>
+              <p class="history-fields mb-1">
+                Description: <span class="{{ 'history-changed' if event.description_changed }}">{{ event.description }}</span><br>
+                Move type: <span class="{{ 'history-changed' if event.move_type_changed }}">{{ event.move_type }}</span><br>
+                Move range: <span class="{{ 'history-changed' if event.move_range_changed }}">{{ event.move_range }}</span>
+              </p>
+              {{ terminal(event.extra_json) }}
+            </div>
+            {% endfor %}
           </div>
         </div>
       </div>
