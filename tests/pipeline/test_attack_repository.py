@@ -425,6 +425,62 @@ def test_list_saved_cards_orders_most_recently_created_raw_field_first(seeded_db
     assert [entry["raw_field_id"] for entry in entries] == [claw_field.id, bite_field.id]
 
 
+def test_list_saved_cards_query_filters_by_name_substring(seeded_db_session):
+    bite_field = _make_raw_field(seeded_db_session, raw_attack=BITE)
+    bite_result = AttackSemanticResult(description="A bite.", move_type=MoveType.PHYSICAL, move_range=None,
+                                        confidence=0.9, rationale="Clear.")
+    bite_event = record_llm_run(seeded_db_session, raw_field=bite_field, semantic_result=bite_result,
+                                 actor=get_llm_actor(seeded_db_session), prompt_name="classify_attack.jinja2",
+                                 model_name="gemini-flash-lite-latest", confidence_threshold=0.7,
+                                 decision=ValidationStatus.AUTO_APPROVED)
+    activate_classification_event(seeded_db_session, raw_field=bite_field, event=bite_event)
+    _build_and_save_card(seeded_db_session, bite_field, bite_event, BITE, bite_result)
+
+    claw_field = _make_raw_field(seeded_db_session, raw_attack=CLAW)
+    claw_result = AttackSemanticResult(description="A claw.", move_type=MoveType.PHYSICAL, move_range=None,
+                                        confidence=0.9, rationale="Clear.")
+    claw_event = record_llm_run(seeded_db_session, raw_field=claw_field, semantic_result=claw_result,
+                                 actor=get_llm_actor(seeded_db_session), prompt_name="classify_attack.jinja2",
+                                 model_name="gemini-flash-lite-latest", confidence_threshold=0.7,
+                                 decision=ValidationStatus.AUTO_APPROVED)
+    activate_classification_event(seeded_db_session, raw_field=claw_field, event=claw_event)
+    _build_and_save_card(seeded_db_session, claw_field, claw_event, CLAW, claw_result)
+
+    entries = list_saved_cards(seeded_db_session, query="bit")  # lowercase, partial
+
+    assert [entry["raw_field_id"] for entry in entries] == [bite_field.id]
+
+
+def test_list_saved_cards_query_matches_an_id_prefix(seeded_db_session):
+    raw_field = _make_raw_field(seeded_db_session)
+    result = AttackSemanticResult(description="A bite.", move_type=MoveType.PHYSICAL, move_range=None,
+                                   confidence=0.9, rationale="Clear.")
+    event = record_llm_run(seeded_db_session, raw_field=raw_field, semantic_result=result,
+                            actor=get_llm_actor(seeded_db_session), prompt_name="classify_attack.jinja2",
+                            model_name="gemini-flash-lite-latest", confidence_threshold=0.7,
+                            decision=ValidationStatus.AUTO_APPROVED)
+    activate_classification_event(seeded_db_session, raw_field=raw_field, event=event)
+    _build_and_save_card(seeded_db_session, raw_field, event, BITE, result)
+
+    entries = list_saved_cards(seeded_db_session, query=raw_field.id[:8])  # the short id shown in the UI
+
+    assert [entry["raw_field_id"] for entry in entries] == [raw_field.id]
+
+
+def test_list_saved_cards_query_with_no_match_returns_an_empty_list(seeded_db_session):
+    raw_field = _make_raw_field(seeded_db_session)
+    result = AttackSemanticResult(description="A bite.", move_type=MoveType.PHYSICAL, move_range=None,
+                                   confidence=0.9, rationale="Clear.")
+    event = record_llm_run(seeded_db_session, raw_field=raw_field, semantic_result=result,
+                            actor=get_llm_actor(seeded_db_session), prompt_name="classify_attack.jinja2",
+                            model_name="gemini-flash-lite-latest", confidence_threshold=0.7,
+                            decision=ValidationStatus.AUTO_APPROVED)
+    activate_classification_event(seeded_db_session, raw_field=raw_field, event=event)
+    _build_and_save_card(seeded_db_session, raw_field, event, BITE, result)
+
+    assert list_saved_cards(seeded_db_session, query="nonexistent") == []
+
+
 def test_find_existing_card_raises_when_structured_data_has_no_card(seeded_db_session):
     raw_field = _make_raw_field(seeded_db_session)
     result = AttackSemanticResult(description="A bite.", move_type=MoveType.PHYSICAL, move_range=None,

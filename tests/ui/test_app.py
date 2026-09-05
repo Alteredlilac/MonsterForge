@@ -11,6 +11,7 @@ import re
 from unittest.mock import patch
 from fastapi.testclient import TestClient
 from monsterforge.db.cards import Card
+from monsterforge.db.pipeline import RawField
 from monsterforge.llm.clients.gemini import ModelUnavailableError
 from monsterforge.llm.semantic_classification.attacks import AttackSemanticResult
 from monsterforge.structured_data.dnd.v3x.effect_mechanics import EffectRange
@@ -792,3 +793,40 @@ def test_library_shows_human_review_fields_when_present():
 
     assert '"assigned_llm_score": 0.6' in unescaped
     assert '"edit_note": "Looks fine."' in unescaped
+
+
+def test_library_search_filters_by_name():
+    with patch("monsterforge.ui.app.classify_attack", return_value=make_semantic_result(confidence=0.95)):
+        client.post("/convert", data=RAW_ATTACK_FORM)
+        client.post("/convert", data={**RAW_ATTACK_FORM, "name": "Claw", "attack_effect": "1d4+3"})
+
+    response = client.get("/library/cards", params={"q": "bit"})
+
+    assert "BITE" in response.text.upper()
+    assert "CLAW" not in response.text.upper()
+
+
+def test_library_search_matches_an_id_prefix(seeded_db_session):
+    with patch("monsterforge.ui.app.classify_attack", return_value=make_semantic_result(confidence=0.95)):
+        client.post("/convert", data=RAW_ATTACK_FORM)
+
+    raw_field = seeded_db_session.query(RawField).one()
+    response = client.get("/library/cards", params={"q": raw_field.id[:8]})
+
+    assert "BITE" in response.text.upper()
+
+
+def test_library_search_with_no_match_shows_a_message():
+    with patch("monsterforge.ui.app.classify_attack", return_value=make_semantic_result(confidence=0.95)):
+        client.post("/convert", data=RAW_ATTACK_FORM)
+
+    response = client.get("/library/cards", params={"q": "nonexistent"})
+
+    assert 'No cards match "nonexistent"' in response.text
+    assert "BITE" not in response.text.upper()
+
+
+def test_library_search_input_retains_the_query():
+    response = client.get("/library/cards", params={"q": "Bite"})
+
+    assert 'value="Bite"' in response.text

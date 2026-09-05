@@ -14,6 +14,7 @@ import datetime
 import hashlib
 import json
 
+import sqlalchemy as sa
 from sqlalchemy.orm import Session
 
 from monsterforge.db.cards import Card
@@ -281,12 +282,16 @@ def find_existing_card(session: Session, event: ClassificationEvent) -> tuple[St
     return structured_data, card
 
 
-def list_saved_cards(session: Session) -> list[dict]:
+def list_saved_cards(session: Session, *, query: str | None = None) -> list[dict]:
     """
     Build one gallery-shaped entry per raw_field with a resolved,
     card-backed active classification event, most recent first.
 
     Rules:
+    - query, if given, filters to raw_fields whose name contains it
+      (case-insensitive) or whose id starts with it — matches either
+      the full raw_field id or the short id shown in the library UI
+      (see rendering/library_renderer.py's short_id).
     - A raw_field with no active event yet, or whose active event was
       REJECTED (no card exists for a rejection), is skipped.
     - A raw_field whose active event has no saved card behind it
@@ -307,12 +312,12 @@ def list_saved_cards(session: Session) -> list[dict]:
       for the raw_field, regardless of type — every LLM run, rerun, and
       human decision counts.
     """
-    raw_fields = (
-        session.query(RawField)
-        .filter(RawField.current_classification_event_id.isnot(None))
-        .order_by(RawField.created_at.desc())
-        .all()
-    )
+    fields_query = session.query(RawField).filter(RawField.current_classification_event_id.isnot(None))
+    if query:
+        fields_query = fields_query.filter(
+            sa.or_(RawField.name.ilike(f"%{query}%"), RawField.id.ilike(f"{query}%"))
+        )
+    raw_fields = fields_query.order_by(RawField.created_at.desc()).all()
 
     entries = []
     for raw_field in raw_fields:

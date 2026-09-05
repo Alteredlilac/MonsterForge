@@ -55,14 +55,18 @@ def _build_library_entry(index: int, entry: dict) -> dict:
     }
 
 
-def render_library_html(entries: list[dict]) -> str:
+def render_library_html(entries: list[dict], query: str = "") -> str:
     """
     Render the cards-library page from pipeline.attack_repository.list_saved_cards()'s output.
 
     Each entry is expected to have the shape that function builds:
     {"raw_field_id", "case", "context", "classification_result",
     "assigned_llm_score", "edit_note", "revision_count", "move_card"}.
+
+    query is redisplayed in the search box and drives a "no results"
+    message distinct from "nothing saved at all" when entries is empty
+    because of a filter rather than an actually-empty library.
     """
     template = environment.get_template("library.html.jinja2")
     built_entries = [_build_library_entry(index, entry) for index, entry in enumerate(entries, start=1)]
-    return template.render(entries=built_entries)
+    return template.render(entries=built_entries, query=query)

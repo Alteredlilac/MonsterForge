@@ -373,13 +373,16 @@ def favicon() -> FileResponse:
 
 
 @app.get("/library/cards", response_class=HTMLResponse)
-def cards_library(session: Session = Depends(get_db_session)) -> HTMLResponse:
-    """Read-only browsing of every card currently saved in the database —
-    see pipeline.attack_repository.list_saved_cards() and
+def cards_library(q: str = "", session: Session = Depends(get_db_session)) -> HTMLResponse:
+    """Read-only browsing of every card currently saved in the database,
+    optionally filtered by `q` against the attack's name or id — see
+    pipeline.attack_repository.list_saved_cards() and
     rendering.library_renderer.render_library_html(). Deliberately
     separate from the public, curated gallery (rendering/gallery_renderer.py),
     which reads from a fixed JSON dataset, not the live database."""
-    return HTMLResponse(render_library_html(list_saved_cards(session)))
+    query = q.strip()
+    entries = list_saved_cards(session, query=query or None)
+    return HTMLResponse(render_library_html(entries, query=query))
 
 
 @app.get("/convert", response_class=HTMLResponse)

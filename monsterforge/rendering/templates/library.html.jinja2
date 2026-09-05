@@ -143,8 +143,19 @@
 {% endmacro %}
 <div class="d-flex justify-content-between align-items-center mb-3">
   <a href="/convert" class="btn btn-outline-secondary btn-sm">Home</a>
+  <form method="get" action="/library/cards" class="d-flex" style="max-width: 360px;">
+    <input type="text" name="q" value="{{ query }}" class="form-control form-control-sm me-2"
+           placeholder="Search by name or id">
+    <button type="submit" class="btn btn-outline-secondary btn-sm">Search</button>
+    {% if query %}
+    <a href="/library/cards" class="btn btn-outline-secondary btn-sm ms-2">Clear</a>
+    {% endif %}
+  </form>
 </div>
 <h1 class="gallery-title">MonsterForge — {{ entries|length }} Cards in the Library</h1>
+{% if query and not entries %}
+<p class="text-muted">No cards match "{{ query }}".</p>
+{% endif %}
 <div class="entry-list-wrapper">
   <ul class="entry-list">
     {% for entry in entries %}
