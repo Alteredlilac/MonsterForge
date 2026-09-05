@@ -733,3 +733,62 @@ def test_convert_reports_a_missing_saved_card_instead_of_silently_reclassifying(
     assert mock_classify.call_count == 1  # still not reclassified
     assert second.status_code == 500
     assert "Could not load the saved card" in second.text
+
+
+# =====================
+# GET /library/cards
+# =====================
+def test_library_is_empty_when_nothing_is_saved():
+    response = client.get("/library/cards")
+
+    assert response.status_code == 200
+    assert "0 Cards in the Library" in response.text
+
+
+def test_library_lists_a_saved_auto_approved_card():
+    with patch("monsterforge.ui.app.classify_attack", return_value=make_semantic_result(confidence=0.95)):
+        client.post("/convert", data=RAW_ATTACK_FORM)
+
+    response = client.get("/library/cards")
+
+    assert response.status_code == 200
+    assert "1 Cards in the Library" in response.text
+    assert "BITE" in response.text.upper()
+    assert "A vicious bite." in response.text  # classification values block
+
+
+def test_library_excludes_a_rejected_attack():
+    page_html = _review_page_html(confidence=0.3)
+    client.post("/review", data={
+        **REVIEW_HIDDEN_BASE, **_extract_review_ids(page_html),
+        "semantic_result_json": _extract_semantic_result_json(page_html), "decision": "reject",
+    })
+
+    response = client.get("/library/cards")
+
+    assert "0 Cards in the Library" in response.text
+
+
+def test_library_hides_human_review_fields_for_an_auto_approved_card():
+    with patch("monsterforge.ui.app.classify_attack", return_value=make_semantic_result(confidence=0.95)):
+        client.post("/convert", data=RAW_ATTACK_FORM)
+
+    response = client.get("/library/cards")
+
+    assert "assigned_llm_score" not in response.text
+    assert "edit_note" not in response.text
+
+
+def test_library_shows_human_review_fields_when_present():
+    page_html = _review_page_html(confidence=0.3)
+    client.post("/review", data={
+        **REVIEW_HIDDEN_BASE, **_extract_review_ids(page_html),
+        "semantic_result_json": _extract_semantic_result_json(page_html), "decision": "approve",
+        "assigned_llm_score": "0.6", "edit_note": "Looks fine.",
+    })
+
+    response = client.get("/library/cards")
+    unescaped = html.unescape(response.text)  # the JSON block is HTML-escaped by autoescape
+
+    assert '"assigned_llm_score": 0.6' in unescaped
+    assert '"edit_note": "Looks fine."' in unescaped

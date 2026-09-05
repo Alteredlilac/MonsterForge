@@ -56,6 +56,7 @@ from monsterforge.pipeline.attack_repository import (
     get_human_actor,
     get_llm_actor,
     get_or_create_raw_field,
+    list_saved_cards,
     record_human_review,
     record_llm_run,
     save_card,
@@ -71,6 +72,7 @@ from monsterforge.llm.semantic_classification.attacks import (
     classify_attack,
     semantic_result_to_dict,
 )
+from monsterforge.rendering.library_renderer import render_library_html
 from monsterforge.rendering.move_card_renderer import render_move_card_html_with_edit
 from monsterforge.serialization.domain_to_json import card_to_json
 from monsterforge.structured_data.dnd.v3x.effect_mechanics import EffectRange
@@ -368,6 +370,16 @@ FAVICON_PATH = Path(__file__).resolve().parents[1] / "docs" / "images" / "Web" /
 @app.get("/favicon.ico", include_in_schema=False)
 def favicon() -> FileResponse:
     return FileResponse(FAVICON_PATH)
+
+
+@app.get("/library/cards", response_class=HTMLResponse)
+def cards_library(session: Session = Depends(get_db_session)) -> HTMLResponse:
+    """Read-only browsing of every card currently saved in the database —
+    see pipeline.attack_repository.list_saved_cards() and
+    rendering.library_renderer.render_library_html(). Deliberately
+    separate from the public, curated gallery (rendering/gallery_renderer.py),
+    which reads from a fixed JSON dataset, not the live database."""
+    return HTMLResponse(render_library_html(list_saved_cards(session)))
 
 
 @app.get("/convert", response_class=HTMLResponse)
