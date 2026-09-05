@@ -34,7 +34,7 @@ from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from monsterforge.config import validation_settings
-from monsterforge.db.enums import CardType
+from monsterforge.db.enums import CardType, EventType
 from monsterforge.db.pipeline import ClassificationEvent, RawField
 from monsterforge.db.seed import seed_reference_data
 from monsterforge.db.session import create_all_tables, get_session
@@ -383,6 +383,46 @@ def cards_library(q: str = "", session: Session = Depends(get_db_session)) -> HT
     query = q.strip()
     entries = list_saved_cards(session, query=query or None)
     return HTMLResponse(render_library_html(entries, query=query))
+
+
+@app.get("/library/cards/{raw_field_id}", response_class=HTMLResponse)
+def view_saved_card(raw_field_id: str, session: Session = Depends(get_db_session)) -> HTMLResponse:
+    """Reopen an already-saved card for printing or further review,
+    found by raw_field_id (e.g. a link from the cards library) rather
+    than through a fresh fingerprint hit. Delegates to
+    _serve_cached_card() for the actual rendering — the same page
+    /convert's own cache-hit path already builds, with Print and "Edit
+    this classification" (-> /review/edit) both already on it."""
+    raw_field = session.get(RawField, raw_field_id)
+    if raw_field is None or raw_field.current_classification_event_id is None:
+        return _message_page("No saved card found for that id.", status_code=404)
+
+    active_event = session.get(ClassificationEvent, raw_field.current_classification_event_id)
+    if active_event.decision == ValidationStatus.REJECTED:
+        return _message_page("This attack was previously rejected — no card to show.", status_code=422)
+
+    try:
+        _structured_data, card = find_existing_card(session, active_event)
+    except InconsistentActiveClassificationError as exc:
+        return _message_page(f"Could not load the saved card: {exc}", status_code=500)
+
+    # NOTE:
+    # template_name isn't a column on a HUMAN_REVIEW row (see
+    # db/pipeline.py) -- walk back to the LLM_RUN it references for the
+    # prompt actually used, same pattern already used by
+    # list_saved_cards()/list_classification_events() for confidence/
+    # rationale. Always by id (referenced_event_id, a real FK), never
+    # by name -- a name like "Bite" can have homonyms across raw_fields.
+    origin_event = active_event
+    if active_event.event_type == EventType.HUMAN_REVIEW and active_event.referenced_event_id:
+        origin_event = session.get(ClassificationEvent, active_event.referenced_event_id)
+    template_name = origin_event.prompt_name or ATTACK_PROMPT_TEMPLATE
+
+    # Not stored anywhere on raw_field -- already sitting in the saved
+    # card's own content.
+    image_uri = card.content.get("image_uri") or ""
+
+    return _serve_cached_card(session, raw_field, active_event, template_name, image_uri)
 
 
 @app.get("/convert", response_class=HTMLResponse)

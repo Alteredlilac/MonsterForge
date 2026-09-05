@@ -284,6 +284,9 @@
             <div class="modal-card-wrapper">
               {{ entry.card_html | safe }}
             </div>
+            <div class="text-center mt-3">
+              <a href="/library/cards/{{ entry.raw_field_id }}" class="btn btn-outline-secondary">Open for Print / Review</a>
+            </div>
           </div>
           <div class="tab-pane fade" id="history-{{ entry.index }}">
             <p class="tab-description">Every LLM run and human decision recorded for this attack, oldest first — not just the currently active result.</p>

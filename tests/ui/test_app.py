@@ -876,3 +876,69 @@ def test_library_shows_history_for_a_saved_card():
 
     assert "llm_run" in response.text
     assert '<span class="badge bg-success ms-auto">active</span>' in response.text
+
+
+# =====================
+# GET /library/cards/{raw_field_id}
+# =====================
+def test_view_saved_card_shows_the_card_and_edit_controls(seeded_db_session):
+    with patch("monsterforge.ui.app.classify_attack", return_value=make_semantic_result(confidence=0.95)):
+        client.post("/convert", data=RAW_ATTACK_FORM)
+
+    raw_field = seeded_db_session.query(RawField).one()
+    response = client.get(f"/library/cards/{raw_field.id}")
+
+    assert response.status_code == 200
+    assert "BITE" in response.text.upper()
+    assert "Edit this classification" in response.text
+    assert 'onclick="window.print()"' in response.text
+
+
+def test_view_saved_card_returns_404_for_an_unknown_id():
+    response = client.get("/library/cards/does-not-exist")
+
+    assert response.status_code == 404
+
+
+def test_view_saved_card_reports_a_previously_rejected_attack(seeded_db_session):
+    page_html = _review_page_html(confidence=0.3)
+    client.post("/review", data={
+        **REVIEW_HIDDEN_BASE, **_extract_review_ids(page_html),
+        "semantic_result_json": _extract_semantic_result_json(page_html), "decision": "reject",
+    })
+
+    raw_field = seeded_db_session.query(RawField).one()
+    response = client.get(f"/library/cards/{raw_field.id}")
+
+    assert response.status_code == 422
+    assert "previously rejected" in response.text.lower()
+
+
+def test_view_saved_card_resolves_template_name_for_an_auto_approved_result(seeded_db_session):
+    chosen = "attacks/classify_attack_confidence_guard.jinja2"
+    with patch("monsterforge.ui.app.classify_attack", return_value=make_semantic_result(confidence=0.95)):
+        client.post("/convert", data={**RAW_ATTACK_FORM, "template_name": chosen})
+
+    raw_field = seeded_db_session.query(RawField).one()
+    response = client.get(f"/library/cards/{raw_field.id}")
+
+    assert f'value="{chosen}"' in response.text
+
+
+def test_view_saved_card_resolves_template_name_from_the_referenced_llm_run_after_review(seeded_db_session):
+    """The active event here is the HUMAN_REVIEW, not the LLM_RUN --
+    prompt_name lives only on the LLM_RUN it references (see
+    db/pipeline.py), so this must walk back to it rather than default."""
+    chosen = "attacks/classify_attack_confidence_guard.jinja2"
+    with patch("monsterforge.ui.app.classify_attack", return_value=make_semantic_result(confidence=0.3)):
+        page_html = client.post("/convert", data={**RAW_ATTACK_FORM, "template_name": chosen}).text
+
+    client.post("/review", data={
+        **REVIEW_HIDDEN_BASE, **_extract_review_ids(page_html),
+        "semantic_result_json": _extract_semantic_result_json(page_html), "decision": "approve",
+    })
+
+    raw_field = seeded_db_session.query(RawField).one()
+    response = client.get(f"/library/cards/{raw_field.id}")
+
+    assert f'value="{chosen}"' in response.text
