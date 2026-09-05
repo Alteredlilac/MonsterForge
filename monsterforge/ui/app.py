@@ -25,12 +25,16 @@ and reported as a plain error response instead.
 """
 import dataclasses
 import json
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Literal
 import jinja2
-from fastapi import FastAPI, Form, Request
+from fastapi import Depends, FastAPI, Form, Request
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
+from sqlalchemy.orm import Session
+from monsterforge.db.seed import seed_reference_data
+from monsterforge.db.session import create_all_tables, get_session
 from monsterforge.parsing.dnd.v3x.raw_fields.attacks import Attack as RawAttack
 from monsterforge.parsing.dnd.v3x.structured_conversions.attacks.attacks_converter import (
     UnknownAttackRange,
@@ -55,7 +59,33 @@ from monsterforge.structured_data.dnd.v3x.effect_mechanics import EffectRange
 from monsterforge.structured_data.dnd.v3x.enums import CreatureSubtype, MoveType, UnitSystem
 from monsterforge.validation.review import needs_review
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    """Create the database tables and seed reference rows once, at
+    startup — this project has no migration tool, so table creation
+    must be triggered explicitly rather than happening on import (see
+    db/session.py::create_all_tables())."""
+    create_all_tables()
+    session = get_session()
+    try:
+        seed_reference_data(session)
+    finally:
+        session.close()
+    yield
+
+
+def get_db_session():
+    """FastAPI dependency: yields a session scoped to one request, always
+    closed afterward. Overridden in tests (tests/ui/conftest.py) to
+    yield an isolated in-memory session instead of the real database."""
+    session = get_session()
+    try:
+        yield session
+    finally:
+        session.close()
+
+
+app = FastAPI(lifespan=lifespan)
 # NOTE:
 # Jinja2Templates(directory=...) hardcodes autoescape=jinja2.select_autoescape(),
 # whose extension check never matches "*.html.jinja2" (every template in
