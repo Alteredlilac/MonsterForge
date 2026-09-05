@@ -196,8 +196,11 @@
     <span class="dot dot-red"></span>
     <span class="dot dot-yellow"></span>
     <span class="dot dot-green"></span>
+    {% if entry.is_active %}<span class="badge bg-success">active</span>{% endif %}
     <span class="terminal-title{{ ' terminal-title-active' if entry.is_active }}">{{ entry.event_type }} — {{ entry.decision }} — {{ entry.actor_name }} (authority {{ entry.actor_authority }}) — {{ entry.created_at }}</span>
-    {% if entry.is_active %}<span class="badge bg-success ms-auto">active</span>{% endif %}
+    {% if entry.decision != "rejected" %}
+    <a href="/library/events/{{ entry.id }}/review" class="btn btn-outline-secondary btn-sm ms-auto">Reopen for review</a>
+    {% endif %}
   </div>
   <pre><code class="nohighlight">{
 {% for field in entry.fields -%}

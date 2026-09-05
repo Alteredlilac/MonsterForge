@@ -76,6 +76,7 @@ def _build_history_entry(event: dict, previous_result: dict | None) -> dict:
         ]
 
     return {
+        "id": event["id"],
         "event_type": event["event_type"],
         "decision": event["decision"] or "pending",
         "actor_name": event["actor_name"],

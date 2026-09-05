@@ -425,6 +425,53 @@ def view_saved_card(raw_field_id: str, session: Session = Depends(get_db_session
     return _serve_cached_card(session, raw_field, active_event, template_name, image_uri)
 
 
+@app.get("/library/events/{classification_event_id}/review", response_class=HTMLResponse)
+def reopen_event_for_review(
+        request: Request, classification_event_id: str,
+        session: Session = Depends(get_db_session)) -> HTMLResponse:
+    """Reopen any past classification_events row for a fresh review
+    decision, not just the raw_field's currently active one — approving
+    or correcting it here makes it the new active result. Works
+    uniformly whether or not this event ever had a card built for it (a
+    superseded, never-decided LLM_RUN never does) since it reopens the
+    review form directly, the same way /review/edit already does,
+    rather than a rendered card. Not linked to at all from
+    library.html.jinja2 for a REJECTED event, whose own result is an
+    empty dict — nothing to review; rejected here too, directly, in
+    case this URL is reached some other way."""
+    event = session.get(ClassificationEvent, classification_event_id)
+    if event is None:
+        return _message_page("No such classification event.", status_code=404)
+    if event.decision == ValidationStatus.REJECTED:
+        return _message_page("This event was rejected — nothing to review.", status_code=422)
+
+    raw_field = session.get(RawField, event.raw_field_id)
+    raw_attack = RawAttack(
+        name=raw_field.data["name"], modifier=raw_field.data["modifier"],
+        attack_type=raw_field.data["attack_type"], attack_effect=raw_field.data["attack_effect"],
+    )
+    semantic_context = _semantic_context_from_form(
+        raw_field.data.get("additional_description") or "",
+        raw_field.data.get("creature_description") or "",
+        raw_field.data.get("creature_subtype") or "",
+    )
+    semantic_result = _semantic_result_from_json(json.dumps(event.result))
+
+    # Same by-id walk-back as view_saved_card() above, for the same reason.
+    origin_event = event
+    if event.event_type == EventType.HUMAN_REVIEW and event.referenced_event_id:
+        origin_event = session.get(ClassificationEvent, event.referenced_event_id)
+    template_name = origin_event.prompt_name or ATTACK_PROMPT_TEMPLATE
+
+    return templates.TemplateResponse(
+        request, "review_form.html.jinja2",
+        _review_form_context(
+            raw_attack, semantic_context, semantic_result, template_name, "",
+            raw_field_id=raw_field.id, classification_event_id=event.id,
+        ),
+    )
+
+
 @app.get("/convert", response_class=HTMLResponse)
 def show_convert_form(request: Request) -> HTMLResponse:
     return templates.TemplateResponse(request, "convert_form.html.jinja2", {

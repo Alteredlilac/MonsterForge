@@ -11,7 +11,7 @@ import re
 from unittest.mock import patch
 from fastapi.testclient import TestClient
 from monsterforge.db.cards import Card
-from monsterforge.db.pipeline import RawField
+from monsterforge.db.pipeline import ClassificationEvent, RawField
 from monsterforge.llm.clients.gemini import ModelUnavailableError
 from monsterforge.llm.semantic_classification.attacks import AttackSemanticResult
 from monsterforge.structured_data.dnd.v3x.effect_mechanics import EffectRange
@@ -875,7 +875,7 @@ def test_library_shows_history_for_a_saved_card():
     response = client.get("/library/cards")
 
     assert "llm_run" in response.text
-    assert '<span class="badge bg-success ms-auto">active</span>' in response.text
+    assert '<span class="badge bg-success">active</span>' in response.text
 
 
 # =====================
@@ -942,3 +942,75 @@ def test_view_saved_card_resolves_template_name_from_the_referenced_llm_run_afte
     response = client.get(f"/library/cards/{raw_field.id}")
 
     assert f'value="{chosen}"' in response.text
+
+
+# =====================
+# GET /library/events/{classification_event_id}/review
+# =====================
+def test_reopen_event_for_review_shows_the_review_form(seeded_db_session):
+    with patch("monsterforge.ui.app.classify_attack", return_value=make_semantic_result(confidence=0.95)):
+        client.post("/convert", data=RAW_ATTACK_FORM)
+
+    raw_field = seeded_db_session.query(RawField).one()
+    response = client.get(f"/library/events/{raw_field.current_classification_event_id}/review")
+
+    assert response.status_code == 200
+    assert "Human Review Requested" in response.text
+    assert 'value="Bite"' in response.text
+
+
+def test_reopen_event_for_review_returns_404_for_an_unknown_id():
+    response = client.get("/library/events/does-not-exist/review")
+
+    assert response.status_code == 404
+
+
+def test_reopen_event_for_review_can_reactivate_an_old_event(seeded_db_session):
+    """The whole point of MVP 2.18: approving a past, now-archived event
+    makes it the new active result again, superseding whatever
+    superseded it -- not just editing the currently active one."""
+    with patch("monsterforge.ui.app.classify_attack", return_value=make_semantic_result(confidence=0.95)):
+        client.post("/convert", data=RAW_ATTACK_FORM)
+
+    raw_field = seeded_db_session.query(RawField).one()
+    original_event_id = raw_field.current_classification_event_id
+
+    card_page = client.get(f"/library/cards/{raw_field.id}").text
+    client.post("/review", data={
+        **REVIEW_HIDDEN_BASE, **_extract_review_ids(card_page),
+        "semantic_result_json": _extract_semantic_result_json(card_page), "decision": "correct",
+        "name": "Bite", "description": "A corrected bite.", "move_type": "magical",
+        "range_value": "", "range_unit": "metric",
+    })
+    seeded_db_session.refresh(raw_field)
+    assert raw_field.current_classification_event_id != original_event_id  # sanity check
+
+    reopen_page = client.get(f"/library/events/{original_event_id}/review").text
+    assert "A vicious bite." in reopen_page  # the original, pre-correction description
+    assert "A corrected bite." not in reopen_page
+
+    client.post("/review", data={
+        **REVIEW_HIDDEN_BASE, **_extract_review_ids(reopen_page),
+        "semantic_result_json": _extract_semantic_result_json(reopen_page), "decision": "approve",
+    })
+
+    seeded_db_session.refresh(raw_field)
+    reactivated_event = seeded_db_session.get(ClassificationEvent, raw_field.current_classification_event_id)
+    assert reactivated_event.referenced_event_id == original_event_id
+
+
+def test_reopen_event_for_review_rejects_a_rejected_event(seeded_db_session):
+    """Not reachable from the library UI (see library.html.jinja2's own
+    "!= rejected" check), but guarded here too in case this URL is hit
+    directly -- a REJECTED event's own result is an empty dict, nothing
+    to build a review form from."""
+    page_html = _review_page_html(confidence=0.3)
+    client.post("/review", data={
+        **REVIEW_HIDDEN_BASE, **_extract_review_ids(page_html),
+        "semantic_result_json": _extract_semantic_result_json(page_html), "decision": "reject",
+    })
+
+    raw_field = seeded_db_session.query(RawField).one()
+    response = client.get(f"/library/events/{raw_field.current_classification_event_id}/review")
+
+    assert response.status_code == 422

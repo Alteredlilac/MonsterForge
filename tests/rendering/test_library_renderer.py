@@ -43,6 +43,7 @@ DEFAULT_RESULT = {
 
 def make_event(event_type="llm_run", result=None, **overrides):
     defaults = dict(
+        id="event-0000",
         event_type=event_type,
         status="active",
         decision="auto_approved" if event_type == "llm_run" else "approved",

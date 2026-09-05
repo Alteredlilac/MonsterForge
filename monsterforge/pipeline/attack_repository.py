@@ -319,6 +319,7 @@ def list_classification_events(session: Session, raw_field_id: str) -> list[dict
     for event in events:
         actor = session.get(Actor, event.actor_id)
         summaries.append({
+            "id": event.id,
             "event_type": event.event_type.value,
             "status": event.status.value,
             "decision": event.decision.value if event.decision else None,
