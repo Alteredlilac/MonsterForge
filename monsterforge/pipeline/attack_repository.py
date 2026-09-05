@@ -16,8 +16,9 @@ import json
 
 from sqlalchemy.orm import Session
 
-from monsterforge.db.enums import EventStatus, EventType, RawKind
-from monsterforge.db.pipeline import ClassificationEvent, RawField
+from monsterforge.db.cards import Card
+from monsterforge.db.enums import CardType, EntityType, EventStatus, EventType, RawKind
+from monsterforge.db.pipeline import ClassificationEvent, RawField, StructuredData
 from monsterforge.db.reference_data import Actor, Game
 from monsterforge.db.seed import DND_GAME_NAME, HUMAN_REVIEWER_ACTOR_NAME, LLM_ACTOR_NAME
 from monsterforge.llm.semantic_classification.attacks import (
@@ -26,6 +27,8 @@ from monsterforge.llm.semantic_classification.attacks import (
     semantic_result_to_dict,
 )
 from monsterforge.parsing.dnd.v3x.raw_fields.attacks import Attack as RawAttack
+from monsterforge.serialization.plain_data import to_plain
+from monsterforge.structured_data.dnd.v3x.attacks import Attack as StructuredAttack
 from monsterforge.structured_data.dnd.v3x.effect_mechanics import EffectRange
 from monsterforge.structured_data.dnd.v3x.enums import CreatureSubtype
 from monsterforge.validation.enums import ValidationStatus
@@ -211,3 +214,66 @@ def activate_classification_event(
     event.status = EventStatus.ACTIVE
     raw_field.current_classification_event_id = event.id
     session.commit()
+
+
+def find_existing_card(session: Session, event: ClassificationEvent) -> tuple[StructuredData, Card]:
+    """
+    Look up the structured_data/cards pair already saved for `event`.
+
+    Raises:
+        InconsistentActiveClassificationError:
+            If `event` is a raw_field's active event but no
+            structured_data row exists for it, or that structured_data
+            has no cards row — a data-integrity anomaly (e.g. the
+            pipeline failed between activating the event and saving its
+            output), reported loudly rather than silently reclassifying
+            as if the event had never been resolved.
+    """
+    structured_data = session.query(StructuredData).filter_by(classification_event_id=event.id).first()
+    if structured_data is None:
+        raise InconsistentActiveClassificationError(
+            f"classification_event {event.id} is active but has no structured_data row."
+        )
+
+    card = session.query(Card).filter_by(structured_data_id=structured_data.id).first()
+    if card is None:
+        raise InconsistentActiveClassificationError(
+            f"structured_data {structured_data.id} has no corresponding cards row."
+        )
+
+    return structured_data, card
+
+
+def save_structured_data(
+        session: Session, *,
+        raw_field: RawField,
+        classification_event: ClassificationEvent,
+        structured_attack: StructuredAttack) -> StructuredData:
+    """Persist a StructuredAttack as the structured_data row for `classification_event`."""
+    structured_data = StructuredData(
+        raw_field_id=raw_field.id,
+        classification_event_id=classification_event.id,
+        entity_type=EntityType.ATTACK,
+        name=structured_attack.name,
+        data=to_plain(structured_attack),
+    )
+    session.add(structured_data)
+    session.commit()
+    return structured_data
+
+
+def save_card(
+        session: Session, *,
+        structured_data: StructuredData,
+        card_data: dict,
+        card_type: CardType) -> Card:
+    """Persist an already-serialized MoveCard dict (see card_to_json()) as a cards row."""
+    card = Card(
+        structured_data_id=structured_data.id,
+        card_type=card_type,
+        name=card_data["name"],
+        content=card_data,
+    )
+    session.add(card)
+    session.commit()
+    return card
