@@ -32,6 +32,7 @@ from monsterforge.structured_data.dnd.v3x.attacks import Attack as StructuredAtt
 from monsterforge.structured_data.dnd.v3x.effect_mechanics import EffectRange
 from monsterforge.structured_data.dnd.v3x.enums import CreatureSubtype
 from monsterforge.validation.enums import ValidationStatus
+from monsterforge.validation.review import HumanReview
 
 
 class InconsistentActiveClassificationError(ValueError):
@@ -183,6 +184,42 @@ def record_llm_run(
         actor_id=actor.id,
         decision=decision,
         status=EventStatus.PENDING,
+        created_at=datetime.datetime.now(),
+    )
+    session.add(event)
+    session.commit()
+    return event
+
+
+def record_human_review(
+        session: Session, *,
+        raw_field: RawField,
+        referenced_event: ClassificationEvent,
+        review: HumanReview,
+        actor: Actor) -> ClassificationEvent:
+    """
+    Record a human review decision as a new append-only event.
+
+    `referenced_event_id` points at the specific LLM_RUN this decision
+    is about (see db/pipeline.py's HUMAN_REVIEW vs. MANUAL_CORRECTION
+    distinction) — an explicit semantic pointer, not a chronological
+    one. `review.result` is None only for a REJECTED review (per
+    HumanReview's own contract); stored here as an empty dict rather
+    than None, since ClassificationEvent.result is never nullable —
+    every event has some result, even an empty one for a rejection with
+    nothing to reuse. Like record_llm_run(), this never activates the
+    event on its own; that's activate_classification_event()'s job.
+    """
+    event = ClassificationEvent(
+        raw_field_id=raw_field.id,
+        event_type=EventType.HUMAN_REVIEW,
+        result=semantic_result_to_dict(review.result) if review.result is not None else {},
+        assigned_llm_score=review.assigned_llm_score,
+        edit_note=review.edit_note,
+        actor_id=actor.id,
+        decision=review.status,
+        status=EventStatus.PENDING,
+        referenced_event_id=referenced_event.id,
         created_at=datetime.datetime.now(),
     )
     session.add(event)
