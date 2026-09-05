@@ -860,12 +860,12 @@ def test_library_history_highlights_the_field_a_correction_changed():
         "range_value": "", "range_unit": "metric",
     })
 
-    response = client.get("/library/cards")
+    unescaped = html.unescape(client.get("/library/cards").text)
 
-    assert '<span class="history-changed">magical</span>' in response.text
+    assert '<span class="history-changed">"magical"</span>' in unescaped
     # The LLM_RUN entry is first in the history, nothing to compare
     # against yet, so its own move_type is never flagged as changed.
-    assert '<span class="">physical</span>' in response.text
+    assert '<span class="">"physical"</span>' in unescaped
 
 
 def test_library_shows_history_for_a_saved_card():
@@ -875,4 +875,4 @@ def test_library_shows_history_for_a_saved_card():
     response = client.get("/library/cards")
 
     assert "llm_run" in response.text
-    assert '<span class="badge bg-success">active</span>' in response.text
+    assert '<span class="badge bg-success ms-auto">active</span>' in response.text

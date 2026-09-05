@@ -76,25 +76,28 @@
     font-size: 0.85rem;
     margin-bottom: 1rem;
   }
-  .history-header {
-    color: #2a2015;
-    font-size: 0.85rem;
-  }
-  .history-fields {
-    color: #2a2015;
-    font-size: 0.85rem;
-  }
   /* NOTE:
-     Highlights exactly the field a human correction changed, relative
-     to the immediately preceding event in the history — a classic
-     highlighter-pen yellow, distinct from the green "active" badge and
-     high-contrast against the modal's light background. */
+     Cyan from the atom-one-dark theme already loaded on this page
+     (its "literal" token color) — deliberately not green (already
+     means "active", via the Bootstrap badge below) and not blue+
+     underline (reads as a clickable link at a glance). Bold only, no
+     background/underline. The key gets the same color, unbolded, so a
+     changed line is easy to spot as a whole without drawing the eye
+     away from the value itself. */
   .history-changed {
-    background-color: #fff3a0;
-    color: #2a2015;
-    padding: 0 3px;
-    border-radius: 3px;
+    color: #56b6c2;
     font-weight: bold;
+  }
+  .history-changed-key {
+    color: #56b6c2;
+  }
+  /* The history JSON block below opts out of highlight.js (see its own
+     NOTE), which also means it never gets the theme's own base
+     foreground color — restore it here, or the block falls back to
+     Bootstrap's default (dark) <code> color, unreadable on this dark
+     background. */
+  .terminal pre code.nohighlight {
+    color: #abb2bf;
   }
   .terminal {
     background: #282c34;
@@ -104,9 +107,21 @@
   }
   .terminal-titlebar {
     display: flex;
+    align-items: center;
     gap: 6px;
     padding: 8px 10px;
     background: #21252b;
+  }
+  .terminal-title {
+    color: #abb2bf;
+    font-size: 0.8rem;
+    margin-left: 6px;
+  }
+  /* A brighter green than the "active" badge's Bootstrap bg-success
+     (#198754) — that shade reads fine on a white badge but is too
+     dark to read as plain text on this near-black titlebar. */
+  .terminal-title-active {
+    color: #3ddc84;
   }
   .terminal-titlebar .dot {
     width: 10px;
@@ -159,6 +174,36 @@
     <span class="dot dot-green"></span>
   </div>
   <pre><code class="language-json">{{ content }}</code></pre>
+</div>
+{% endmacro %}
+{% macro history_json(entry) %}
+<!--
+  NOTE:
+  class="nohighlight", not "language-json" like terminal() above — this
+  block embeds a real <span> around whichever value changed, and
+  hljs.highlightAll() (called once for every ".language-json" block on
+  the page, further down) re-tokenizes raw text and would treat that
+  <span> as literal characters to escape, destroying the highlight.
+  "nohighlight" is highlight.js's own documented way to exclude a block
+  from that pass.
+
+  The event's header (type/decision/actor/when) lives in this same
+  terminal's titlebar, not a separate paragraph above it — one framed
+  block per event, not two, so header and detail read as one thing.
+-->
+<div class="terminal">
+  <div class="terminal-titlebar">
+    <span class="dot dot-red"></span>
+    <span class="dot dot-yellow"></span>
+    <span class="dot dot-green"></span>
+    <span class="terminal-title{{ ' terminal-title-active' if entry.is_active }}">{{ entry.event_type }} — {{ entry.decision }} — {{ entry.actor_name }} (authority {{ entry.actor_authority }}) — {{ entry.created_at }}</span>
+    {% if entry.is_active %}<span class="badge bg-success ms-auto">active</span>{% endif %}
+  </div>
+  <pre><code class="nohighlight">{
+{% for field in entry.fields -%}
+  <span class="{{ 'history-changed-key' if field.changed }}">"{{ field.key }}"</span>: <span class="{{ 'history-changed' if field.changed }}">{{ field.value_json }}</span>{{ "," if not loop.last }}
+{% endfor -%}
+}</code></pre>
 </div>
 {% endmacro %}
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -243,18 +288,7 @@
           <div class="tab-pane fade" id="history-{{ entry.index }}">
             <p class="tab-description">Every LLM run and human decision recorded for this attack, oldest first — not just the currently active result.</p>
             {% for event in entry.history %}
-            <div class="mb-3">
-              <p class="history-header mb-1">
-                <strong>{{ event.event_type }}</strong> — {{ event.decision }} — {{ event.actor_name }} — {{ event.created_at }}
-                {% if event.is_active %}<span class="badge bg-success">active</span>{% endif %}
-              </p>
-              <p class="history-fields mb-1">
-                Description: <span class="{{ 'history-changed' if event.description_changed }}">{{ event.description }}</span><br>
-                Move type: <span class="{{ 'history-changed' if event.move_type_changed }}">{{ event.move_type }}</span><br>
-                Move range: <span class="{{ 'history-changed' if event.move_range_changed }}">{{ event.move_range }}</span>
-              </p>
-              {{ terminal(event.extra_json) }}
-            </div>
+            {{ history_json(event) }}
             {% endfor %}
           </div>
         </div>

@@ -47,6 +47,7 @@ def make_event(event_type="llm_run", result=None, **overrides):
         status="active",
         decision="auto_approved" if event_type == "llm_run" else "approved",
         actor_name="llm" if event_type == "llm_run" else "human_reviewer",
+        actor_authority=0 if event_type == "llm_run" else 10,
         created_at="2026-09-05T18:00:00",
         is_active=False,
         result=result if result is not None else dict(DEFAULT_RESULT),
@@ -116,12 +117,12 @@ def test_render_library_html_highlights_a_field_a_correction_changed():
         result={"description": "A shock.", "move_type": "physical", "move_range": None,
                 "confidence": 0.9, "rationale": "Elemental damage implies magic."},
     )
-    page = render_library_html([make_entry(events=[llm_event, review_event])])
+    page = html.unescape(render_library_html([make_entry(events=[llm_event, review_event])]))
 
-    assert '<span class="history-changed">physical</span>' in page
+    assert '<span class="history-changed">"physical"</span>' in page
     # The LLM_RUN is the first event, nothing to compare against yet,
     # so its own move_type is never flagged even though it later changes.
-    assert '<span class="">magical</span>' in page
+    assert '<span class="">"magical"</span>' in page
 
 
 def test_render_library_html_does_not_highlight_an_unchanged_field():

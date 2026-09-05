@@ -289,9 +289,11 @@ def list_classification_events(session: Session, raw_field_id: str) -> list[dict
     from, not just its currently active result.
 
     Rules:
-    - actor_name is resolved here (not left as a bare actor_id), the
-      same presentation-shaped-summary spirit as list_saved_cards()'s
-      own entries.
+    - actor_name/actor_authority are resolved here (not left as a bare
+      actor_id), the same presentation-shaped-summary spirit as
+      list_saved_cards()'s own entries. authority is the conflict-
+      resolution rank from db/reference_data.py (LLM=0, human
+      reviewer=10) — worth showing next to who did what.
     - result is this event's own recorded classification (description/
       move_type/move_range/confidence/rationale, see
       semantic_result_to_dict()) — an empty dict for a REJECTED review,
@@ -321,6 +323,7 @@ def list_classification_events(session: Session, raw_field_id: str) -> list[dict
             "status": event.status.value,
             "decision": event.decision.value if event.decision else None,
             "actor_name": actor.actor_name,
+            "actor_authority": actor.authority,
             "created_at": event.created_at.isoformat(),
             "is_active": event.id == raw_field.current_classification_event_id,
             "result": event.result,

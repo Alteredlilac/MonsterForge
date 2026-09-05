@@ -23,54 +23,66 @@ from monsterforge.rendering.move_card_renderer import build_card_context, enviro
 _fragment_template = environment.get_template("move_card_fragment.html.jinja2")
 
 
-def _format_move_range(move_range: dict | None) -> str:
+def _format_move_range(move_range: dict | None) -> str | None:
+    """None (rendered as JSON's own `null`, not a quoted placeholder
+    string) for a melee attack with no range at all."""
     if not move_range:
-        return "—"
+        return None
     return f"{move_range['effect_range']} {move_range['range_unit_system']}"
 
 
 def _build_history_entry(event: dict, previous_result: dict | None) -> dict:
     """
     Format one pipeline.attack_repository.list_classification_events()
-    summary for display: a one-line header (type/decision/actor/when),
-    the three fields a human correction can actually change
-    (description/move_type/move_range) each flagged as changed when it
-    differs from `previous_result` (the chronologically preceding
-    event's own result — None for the very first event, so nothing is
-    flagged there), and a JSON block of the remaining, type-specific
-    fields: an LLM_RUN's prompt_name/model_name/rerun_note/confidence/
-    rationale, or a HUMAN_REVIEW/MANUAL_CORRECTION's
-    assigned_llm_score/edit_note.
+    summary for display: a header (type/decision/actor+authority/when)
+    plus every field of that event in one JSON-look block — the three
+    fields a human correction can actually change (description/
+    move_type/move_range) each flagged as changed when they differ from
+    `previous_result` (the chronologically preceding event's own result
+    — None for the very first event, so nothing is flagged there), then
+    the remaining, type-specific fields: an LLM_RUN's prompt_name/
+    model_name/rerun_note/confidence/rationale, or a HUMAN_REVIEW/
+    MANUAL_CORRECTION's assigned_llm_score/edit_note. One block, not
+    two — a single event's own detail split across two separately
+    bordered boxes read as unrelated at a glance.
     """
     result = event["result"] or {}
     has_previous = previous_result is not None
     baseline = previous_result or {}
 
-    def _changed(key: str) -> bool:
-        return has_previous and result.get(key) != baseline.get(key)
+    def _field(key: str, display_value, changed: bool = False) -> dict:
+        return {"key": key, "value_json": json.dumps(display_value), "changed": changed}
 
+    fields = [
+        _field("description", result.get("description"),
+               has_previous and result.get("description") != baseline.get("description")),
+        _field("move_type", result.get("move_type"),
+               has_previous and result.get("move_type") != baseline.get("move_type")),
+        _field("move_range", _format_move_range(result.get("move_range")),
+               has_previous and result.get("move_range") != baseline.get("move_range")),
+    ]
     if event["event_type"] == "llm_run":
-        extra = {
-            "prompt_name": event["prompt_name"], "model_name": event["model_name"],
-            "rerun_note": event["rerun_note"], "confidence": result.get("confidence"),
-            "rationale": result.get("rationale"),
-        }
+        fields += [
+            _field("prompt_name", event["prompt_name"]),
+            _field("model_name", event["model_name"]),
+            _field("rerun_note", event["rerun_note"]),
+            _field("confidence", result.get("confidence")),
+            _field("rationale", result.get("rationale")),
+        ]
     else:
-        extra = {"assigned_llm_score": event["assigned_llm_score"], "edit_note": event["edit_note"]}
+        fields += [
+            _field("assigned_llm_score", event["assigned_llm_score"]),
+            _field("edit_note", event["edit_note"]),
+        ]
 
     return {
         "event_type": event["event_type"],
         "decision": event["decision"] or "pending",
         "actor_name": event["actor_name"],
+        "actor_authority": event["actor_authority"],
         "created_at": event["created_at"],
         "is_active": event["is_active"],
-        "description": result.get("description"),
-        "description_changed": _changed("description"),
-        "move_type": result.get("move_type"),
-        "move_type_changed": _changed("move_type"),
-        "move_range": _format_move_range(result.get("move_range")),
-        "move_range_changed": _changed("move_range"),
-        "extra_json": json.dumps(extra, indent=2),
+        "fields": fields,
     }
 
 
