@@ -123,6 +123,14 @@
   .terminal-title-active {
     color: #3ddc84;
   }
+  /* Flags a rejected event's own titlebar text at a glance in the
+     History tab -- defined after terminal-title-active so it wins on
+     an event that is both is_active and rejected (rejecting the
+     currently active event, or a raw_field's very first decision, per
+     ui/app.py::review()'s reject branch). */
+  .terminal-title-rejected {
+    color: #ff6b6b;
+  }
   .terminal-titlebar .dot {
     width: 10px;
     height: 10px;
@@ -197,8 +205,10 @@
     <span class="dot dot-yellow"></span>
     <span class="dot dot-green"></span>
     {% if entry.is_active %}<span class="badge bg-success">active</span>{% endif %}
-    <span class="terminal-title{{ ' terminal-title-active' if entry.is_active }}">{{ entry.event_type }} — {{ entry.decision }} — {{ entry.actor_name }} (authority {{ entry.actor_authority }}) — {{ entry.created_at }}</span>
-    {% if entry.decision != "rejected" %}
+    <span class="terminal-title{{ ' terminal-title-active' if entry.is_active }}{{ ' terminal-title-rejected' if entry.decision == 'rejected' }}">{{ entry.event_type }} — {{ entry.decision }} — {{ entry.actor_name }} (authority {{ entry.actor_authority }}) — {{ entry.created_at }}</span>
+    {% if entry.decision == "rejected" %}
+    <span class="badge bg-danger ms-auto">rejected</span>
+    {% else %}
     <a href="/library/events/{{ entry.id }}/review" class="btn btn-outline-secondary btn-sm ms-auto">Reopen for review</a>
     {% endif %}
   </div>
