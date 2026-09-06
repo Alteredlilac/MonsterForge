@@ -733,6 +733,17 @@ def review(
                                 edit_note=edit_note or None),
             actor=get_human_actor(session),
         )
+        # NOTE:
+        # Only activates when rejecting the raw_field's currently active
+        # event (or its very first decision, current_classification_event_id
+        # still None) -- rejecting an old, already-superseded event reopened
+        # via /library/events/{id}/review (MVP 2.18) must not un-activate a
+        # genuinely good current result. The rejection is still recorded in
+        # the history either way, via record_human_review() above.
+        if raw_field.current_classification_event_id not in (None, referenced_event.id):
+            return _message_page(
+                "This old attempt was marked as rejected. The currently active result was not affected."
+            )
         activate_classification_event(session, raw_field=raw_field, event=review_event)
         return _message_page("No card produced: the classification was rejected.")
 

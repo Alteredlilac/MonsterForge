@@ -11,12 +11,14 @@ import re
 from unittest.mock import patch
 from fastapi.testclient import TestClient
 from monsterforge.db.cards import Card
+from monsterforge.db.enums import EventStatus
 from monsterforge.db.pipeline import ClassificationEvent, RawField
 from monsterforge.llm.clients.gemini import ModelUnavailableError
 from monsterforge.llm.semantic_classification.attacks import AttackSemanticResult
 from monsterforge.structured_data.dnd.v3x.effect_mechanics import EffectRange
 from monsterforge.structured_data.dnd.v3x.enums import MoveType, UnitSystem
 from monsterforge.ui.app import app
+from monsterforge.validation.enums import ValidationStatus
 
 client = TestClient(app)
 
@@ -1014,3 +1016,46 @@ def test_reopen_event_for_review_rejects_a_rejected_event(seeded_db_session):
     response = client.get(f"/library/events/{raw_field.current_classification_event_id}/review")
 
     assert response.status_code == 422
+
+
+def test_rejecting_a_reopened_old_event_does_not_deactivate_the_current_good_result(seeded_db_session):
+    """Regression for a bug found testing MVP 2.18: rejecting a past,
+    already-superseded event (reopened via /library/events/{id}/review)
+    must not un-activate a genuinely good current result -- only
+    rejecting the raw_field's currently active event (or its very first
+    decision) takes over as active."""
+    with patch("monsterforge.ui.app.classify_attack", return_value=make_semantic_result(confidence=0.95)):
+        client.post("/convert", data=RAW_ATTACK_FORM)
+
+    raw_field = seeded_db_session.query(RawField).one()
+    original_event_id = raw_field.current_classification_event_id
+
+    card_page = client.get(f"/library/cards/{raw_field.id}").text
+    client.post("/review", data={
+        **REVIEW_HIDDEN_BASE, **_extract_review_ids(card_page),
+        "semantic_result_json": _extract_semantic_result_json(card_page), "decision": "correct",
+        "name": "Bite", "description": "A corrected bite.", "move_type": "magical",
+        "range_value": "", "range_unit": "metric",
+    })
+    seeded_db_session.refresh(raw_field)
+    corrected_event_id = raw_field.current_classification_event_id
+    assert corrected_event_id != original_event_id  # sanity check
+
+    reopen_page = client.get(f"/library/events/{original_event_id}/review").text
+    response = client.post("/review", data={
+        **REVIEW_HIDDEN_BASE, **_extract_review_ids(reopen_page),
+        "semantic_result_json": _extract_semantic_result_json(reopen_page), "decision": "reject",
+    })
+
+    assert response.status_code == 200
+    assert "not affected" in response.text.lower()
+
+    seeded_db_session.refresh(raw_field)
+    assert raw_field.current_classification_event_id == corrected_event_id  # still the good correction
+
+    reject_event = (
+        seeded_db_session.query(ClassificationEvent)
+        .filter_by(referenced_event_id=original_event_id, decision=ValidationStatus.REJECTED)
+        .one()
+    )
+    assert reject_event.status == EventStatus.PENDING  # recorded in history, never activated

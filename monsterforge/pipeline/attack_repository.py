@@ -237,11 +237,15 @@ def activate_classification_event(
 
     Archives whatever event was previously active for this raw_field
     (if any), sets `event.status = ACTIVE`, and points
-    `raw_field.current_classification_event_id` at it. Called for every
-    resolved outcome, including a REJECTED human review — status tracks
+    `raw_field.current_classification_event_id` at it. Called for a
+    REJECTED human review too, as long as it concerns the raw_field's
+    currently active event (or there isn't one yet) — status tracks
     "the most recently resolved state for this raw_field", not only "a
     usable result"; callers must check `event.decision` separately
     before treating an active event as something to build a card from.
+    Rejecting an old, already-superseded event does NOT call this — see
+    ui/app.py::review()'s reject branch, added for MVP 2.18's ability to
+    reopen any past event for review.
     """
     previous_active_id = raw_field.current_classification_event_id
     if previous_active_id is not None:
