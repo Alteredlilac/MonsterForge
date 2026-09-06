@@ -84,9 +84,19 @@ name or id, each with a full event-by-event history — every LLM run
 and human decision that ever happened to it, with exactly what a
 correction changed highlighted — and a way to reopen any past
 attempt, not just the current one, for a fresh review decision that
-supersedes whatever is active now.
+supersedes whatever is active now. Reopening an old attempt now also
+carries over that specific attempt's own saved image rather than
+showing a blank field, a reviewer can change a card's artwork directly
+while correcting its classification, and rejecting an old, superseded
+attempt this way can no longer silently deactivate a genuinely good
+current result — it only takes effect when it's the currently active
+attempt (or a raw field's very first decision) being rejected. A raw
+field whose active attempt was rejected also stays visible in the
+library instead of disappearing entirely — flagged in red, with its
+Raw Input and History still there so an earlier good attempt can be
+found and reactivated.
 
-The current test suite contains 703 passing tests, 0 failing.
+The current test suite contains 709 passing tests, 0 failing.
 
 ## What works today
 
@@ -230,9 +240,29 @@ The current test suite contains 703 passing tests, 0 failing.
   instead of silently reclassifying. The CLI doesn't use this cache yet
   — only `/convert`/`/review` do.
 
+- **A browsable, searchable library of everything the database has
+  saved** (`/library/cards`): every saved attack, filterable by name or
+  id, each with a full event-by-event history (every LLM run and human
+  decision, with exactly what a correction changed highlighted) and a
+  link to reopen any past attempt — not just the current one — for a
+  fresh review decision that supersedes whatever is active now, image
+  included. A raw field whose currently active attempt was rejected
+  stays in the library rather than disappearing, flagged rather than
+  hidden, so an earlier good attempt underneath it can still be found
+  and reactivated. Rejecting a *reopened, already-superseded* attempt
+  this way no longer risks silently deactivating a good current result
+  — only rejecting the currently active attempt (or a raw field's very
+  first decision) actually takes effect.
+
 ## Test coverage
 
-**703 passing, 0 failing.** 43 of those cover the cards library added
+**709 passing, 0 failing.** 6 of those close out gaps found testing
+the cards library the same session it was built: a rejected reopened
+attempt no longer deactivating a good active result, an editable image
+field on a correction (and Approve/Reject/Rerun correctly ignoring it),
+and a reopened attempt correctly carrying over its own saved image
+(or a blank one, tolerated rather than raised, when it never had a
+card at all). Before that, 43 of those cover the cards library added
 this session: `pipeline/attack_repository.py::list_saved_cards()`/
 `list_classification_events()` (name/id search, skipping rejected or
 anomalous rows, walking back to the originating LLM run for
@@ -513,6 +543,15 @@ full changelog:
   test suite that had only ever exercised the approval path. Fixed by
   reading the classification from the attack's actual current event
   directly.
+- Reopening a past attempt for review (rather than the current one)
+  let a reviewer reject it, which unconditionally deactivated whatever
+  was currently active for that raw field — correct back when reject
+  could only ever apply to the newest/active attempt, but wrong once
+  any past attempt became reachable for review on its own. Fixed by
+  only deactivating the current result when the rejection is actually
+  about the currently active attempt (or a raw field's very first
+  decision); rejecting an older, already-superseded attempt is still
+  recorded in its history, it just no longer takes over as active.
 
 ## Documentation housekeeping
 
