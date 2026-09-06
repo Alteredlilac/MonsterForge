@@ -478,7 +478,15 @@ def test_list_saved_cards_shows_the_corrected_values_not_the_original(seeded_db_
     assert entries[0]["classification_result"]["move_type"] == "physical"
 
 
-def test_list_saved_cards_skips_a_rejected_raw_field(seeded_db_session):
+def test_list_saved_cards_includes_a_rejected_raw_field_with_no_card(seeded_db_session):
+    """A REJECTED active event still gets an entry (unlike an earlier
+    version of this function, which skipped it entirely) -- it must
+    stay reachable, history included, so a reviewer can find and
+    reactivate an earlier good attempt instead of the raw_field simply
+    vanishing from the library. find_existing_card() is never called
+    for it (a REJECTED event never has a card), so move_card/
+    classification_result are both None and name falls back to
+    raw_fields.data["name"]."""
     raw_field = _make_raw_field(seeded_db_session)
     result = AttackSemanticResult(description="Uncertain.", move_type=MoveType.PHYSICAL, move_range=None,
                                    confidence=0.4, rationale="Low.")
@@ -490,7 +498,13 @@ def test_list_saved_cards_skips_a_rejected_raw_field(seeded_db_session):
                                         review=reject, actor=get_human_actor(seeded_db_session))
     activate_classification_event(seeded_db_session, raw_field=raw_field, event=reject_event)
 
-    assert list_saved_cards(seeded_db_session) == []
+    entries = list_saved_cards(seeded_db_session)
+
+    assert len(entries) == 1
+    assert entries[0]["name"] == "Bite"
+    assert entries[0]["move_card"] is None
+    assert entries[0]["classification_result"] is None
+    assert entries[0]["revision_count"] == 2  # the LLM_RUN plus the rejection
 
 
 def test_list_saved_cards_skips_a_raw_field_with_no_active_event(seeded_db_session):

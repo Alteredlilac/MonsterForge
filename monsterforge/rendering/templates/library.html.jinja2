@@ -232,7 +232,9 @@
         <span class="entry-name">{{ entry.name }}</span>
         <span class="entry-id">ID {{ entry.short_id }} · {{ entry.revision_count }} revision{{ "s" if entry.revision_count != 1 else "" }}</span>
       </span>
-      <span class="entry-meta">{{ entry.move_type }} / {{ entry.category }}</span>
+      <span class="entry-meta">
+        {% if entry.has_card %}{{ entry.move_type }} / {{ entry.category }}{% else %}<span class="text-danger">rejected</span>{% endif %}
+      </span>
     </li>
     {% endfor %}
   </ul>
@@ -247,10 +249,14 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
+        {% if not entry.has_card %}
+        <div class="alert alert-warning">This attack's active attempt was rejected — no card was produced. See History for what happened and to reopen an earlier attempt.</div>
+        {% endif %}
         <ul class="nav nav-tabs" role="tablist">
           <li class="nav-item">
             <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#raw-{{ entry.index }}" type="button">Raw Input</button>
           </li>
+          {% if entry.has_card %}
           <li class="nav-item">
             <button class="nav-link" data-bs-toggle="tab" data-bs-target="#classification-{{ entry.index }}" type="button">Classification</button>
           </li>
@@ -260,6 +266,7 @@
           <li class="nav-item">
             <button class="nav-link card-tab-trigger" data-bs-toggle="tab" data-bs-target="#card-{{ entry.index }}" type="button">Card</button>
           </li>
+          {% endif %}
           <li class="nav-item">
             <button class="nav-link" data-bs-toggle="tab" data-bs-target="#history-{{ entry.index }}" type="button">History</button>
           </li>
@@ -270,6 +277,7 @@
             {{ terminal(entry.raw_input_json) }}
             {{ terminal(entry.context_json) }}
           </div>
+          {% if entry.has_card %}
           <div class="tab-pane fade" id="classification-{{ entry.index }}">
             <p class="tab-description">The <strong>currently active</strong> classification for this attack: what the LLM decided, its own confidence/rationale, and — when this result went through review — the human reviewer's score/note.</p>
             {{ terminal(entry.classification_values_json) }}
@@ -291,6 +299,7 @@
               <a href="/library/cards/{{ entry.raw_field_id }}" class="btn btn-outline-secondary">Open for Print / Review</a>
             </div>
           </div>
+          {% endif %}
           <div class="tab-pane fade" id="history-{{ entry.index }}">
             <p class="tab-description">Every LLM run and human decision recorded for this attack, oldest first — not just the currently active result.</p>
             {% for event in entry.history %}

@@ -809,7 +809,11 @@ def test_library_lists_a_saved_auto_approved_card():
     assert "A vicious bite." in response.text  # classification values block
 
 
-def test_library_excludes_a_rejected_attack():
+def test_library_shows_a_rejected_attack_with_no_card_or_classification_tabs():
+    """A rejected raw_field must stay reachable (name, id, Raw Input and
+    History tabs) instead of vanishing from the library entirely -- but
+    with no Card/Classification/JSON tabs, since none of them exist for
+    it (see pipeline.attack_repository.list_saved_cards())."""
     page_html = _review_page_html(confidence=0.3)
     client.post("/review", data={
         **REVIEW_HIDDEN_BASE, **_extract_review_ids(page_html),
@@ -818,7 +822,13 @@ def test_library_excludes_a_rejected_attack():
 
     response = client.get("/library/cards")
 
-    assert "0 Cards in the Library" in response.text
+    assert "1 Cards in the Library" in response.text
+    assert "BITE" in response.text.upper()
+    assert "rejected" in response.text.lower()
+    assert 'data-bs-target="#card-1"' not in response.text
+    assert 'data-bs-target="#classification-1"' not in response.text
+    assert 'data-bs-target="#json-1"' not in response.text
+    assert 'data-bs-target="#history-1"' in response.text
 
 
 def test_library_hides_human_review_fields_for_an_auto_approved_card():

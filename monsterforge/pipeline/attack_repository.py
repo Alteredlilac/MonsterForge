@@ -351,12 +351,26 @@ def list_saved_cards(session: Session, *, query: str | None = None) -> list[dict
       (case-insensitive) or whose id starts with it — matches either
       the full raw_field id or the short id shown in the library UI
       (see rendering/library_renderer.py's short_id).
-    - A raw_field with no active event yet, or whose active event was
-      REJECTED (no card exists for a rejection), is skipped.
-    - A raw_field whose active event has no saved card behind it
-      (InconsistentActiveClassificationError) is skipped rather than
-      raised: this is a read-only browsing view, one broken row must
-      not break the whole listing.
+    - A raw_field with no active event yet is skipped — there is
+      nothing at all to show for it yet.
+    - A raw_field whose active event is REJECTED still gets an entry
+      (unlike earlier versions of this function, which skipped it
+      entirely): a rejection reachable via /library/events/{id}/review
+      (MVP 2.18) must stay reachable itself, history included, rather
+      than vanishing from the library along with any good earlier
+      result a reviewer might want to reactivate. find_existing_card()
+      is never even called in this case — a REJECTED event never has a
+      card (see record_human_review()/_render_card()) — so
+      classification_result/move_card are both None; the entry's
+      display name falls back to raw_fields.data["name"] instead of a
+      card's own name (see rendering/library_renderer.py for how it
+      renders an entry with no card).
+    - A raw_field whose active event is NOT rejected but still has no
+      saved card behind it (InconsistentActiveClassificationError) is
+      skipped rather than given an entry: that combination is a genuine
+      data-integrity anomaly, not the expected REJECTED case above, and
+      this is a read-only browsing view where one broken row must not
+      break the whole listing.
     - classification_result is the active event's own result dict
       (description/move_type/move_range/confidence/rationale, see
       semantic_result_to_dict()) — always the currently active values,
@@ -366,8 +380,7 @@ def list_saved_cards(session: Session, *, query: str | None = None) -> list[dict
       only ever replaces description/move_type/move_range (see
       ui/app.py's "correct" branch), never confidence/rationale, so
       they're carried through from the original classification either
-      way. (REJECTED reviews, whose result is an empty dict, are
-      already filtered out above.)
+      way.
     - assigned_llm_score/edit_note come straight from the active event
       (populated only for HUMAN_REVIEW/MANUAL_CORRECTION) — None when
       the active event is an auto-approved LLM_RUN with no human
@@ -387,18 +400,21 @@ def list_saved_cards(session: Session, *, query: str | None = None) -> list[dict
     entries = []
     for raw_field in raw_fields:
         active_event = session.get(ClassificationEvent, raw_field.current_classification_event_id)
-        if active_event.decision == ValidationStatus.REJECTED:
-            continue
 
-        try:
-            _structured_data, card = find_existing_card(session, active_event)
-        except InconsistentActiveClassificationError:
-            continue
+        card = None
+        classification_result = None
+        if active_event.decision != ValidationStatus.REJECTED:
+            try:
+                _structured_data, card = find_existing_card(session, active_event)
+            except InconsistentActiveClassificationError:
+                continue
+            classification_result = active_event.result
 
         events = list_classification_events(session, raw_field.id)
 
         entries.append({
             "raw_field_id": raw_field.id,
+            "name": raw_field.data["name"],
             "case": {
                 "name": raw_field.data["name"],
                 "modifier": raw_field.data["modifier"],
@@ -411,12 +427,12 @@ def list_saved_cards(session: Session, *, query: str | None = None) -> list[dict
                 "creature_subtype": raw_field.data.get("creature_subtype"),
             },
             "raw_response": None,
-            "classification_result": active_event.result,
+            "classification_result": classification_result,
             "assigned_llm_score": active_event.assigned_llm_score,
             "edit_note": active_event.edit_note,
             "revision_count": len(events),
             "events": events,
-            "move_card": card.content,
+            "move_card": card.content if card else None,
         })
     return entries
 

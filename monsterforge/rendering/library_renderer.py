@@ -100,34 +100,59 @@ def _build_history(events: list[dict]) -> list[dict]:
 
 
 def _build_library_entry(index: int, entry: dict) -> dict:
+    """
+    Build one modal's worth of display data from list_saved_cards()'s
+    entry shape.
+
+    has_card is False for a raw_field whose active event is REJECTED
+    (see list_saved_cards()) — there is no card, and no classification
+    to show: the Classification/JSON/Card tabs are omitted entirely by
+    library.html.jinja2 in that case, leaving only Raw Input and
+    History (always meaningful, rejection included). name falls back to
+    entry["name"] (raw_fields.data["name"], promoted by
+    list_saved_cards()) instead of a card's own name, since there's no
+    card to read it from.
+    """
     move_card = entry["move_card"]
-    card_html = _fragment_template.render(**build_card_context(move_card))
-    classification_result = entry["classification_result"] or {}
-    classification_values = {
-        key: classification_result.get(key) for key in ("description", "move_type", "move_range")
-    }
-    classification_confidence = {
-        key: classification_result.get(key) for key in ("confidence", "rationale")
-    }
-    human_review = None
-    if entry["assigned_llm_score"] is not None or entry["edit_note"]:
-        human_review = {"assigned_llm_score": entry["assigned_llm_score"], "edit_note": entry["edit_note"]}
+    has_card = move_card is not None
+
+    card_html = None
+    classification_values_json = None
+    classification_confidence_json = None
+    human_review_json = None
+    move_card_json = None
+    if has_card:
+        card_html = _fragment_template.render(**build_card_context(move_card))
+        classification_result = entry["classification_result"] or {}
+        classification_values = {
+            key: classification_result.get(key) for key in ("description", "move_type", "move_range")
+        }
+        classification_confidence = {
+            key: classification_result.get(key) for key in ("confidence", "rationale")
+        }
+        classification_values_json = json.dumps(classification_values, indent=2)
+        classification_confidence_json = json.dumps(classification_confidence, indent=2)
+        if entry["assigned_llm_score"] is not None or entry["edit_note"]:
+            human_review = {"assigned_llm_score": entry["assigned_llm_score"], "edit_note": entry["edit_note"]}
+            human_review_json = json.dumps(human_review, indent=2)
+        move_card_json = json.dumps(move_card, indent=2)
 
     return {
         "index": index,
         "raw_field_id": entry["raw_field_id"],
         "short_id": entry["raw_field_id"][:8],
         "revision_count": entry["revision_count"],
-        "name": move_card["name"],
-        "move_type": move_card["move_type"],
-        "category": move_card["category"],
+        "has_card": has_card,
+        "name": move_card["name"] if has_card else entry["name"],
+        "move_type": move_card["move_type"] if has_card else None,
+        "category": move_card["category"] if has_card else None,
         "card_html": card_html,
         "raw_input_json": json.dumps(entry["case"], indent=2),
         "context_json": json.dumps(entry["context"], indent=2),
-        "classification_values_json": json.dumps(classification_values, indent=2),
-        "classification_confidence_json": json.dumps(classification_confidence, indent=2),
-        "human_review_json": json.dumps(human_review, indent=2) if human_review is not None else None,
-        "move_card_json": json.dumps(move_card, indent=2),
+        "classification_values_json": classification_values_json,
+        "classification_confidence_json": classification_confidence_json,
+        "human_review_json": human_review_json,
+        "move_card_json": move_card_json,
         "history": _build_history(entry["events"]),
     }
 
@@ -137,9 +162,11 @@ def render_library_html(entries: list[dict], query: str = "") -> str:
     Render the cards-library page from pipeline.attack_repository.list_saved_cards()'s output.
 
     Each entry is expected to have the shape that function builds:
-    {"raw_field_id", "case", "context", "classification_result",
+    {"raw_field_id", "name", "case", "context", "classification_result",
     "assigned_llm_score", "edit_note", "revision_count", "events",
-    "move_card"}.
+    "move_card"} — "move_card"/"classification_result" are None for a
+    raw_field whose active event is REJECTED, in which case "name" (not
+    a card's own name) is what gets displayed, see _build_library_entry().
 
     query is redisplayed in the search box and drives a "no results"
     message distinct from "nothing saved at all" when entries is empty
