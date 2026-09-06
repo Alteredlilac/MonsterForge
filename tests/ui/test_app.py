@@ -1050,6 +1050,55 @@ def test_reopen_event_for_review_can_reactivate_an_old_event(seeded_db_session):
     assert reactivated_event.referenced_event_id == original_event_id
 
 
+def test_reopen_event_for_review_prefills_the_image_from_that_events_own_card(seeded_db_session):
+    """Regression: reopening an old, already-superseded event used to
+    always show a blank image field, even when that event's own card had
+    one -- the image must come from the specific event being reopened,
+    not from whatever is currently active."""
+    with patch("monsterforge.ui.app.classify_attack", return_value=make_semantic_result(confidence=0.95)):
+        client.post("/convert", data={**RAW_ATTACK_FORM, "image_uri": "https://example.com/original.png"})
+
+    raw_field = seeded_db_session.query(RawField).one()
+    original_event_id = raw_field.current_classification_event_id
+
+    card_page = client.get(f"/library/cards/{raw_field.id}").text
+    client.post("/review", data={
+        **REVIEW_HIDDEN_BASE, **_extract_review_ids(card_page),
+        "semantic_result_json": _extract_semantic_result_json(card_page), "decision": "correct",
+        "name": "Bite", "description": "A corrected bite.", "move_type": "magical",
+        "range_value": "", "range_unit": "metric",
+        "image_uri": "https://example.com/original.png",
+        "corrected_image_uri": "https://example.com/updated.png",
+    })
+
+    reopen_page = client.get(f"/library/events/{original_event_id}/review")
+
+    assert reopen_page.status_code == 200
+    assert "https://example.com/original.png" in reopen_page.text
+    assert "https://example.com/updated.png" not in reopen_page.text
+
+
+def test_reopen_event_for_review_leaves_the_image_blank_when_that_event_has_no_card():
+    """A superseded LLM_RUN overtaken by a rerun before ever being
+    decided never had a card built for it -- reopening it must not
+    raise (InconsistentActiveClassificationError caught as a normal,
+    tolerated case here, not an anomaly), just show a blank image."""
+    page_html = _review_page_html()
+    original_event_id = _extract_review_ids(page_html)["classification_event_id"]
+
+    with patch("monsterforge.ui.app.classify_attack", return_value=make_semantic_result(confidence=0.2)):
+        client.post("/review", data={
+            **REVIEW_HIDDEN_BASE, **_extract_review_ids(page_html),
+            "semantic_result_json": _extract_semantic_result_json(page_html), "decision": "rerun",
+            "rerun_template_name": TEMPLATE_NAME,
+        })
+
+    response = client.get(f"/library/events/{original_event_id}/review")
+
+    assert response.status_code == 200
+    assert 'name="corrected_image_uri"' in response.text
+
+
 def test_reopen_event_for_review_rejects_a_rejected_event(seeded_db_session):
     """Not reachable from the library UI (see library.html.jinja2's own
     "!= rejected" check), but guarded here too in case this URL is hit

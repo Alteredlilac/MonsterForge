@@ -463,10 +463,22 @@ def reopen_event_for_review(
         origin_event = session.get(ClassificationEvent, event.referenced_event_id)
     template_name = origin_event.prompt_name or ATTACK_PROMPT_TEMPLATE
 
+    try:
+        _structured_data, card = find_existing_card(session, event)
+        image_uri = card.image_uri or ""
+    except InconsistentActiveClassificationError:
+        # NOTE:
+        # Unlike view_saved_card()'s lookup on the raw_field's ACTIVE
+        # event (where a missing card is a real data-integrity anomaly),
+        # a missing card here is normal, not an anomaly: a superseded
+        # LLM_RUN that a rerun overtook before ever being decided, or a
+        # rejected review, never had one built in the first place.
+        image_uri = ""
+
     return templates.TemplateResponse(
         request, "review_form.html.jinja2",
         _review_form_context(
-            raw_attack, semantic_context, semantic_result, template_name, "",
+            raw_attack, semantic_context, semantic_result, template_name, image_uri,
             raw_field_id=raw_field.id, classification_event_id=event.id,
         ),
     )
