@@ -129,6 +129,16 @@ class ClassificationEvent(Base):
     # Populated only for event_type in (HUMAN_REVIEW, MANUAL_CORRECTION).
     assigned_llm_score: Mapped[float | None] = mapped_column(sa.Float, nullable=True)
     edit_note: Mapped[str | None] = mapped_column(sa.Text, nullable=True)
+    # NOTE:
+    # The corrected name, only on a CORRECTED human_review/
+    # manual_correction row where the reviewer actually edited it --
+    # NULL everywhere else. raw_fields.name/raw_fields.data["name"] are
+    # never rewritten after creation (see RawField above), so this
+    # column is the only place a name correction is recorded at all --
+    # name isn't part of AttackSemanticResult (never LLM-classified),
+    # so it can't live in `result` the way description/move_type/
+    # move_range do.
+    corrected_name: Mapped[str | None] = mapped_column(sa.Text, nullable=True)
     # Never NULL — every event has an actor, including the LLM itself.
     actor_id: Mapped[str] = mapped_column(sa.Text, sa.ForeignKey("actors.id"))
     # NOTE:

@@ -197,6 +197,49 @@ def test_classification_event_referenced_event_id_can_point_at_an_earlier_event(
     assert result.edit_note == "looks correct"
 
 
+def test_classification_event_corrected_name_round_trips(db_session):
+    """MVP 2.19: the only place a name correction is ever recorded --
+    raw_fields.name/data["name"] are never rewritten after creation."""
+    game, actor = _make_game_and_actor(db_session)
+    raw_field = _make_raw_field(db_session, game)
+
+    event = ClassificationEvent(
+        raw_field_id=raw_field.id,
+        event_type=EventType.HUMAN_REVIEW,
+        result={},
+        corrected_name="Fixed Name",
+        actor_id=actor.id,
+        decision=ValidationStatus.CORRECTED,
+        status=EventStatus.ACTIVE,
+        created_at=datetime.datetime(2026, 9, 6, 10, 0),
+    )
+    db_session.add(event)
+    db_session.commit()
+
+    assert db_session.query(ClassificationEvent).one().corrected_name == "Fixed Name"
+
+
+def test_classification_event_corrected_name_defaults_to_none(db_session):
+    """Every row except an actual name correction -- an LLM_RUN never
+    touches it at all."""
+    game, actor = _make_game_and_actor(db_session)
+    raw_field = _make_raw_field(db_session, game)
+
+    event = ClassificationEvent(
+        raw_field_id=raw_field.id,
+        event_type=EventType.LLM_RUN,
+        result={},
+        actor_id=actor.id,
+        decision=None,
+        status=EventStatus.PENDING,
+        created_at=datetime.datetime(2026, 9, 6, 10, 0),
+    )
+    db_session.add(event)
+    db_session.commit()
+
+    assert db_session.query(ClassificationEvent).one().corrected_name is None
+
+
 def test_classification_event_rejects_an_unknown_raw_field_id(db_session):
     _game, actor = _make_game_and_actor(db_session)
 
