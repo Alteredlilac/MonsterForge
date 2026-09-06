@@ -1,5 +1,7 @@
 # MonsterForge — RPG Data Transformation Engine
 
+[![Tests](https://github.com/Alteredlilac/MonsterForge/actions/workflows/tests.yml/badge.svg)](https://github.com/Alteredlilac/MonsterForge/actions/workflows/tests.yml)
+
 A typed, multi-stage data transformation pipeline, combining
 deterministic parsing and calculation with LLM-assisted semantic
 classification, applied to a concrete case: converting D&D
