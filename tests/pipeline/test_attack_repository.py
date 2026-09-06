@@ -22,6 +22,7 @@ from monsterforge.pipeline.attack_repository import (
     list_saved_cards,
     record_human_review,
     record_llm_run,
+    resolve_effective_name,
     save_card,
     save_structured_data,
 )
@@ -262,6 +263,40 @@ def test_record_human_review_rejected_stores_an_empty_dict_not_none(seeded_db_se
     assert review_event.decision == ValidationStatus.REJECTED
 
 
+def test_record_human_review_stores_the_corrected_name(seeded_db_session):
+    """MVP 2.19: the corrected name has nowhere else to live -- it's
+    never part of AttackSemanticResult (see HumanReview.corrected_name's
+    own docstring) -- so record_human_review() must persist it onto the
+    new classification_events.corrected_name column directly."""
+    raw_field = _make_raw_field(seeded_db_session)
+    result = AttackSemanticResult(description="A bite.", move_type=MoveType.PHYSICAL, move_range=None,
+                                   confidence=0.4, rationale="Low.")
+    llm_event = record_llm_run(seeded_db_session, raw_field=raw_field, semantic_result=result,
+                                actor=get_llm_actor(seeded_db_session), prompt_name="classify_attack.jinja2",
+                                model_name="gemini-flash-lite-latest", confidence_threshold=0.7, decision=None)
+    correct = HumanReview(status=ValidationStatus.CORRECTED, result=result, corrected_name="Fixed Name")
+
+    review_event = record_human_review(seeded_db_session, raw_field=raw_field, referenced_event=llm_event,
+                                        review=correct, actor=get_human_actor(seeded_db_session))
+
+    assert review_event.corrected_name == "Fixed Name"
+
+
+def test_record_human_review_leaves_corrected_name_null_when_not_given(seeded_db_session):
+    raw_field = _make_raw_field(seeded_db_session)
+    result = AttackSemanticResult(description="A bite.", move_type=MoveType.PHYSICAL, move_range=None,
+                                   confidence=0.9, rationale="Clear.")
+    llm_event = record_llm_run(seeded_db_session, raw_field=raw_field, semantic_result=result,
+                                actor=get_llm_actor(seeded_db_session), prompt_name="classify_attack.jinja2",
+                                model_name="gemini-flash-lite-latest", confidence_threshold=0.7, decision=None)
+    approve = HumanReview(status=ValidationStatus.APPROVED, result=result)
+
+    review_event = record_human_review(seeded_db_session, raw_field=raw_field, referenced_event=llm_event,
+                                        review=approve, actor=get_human_actor(seeded_db_session))
+
+    assert review_event.corrected_name is None
+
+
 # =====================
 # SAVE_STRUCTURED_DATA / SAVE_CARD / FIND_EXISTING_CARD
 # =====================
@@ -393,6 +428,86 @@ def test_list_classification_events_result_reflects_a_correction_not_the_origina
     assert events[1]["result"]["move_type"] == "physical"  # the reviewer's correction
 
 
+def test_list_classification_events_effective_name_defaults_to_the_raw_fields_original(seeded_db_session):
+    """No correction has ever touched the name -- every event's
+    effective_name falls back to raw_fields.data["name"] (BITE's own
+    "Bite", see _make_raw_field())."""
+    raw_field = _make_raw_field(seeded_db_session)
+    result = AttackSemanticResult(description="A bite.", move_type=MoveType.PHYSICAL, move_range=None,
+                                   confidence=0.9, rationale="Clear.")
+    record_llm_run(seeded_db_session, raw_field=raw_field, semantic_result=result,
+                    actor=get_llm_actor(seeded_db_session), prompt_name="classify_attack.jinja2",
+                    model_name="gemini-flash-lite-latest", confidence_threshold=0.7,
+                    decision=ValidationStatus.AUTO_APPROVED)
+
+    events = list_classification_events(seeded_db_session, raw_field.id)
+
+    assert events[0]["corrected_name"] is None
+    assert events[0]["effective_name"] == "Bite"
+
+
+def test_list_classification_events_effective_name_carries_a_correction_forward(seeded_db_session):
+    """A later event that never touches the name (an approve, or a
+    fresh rerun) must still show the corrected name as its own
+    effective_name, not silently revert to the original -- the whole
+    point of MVP 2.19."""
+    raw_field = _make_raw_field(seeded_db_session)
+    result = AttackSemanticResult(description="A bite.", move_type=MoveType.PHYSICAL, move_range=None,
+                                   confidence=0.4, rationale="Low.")
+    llm_event = record_llm_run(seeded_db_session, raw_field=raw_field, semantic_result=result,
+                                actor=get_llm_actor(seeded_db_session), prompt_name="classify_attack.jinja2",
+                                model_name="gemini-flash-lite-latest", confidence_threshold=0.7, decision=None)
+    correct = HumanReview(status=ValidationStatus.CORRECTED, result=result, corrected_name="Fixed Name")
+    correction_event = record_human_review(seeded_db_session, raw_field=raw_field, referenced_event=llm_event,
+                                            review=correct, actor=get_human_actor(seeded_db_session))
+    activate_classification_event(seeded_db_session, raw_field=raw_field, event=correction_event)
+
+    rerun_event = record_llm_run(seeded_db_session, raw_field=raw_field, semantic_result=result,
+                                  actor=get_llm_actor(seeded_db_session), prompt_name="classify_attack.jinja2",
+                                  model_name="gemini-flash-lite-latest", confidence_threshold=0.7, decision=None,
+                                  rerun_note="try again")
+
+    events = list_classification_events(seeded_db_session, raw_field.id)
+
+    assert events[0]["effective_name"] == "Bite"        # the original LLM_RUN, before any correction
+    assert events[1]["effective_name"] == "Fixed Name"  # the correction itself
+    assert events[2]["effective_name"] == "Fixed Name"  # a later rerun that never touched the name
+    assert events[2]["id"] == rerun_event.id
+
+
+# =====================
+# RESOLVE_EFFECTIVE_NAME
+# =====================
+def test_resolve_effective_name_returns_the_name_as_of_a_specific_past_event(seeded_db_session):
+    """Resolving an OLD event, from before a later correction, must
+    return the name as it stood back then -- not the raw_field's
+    current name overall. Needed for reopening a past event for review
+    (MVP 2.18) without silently jumping its name forward in time."""
+    raw_field = _make_raw_field(seeded_db_session)
+    result = AttackSemanticResult(description="A bite.", move_type=MoveType.PHYSICAL, move_range=None,
+                                   confidence=0.4, rationale="Low.")
+    llm_event = record_llm_run(seeded_db_session, raw_field=raw_field, semantic_result=result,
+                                actor=get_llm_actor(seeded_db_session), prompt_name="classify_attack.jinja2",
+                                model_name="gemini-flash-lite-latest", confidence_threshold=0.7, decision=None)
+    correct = HumanReview(status=ValidationStatus.CORRECTED, result=result, corrected_name="Fixed Name")
+    record_human_review(seeded_db_session, raw_field=raw_field, referenced_event=llm_event,
+                         review=correct, actor=get_human_actor(seeded_db_session))
+
+    assert resolve_effective_name(seeded_db_session, raw_field, llm_event.id) == "Bite"
+
+
+def test_resolve_effective_name_falls_back_to_the_original_when_never_corrected(seeded_db_session):
+    raw_field = _make_raw_field(seeded_db_session)
+    result = AttackSemanticResult(description="A bite.", move_type=MoveType.PHYSICAL, move_range=None,
+                                   confidence=0.95, rationale="Clear.")
+    event = record_llm_run(seeded_db_session, raw_field=raw_field, semantic_result=result,
+                            actor=get_llm_actor(seeded_db_session), prompt_name="classify_attack.jinja2",
+                            model_name="gemini-flash-lite-latest", confidence_threshold=0.7,
+                            decision=ValidationStatus.AUTO_APPROVED)
+
+    assert resolve_effective_name(seeded_db_session, raw_field, event.id) == "Bite"
+
+
 # =====================
 # LIST_SAVED_CARDS
 # =====================
@@ -505,6 +620,32 @@ def test_list_saved_cards_includes_a_rejected_raw_field_with_no_card(seeded_db_s
     assert entries[0]["move_card"] is None
     assert entries[0]["classification_result"] is None
     assert entries[0]["revision_count"] == 2  # the LLM_RUN plus the rejection
+
+
+def test_list_saved_cards_rejected_fallback_name_reflects_an_earlier_correction(seeded_db_session):
+    """The fallback display name for a rejected raw_field must still
+    reflect a correction made before the rejection, not always the raw,
+    original submission -- resolve_effective_name(), not
+    raw_fields.data["name"] directly (MVP 2.19)."""
+    raw_field = _make_raw_field(seeded_db_session)
+    result = AttackSemanticResult(description="Uncertain.", move_type=MoveType.PHYSICAL, move_range=None,
+                                   confidence=0.4, rationale="Low.")
+    llm_event = record_llm_run(seeded_db_session, raw_field=raw_field, semantic_result=result,
+                                actor=get_llm_actor(seeded_db_session), prompt_name="classify_attack.jinja2",
+                                model_name="gemini-flash-lite-latest", confidence_threshold=0.7, decision=None)
+    correct = HumanReview(status=ValidationStatus.CORRECTED, result=result, corrected_name="Fixed Name")
+    correction_event = record_human_review(seeded_db_session, raw_field=raw_field, referenced_event=llm_event,
+                                            review=correct, actor=get_human_actor(seeded_db_session))
+    activate_classification_event(seeded_db_session, raw_field=raw_field, event=correction_event)
+
+    reject = HumanReview(status=ValidationStatus.REJECTED, result=None)
+    reject_event = record_human_review(seeded_db_session, raw_field=raw_field, referenced_event=correction_event,
+                                        review=reject, actor=get_human_actor(seeded_db_session))
+    activate_classification_event(seeded_db_session, raw_field=raw_field, event=reject_event)
+
+    entries = list_saved_cards(seeded_db_session)
+
+    assert entries[0]["name"] == "Fixed Name"
 
 
 def test_list_saved_cards_skips_a_raw_field_with_no_active_event(seeded_db_session):

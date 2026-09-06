@@ -53,3 +53,4 @@ class HumanReview:
     result: AttackSemanticResult | None
     assigned_llm_score: float | None = None  # the reviewer's own score of the classification, distinct from the LLM's own self-reported confidence
     edit_note: str | None = None             # the reviewer's explanation for a correction or rejection, the human counterpart to the LLM's own rationale
+    corrected_name: str | None = None        # the name after a correction, if the reviewer changed it -- name isn't part of AttackSemanticResult (it's user text, never LLM-classified), so it can't live in result like description/move_type/move_range do

@@ -217,6 +217,7 @@ def record_human_review(
         result=semantic_result_to_dict(review.result) if review.result is not None else {},
         assigned_llm_score=review.assigned_llm_score,
         edit_note=review.edit_note,
+        corrected_name=review.corrected_name,
         actor_id=actor.id,
         decision=review.status,
         status=EventStatus.PENDING,
@@ -310,6 +311,15 @@ def list_classification_events(session: Session, raw_field_id: str) -> list[dict
       current_classification_event_id, independent of chronological
       position — a rerun can sit PENDING, never activated, so "active"
       is not simply "the newest row".
+    - effective_name is the name actually in effect right after this
+      event, resolved by walking the raw_field's corrected_name history
+      forward from raw_fields.data["name"] (the original submission) —
+      unlike description/move_type/move_range, corrected_name is only
+      ever set on the specific event that changed it (NULL everywhere
+      else), so this carries the most recent non-NULL value forward
+      instead of reading a single row in isolation. See also
+      resolve_effective_name(), which looks up one specific event's
+      effective_name from this same list.
     """
     raw_field = session.get(RawField, raw_field_id)
     events = (
@@ -320,8 +330,11 @@ def list_classification_events(session: Session, raw_field_id: str) -> list[dict
     )
 
     summaries = []
+    effective_name = raw_field.data["name"]
     for event in events:
         actor = session.get(Actor, event.actor_id)
+        if event.corrected_name is not None:
+            effective_name = event.corrected_name
         summaries.append({
             "id": event.id,
             "event_type": event.event_type.value,
@@ -337,8 +350,27 @@ def list_classification_events(session: Session, raw_field_id: str) -> list[dict
             "rerun_note": event.rerun_note,
             "assigned_llm_score": event.assigned_llm_score,
             "edit_note": event.edit_note,
+            "corrected_name": event.corrected_name,
+            "effective_name": effective_name,
         })
     return summaries
+
+
+def resolve_effective_name(session: Session, raw_field: RawField, event_id: str) -> str:
+    """
+    Resolve the name in effect right after one specific classification_
+    events row — not necessarily the raw_field's current one, since
+    event_id may be an old, already-superseded event reopened for
+    review (MVP 2.18) that predates a later correction.
+
+    Falls back to raw_fields.data["name"] (the original submission) if
+    event_id isn't found in the raw_field's own history at all, which
+    should not happen in practice for a valid event_id.
+    """
+    for event in list_classification_events(session, raw_field.id):
+        if event["id"] == event_id:
+            return event["effective_name"]
+    return raw_field.data["name"]
 
 
 def list_saved_cards(session: Session, *, query: str | None = None) -> list[dict]:
@@ -362,9 +394,11 @@ def list_saved_cards(session: Session, *, query: str | None = None) -> list[dict
       is never even called in this case — a REJECTED event never has a
       card (see record_human_review()/_render_card()) — so
       classification_result/move_card are both None; the entry's
-      display name falls back to raw_fields.data["name"] instead of a
-      card's own name (see rendering/library_renderer.py for how it
-      renders an entry with no card).
+      display name falls back to resolve_effective_name() (the raw_field's
+      original name, or a later correction if one happened before the
+      rejection) instead of a card's own name (see
+      rendering/library_renderer.py for how it renders an entry with no
+      card).
     - A raw_field whose active event is NOT rejected but still has no
       saved card behind it (InconsistentActiveClassificationError) is
       skipped rather than given an entry: that combination is a genuine
@@ -414,7 +448,7 @@ def list_saved_cards(session: Session, *, query: str | None = None) -> list[dict
 
         entries.append({
             "raw_field_id": raw_field.id,
-            "name": raw_field.data["name"],
+            "name": resolve_effective_name(session, raw_field, active_event.id),
             "case": {
                 "name": raw_field.data["name"],
                 "modifier": raw_field.data["modifier"],
