@@ -498,6 +498,55 @@ def test_review_approve_carries_image_uri_through_to_the_card():
     assert "https://example.com/bite.png" in response.text
 
 
+def test_review_form_prefills_corrected_image_uri_with_the_current_image():
+    with patch("monsterforge.ui.app.classify_attack", return_value=make_semantic_result(confidence=0.3)):
+        response = client.post("/convert", data={**RAW_ATTACK_FORM, "image_uri": "https://example.com/bite.png"})
+
+    assert response.status_code == 200
+    assert 'name="corrected_image_uri"' in response.text
+    assert 'value="https://example.com/bite.png"' in response.text
+
+
+def test_review_correct_uses_the_corrected_image_uri_not_the_original():
+    """Changing the image is a visual correction, only meaningful on the
+    "correct" branch -- the corrected value must win over whatever the
+    original, unchanged image_uri hidden field still carries."""
+    page_html = _review_page_html()
+    semantic_result_json = _extract_semantic_result_json(page_html)
+
+    response = client.post("/review", data={
+        **REVIEW_HIDDEN_BASE, **_extract_review_ids(page_html),
+        "semantic_result_json": semantic_result_json, "decision": "correct",
+        "name": "Bite", "description": "A vicious bite.", "move_type": "physical",
+        "range_value": "", "range_unit": "metric",
+        "image_uri": "https://example.com/original.png",
+        "corrected_image_uri": "https://example.com/new.png",
+    })
+
+    assert response.status_code == 200
+    assert "https://example.com/new.png" in response.text
+    assert "https://example.com/original.png" not in response.text
+
+
+def test_review_approve_ignores_a_stray_corrected_image_uri():
+    """corrected_image_uri is only ever read on the "correct" branch
+    (see ui/app.py::review()) -- Approve must keep the original image_uri
+    untouched even if a value happens to be present in that field."""
+    page_html = _review_page_html()
+    semantic_result_json = _extract_semantic_result_json(page_html)
+
+    response = client.post("/review", data={
+        **REVIEW_HIDDEN_BASE, **_extract_review_ids(page_html),
+        "semantic_result_json": semantic_result_json, "decision": "approve",
+        "image_uri": "https://example.com/original.png",
+        "corrected_image_uri": "https://example.com/should-be-ignored.png",
+    })
+
+    assert response.status_code == 200
+    assert "https://example.com/original.png" in response.text
+    assert "https://example.com/should-be-ignored.png" not in response.text
+
+
 def test_rendered_card_includes_an_edit_form_back_to_review():
     with patch("monsterforge.ui.app.classify_attack", return_value=make_semantic_result(confidence=0.95)):
         response = client.post("/convert", data=RAW_ATTACK_FORM)

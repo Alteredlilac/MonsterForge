@@ -708,6 +708,7 @@ def review(
         move_type: str = Form(""),
         range_value: str = Form(""),
         range_unit: str = Form(""),
+        corrected_image_uri: str = Form(""),
         assigned_llm_score: str = Form(""),
         edit_note: str = Form(""),
         rerun_note: str = Form(""),
@@ -832,9 +833,15 @@ def review(
             move_range=corrected_range,
         )
         review_status = ValidationStatus.CORRECTED
+        # NOTE:
+        # A changed image is a visual correction, not a classification
+        # decision -- only the "correct" branch reads corrected_image_uri;
+        # every other decision keeps the original image_uri untouched.
+        final_image_uri = corrected_image_uri
     else:
         final_result = original_result
         review_status = ValidationStatus.APPROVED
+        final_image_uri = image_uri
 
     review_event = record_human_review(
         session, raw_field=raw_field, referenced_event=referenced_event,
@@ -847,13 +854,13 @@ def review(
     try:
         return _render_card(
             session, raw_field, review_event, raw_attack, final_result, semantic_context,
-            template_name, image_uri,
+            template_name, final_image_uri,
         )
     except UnknownAttackRange as exc:
         return templates.TemplateResponse(
             request, "review_form.html.jinja2",
             _review_form_context(
-                raw_attack, semantic_context, final_result, template_name, image_uri,
+                raw_attack, semantic_context, final_result, template_name, final_image_uri,
                 raw_field_id=raw_field_id, classification_event_id=classification_event_id,
                 error_message=f"Could not build the card: {exc} Provide a range below and try again.",
             ),
