@@ -57,6 +57,8 @@ def make_event(event_type="llm_run", result=None, **overrides):
         rerun_note=None,
         assigned_llm_score=None,
         edit_note=None,
+        corrected_name=None,
+        effective_name="Bite",
     )
     defaults.update(overrides)
     return defaults
@@ -132,3 +134,17 @@ def test_render_library_html_does_not_highlight_an_unchanged_field():
     page = render_library_html([make_entry(events=[llm_event, review_event])])
 
     assert page.count('class="history-changed"') == 0
+
+
+def test_render_library_html_highlights_a_name_correction():
+    """name is compared via effective_name, not result (see
+    _build_history_entry()) -- MVP 2.19's own diff row, same cyan
+    treatment already given to description/move_type/move_range."""
+    llm_event = make_event(event_type="llm_run", is_active=False, effective_name="Bite")
+    review_event = make_event(event_type="human_review", is_active=True,
+                               corrected_name="Fixed Name", effective_name="Fixed Name")
+    page = html.unescape(render_library_html([make_entry(events=[llm_event, review_event])]))
+
+    assert '<span class="history-changed">"Fixed Name"</span>' in page
+    # The LLM_RUN is the first event, nothing to compare against yet.
+    assert '<span class="">"Bite"</span>' in page

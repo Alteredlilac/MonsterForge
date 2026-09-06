@@ -31,29 +31,37 @@ def _format_move_range(move_range: dict | None) -> str | None:
     return f"{move_range['effect_range']} {move_range['range_unit_system']}"
 
 
-def _build_history_entry(event: dict, previous_result: dict | None) -> dict:
+def _build_history_entry(event: dict, previous_event: dict | None) -> dict:
     """
     Format one pipeline.attack_repository.list_classification_events()
     summary for display: a header (type/decision/actor+authority/when)
-    plus every field of that event in one JSON-look block — the three
-    fields a human correction can actually change (description/
+    plus every field of that event in one JSON-look block — the four
+    fields a human correction can actually change (name/description/
     move_type/move_range) each flagged as changed when they differ from
-    `previous_result` (the chronologically preceding event's own result
-    — None for the very first event, so nothing is flagged there), then
+    `previous_event` (the chronologically preceding event — None for
+    the very first event, so nothing is flagged there), then
     the remaining, type-specific fields: an LLM_RUN's prompt_name/
     model_name/rerun_note/confidence/rationale, or a HUMAN_REVIEW/
     MANUAL_CORRECTION's assigned_llm_score/edit_note. One block, not
     two — a single event's own detail split across two separately
     bordered boxes read as unrelated at a glance.
+
+    name is compared via effective_name (see list_classification_events()),
+    not result -- unlike description/move_type/move_range, corrected_name
+    is only ever set on the specific event that changed it, so
+    effective_name is what actually carries the current value forward.
     """
     result = event["result"] or {}
-    has_previous = previous_result is not None
-    baseline = previous_result or {}
+    has_previous = previous_event is not None
+    baseline = (previous_event or {}).get("result") or {}
+    previous_name = (previous_event or {}).get("effective_name")
 
     def _field(key: str, display_value, changed: bool = False) -> dict:
         return {"key": key, "value_json": json.dumps(display_value), "changed": changed}
 
     fields = [
+        _field("name", event["effective_name"],
+               has_previous and event["effective_name"] != previous_name),
         _field("description", result.get("description"),
                has_previous and result.get("description") != baseline.get("description")),
         _field("move_type", result.get("move_type"),
@@ -92,10 +100,10 @@ def _build_history(events: list[dict]) -> list[dict]:
     first, each compared against the one immediately before it (None
     for the first, so nothing is flagged as changed there)."""
     history = []
-    previous_result = None
+    previous_event = None
     for event in events:
-        history.append(_build_history_entry(event, previous_result))
-        previous_result = event["result"] or {}
+        history.append(_build_history_entry(event, previous_event))
+        previous_event = event
     return history
 
 
