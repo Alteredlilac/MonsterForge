@@ -1,6 +1,6 @@
 # Project Status
 
-Snapshot of where MonsterForge stands as of September 5, 2026.
+Snapshot of where MonsterForge stands as of September 6, 2026.
 For the system's design and long-term architecture, see [PIPELINE_ARCHITECTURE.md](./PIPELINE_ARCHITECTURE.md)
 and [DESIGN.md](../../DESIGN.md). For how the LLM layer specifically is
 structured, see [LLM_ARCHITECTURE.md](./LLM_ARCHITECTURE.md). For how a
@@ -78,7 +78,15 @@ design demonstrates. The CLI doesn't use this cache yet, and a JSON API
 for external consumers is still just a stub — see
 [Limitations](#limitations--not-yet-built) below.
 
-The current test suite contains 660 passing tests, 0 failing.
+Everything the persistence layer saves is now browsable, too: a cards
+library (`/library/cards`) lists every saved attack, searchable by
+name or id, each with a full event-by-event history — every LLM run
+and human decision that ever happened to it, with exactly what a
+correction changed highlighted — and a way to reopen any past
+attempt, not just the current one, for a fresh review decision that
+supersedes whatever is active now.
+
+The current test suite contains 703 passing tests, 0 failing.
 
 ## What works today
 
@@ -224,7 +232,18 @@ The current test suite contains 660 passing tests, 0 failing.
 
 ## Test coverage
 
-**660 passing, 0 failing.** 58 of those cover the persistence layer
+**703 passing, 0 failing.** 43 of those cover the cards library added
+this session: `pipeline/attack_repository.py::list_saved_cards()`/
+`list_classification_events()` (name/id search, skipping rejected or
+anomalous rows, walking back to the originating LLM run for
+confidence/rationale after a review), the rendering/history-highlight
+logic in `rendering/library_renderer.py`, and the web routes —
+including reopening a past, already-superseded event and confirming
+that approving it reactivates it over whatever was active before. A
+promoted `image_uri` column on `cards` (previously only inside its
+JSON content, now queryable directly, matching the same treatment
+already given to `name`) adds one more. Before that, 58 of those cover
+the persistence layer
 end to end: 34 integrity tests for the database schema itself (every
 table round-trips, enum values are stored as their string value rather
 than their Python name, foreign-key constraints are actually enforced —
@@ -482,6 +501,18 @@ full changelog:
   4 errors; the remaining 4 (the same transient condition, not a new
   bug) resolved on a single manual retry pass, logged in the collected
   dataset rather than silently overwritten.
+- Building the cards library surfaced a real bug in the persistence
+  layer it reads from: the classification shown for a saved attack was
+  read from the *originating* LLM classification event, not the
+  attack's actual current one. Harmless when a reviewer approves a
+  classification as-is (the two are identical in that case), but wrong
+  after a correction — the library kept showing the pre-correction
+  values instead of what a reviewer actually changed them to, and what
+  the saved card actually renders. Found by deliberately testing a
+  correction (flipping a physical attack to magical) rather than by a
+  test suite that had only ever exercised the approval path. Fixed by
+  reading the classification from the attack's actual current event
+  directly.
 
 ## Documentation housekeeping
 

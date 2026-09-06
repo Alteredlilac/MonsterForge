@@ -30,8 +30,11 @@ printable HTML/CSS card, and a low-confidence classification is gated behind
 a human review step (approve, correct, reject, or rerun the classification)
 before it reaches the rest of the pipeline, on both channels. The web form
 caches and persists every classification in a SQLite database, keyed by a
-deterministic fingerprint of the attack — the CLI doesn't use that cache
-yet, and a JSON API for external consumers is still just a stub.
+deterministic fingerprint of the attack, and a browsable library
+(searchable by name or id, with a full per-event history and the option
+to reopen and reactivate any past classification) sits on top of that
+database — the CLI doesn't use that cache yet, and a JSON API for
+external consumers is still just a stub.
 
 For the full, up-to-date picture (what's implemented, test coverage, known
 limitations) see **[monsterforge/docs/PROJECT_STATUS.md](./monsterforge/docs/PROJECT_STATUS.md)**.
@@ -216,6 +219,7 @@ Built and working today:
 - Confidence-gated human review: a low-confidence classification is shown to a reviewer (raw input, full LLM context, the classification itself) before it reaches the rest of the pipeline — approve, correct specific fields, reject outright, or rerun the classification (optionally against a different prompt template)
 - The same conversion-and-review flow exposed over the web (`ui/`, FastAPI + Bootstrap), not only the CLI — plus a few things the CLI doesn't have yet: an optional image URL for the card, friendlier error messages on malformed input, and a way to revisit and correct a card's classification even after it was auto-approved
 - SQL persistence (SQLite + SQLAlchemy) for the web flow: every classification and review decision kept as its own row in an append-only log, and a deterministic fingerprint cache so the same attack always resolves to the same card — see [PERSISTENCE.md](./monsterforge/docs/PERSISTENCE.md)
+- A browsable library over that same database: every saved attack, searchable by name or id, with a full per-event history (every LLM run and human decision, with exactly what a correction changed highlighted) and the ability to reopen and reactivate any past classification, not just the current one
 
 Planned, not yet built:
 
