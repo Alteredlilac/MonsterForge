@@ -94,9 +94,18 @@ attempt (or a raw field's very first decision) being rejected. A raw
 field whose active attempt was rejected also stays visible in the
 library instead of disappearing entirely — flagged in red, with its
 Raw Input and History still there so an earlier good attempt can be
-found and reactivated.
+found and reactivated. A reviewer correcting an attack's name during
+review is now tracked through this same history too, instead of being
+lost the moment the card was built — reopening a saved card or an old
+attempt correctly shows the name as it stood at that point, and a
+correction shows up as its own highlighted row alongside
+description/move type/range.
 
-The current test suite contains 709 passing tests, 0 failing.
+The test suite now also runs automatically on GitHub for every push
+and pull request, with a status badge at the top of the repository's
+README.
+
+The current test suite contains 721 passing tests, 0 failing.
 
 ## What works today
 
@@ -252,11 +261,24 @@ The current test suite contains 709 passing tests, 0 failing.
   and reactivated. Rejecting a *reopened, already-superseded* attempt
   this way no longer risks silently deactivating a good current result
   — only rejecting the currently active attempt (or a raw field's very
-  first decision) actually takes effect.
+  first decision) actually takes effect. A name correction made during
+  review is tracked through this same history too, shown as its own
+  highlighted row when it changes, and resolved correctly whether
+  reopening a saved card or an old, already-superseded attempt.
+
+- **Continuous integration** (GitHub Actions): the full test suite runs
+  automatically on every push and pull request, with coverage reported
+  in the run's own log — informational only, no minimum threshold
+  enforced, consistent with this project's own proportional-not-
+  exhaustive testing philosophy (see [Test coverage](#test-coverage)
+  below). Status badge at the top of the repository's README.
 
 ## Test coverage
 
-**709 passing, 0 failing.** 6 of those close out gaps found testing
+**721 passing, 0 failing.** 12 of those close out MVP 2.19: recording
+and resolving a reviewer's name correction through the raw field's
+history, the same way an earlier session closed out four other cards-
+library gaps. Before that, 6 of those close out gaps found testing
 the cards library the same session it was built: a rejected reopened
 attempt no longer deactivating a good active result, an editable image
 field on a correction (and Approve/Reject/Rerun correctly ignoring it),
