@@ -647,6 +647,27 @@ def test_review_correct_can_fix_the_name():
     assert "FIXED NAME" in response.text.upper()
 
 
+def test_review_correct_persists_the_name_for_later_reopening(seeded_db_session):
+    """Regression for MVP 2.19: a name correction used to be lost the
+    moment the card was rendered -- reopening it later (e.g. from the
+    library) would silently revert the edit form to the original name.
+    Now persisted via classification_events.corrected_name."""
+    page_html = _review_page_html()
+    semantic_result_json = _extract_semantic_result_json(page_html)
+
+    client.post("/review", data={
+        **REVIEW_HIDDEN_BASE, **_extract_review_ids(page_html),
+        "semantic_result_json": semantic_result_json, "decision": "correct",
+        "name": "Fixed Name", "description": "A vicious bite.", "move_type": "physical",
+        "range_value": "", "range_unit": "metric",
+    })
+
+    raw_field = seeded_db_session.query(RawField).one()
+    view_page = client.get(f"/library/cards/{raw_field.id}").text
+
+    assert _extract_hidden_field(view_page, "raw_attack_name") == "Fixed Name"
+
+
 def test_review_correct_with_a_blank_name_is_rejected():
     """Server-side backstop for the same rule the review form enforces
     client-side (required + formnovalidate on Approve/Reject) — a
@@ -1107,6 +1128,30 @@ def test_reopen_event_for_review_leaves_the_image_blank_when_that_event_has_no_c
 
     assert response.status_code == 200
     assert 'name="corrected_image_uri"' in response.text
+
+
+def test_reopen_event_for_review_resolves_the_name_as_of_that_specific_event(seeded_db_session):
+    """Reopening an OLD event, from before a later name correction
+    (MVP 2.19), must show the name as it stood back then -- not the
+    raw_field's currently corrected name."""
+    with patch("monsterforge.ui.app.classify_attack", return_value=make_semantic_result(confidence=0.95)):
+        client.post("/convert", data=RAW_ATTACK_FORM)
+
+    raw_field = seeded_db_session.query(RawField).one()
+    original_event_id = raw_field.current_classification_event_id
+
+    card_page = client.get(f"/library/cards/{raw_field.id}").text
+    client.post("/review", data={
+        **REVIEW_HIDDEN_BASE, **_extract_review_ids(card_page),
+        "semantic_result_json": _extract_semantic_result_json(card_page), "decision": "correct",
+        "name": "Fixed Name", "description": "A corrected bite.", "move_type": "magical",
+        "range_value": "", "range_unit": "metric",
+    })
+
+    reopen_page = client.get(f"/library/events/{original_event_id}/review").text
+
+    assert 'value="Bite"' in reopen_page
+    assert 'value="Fixed Name"' not in reopen_page
 
 
 def test_reopen_event_for_review_rejects_a_rejected_event(seeded_db_session):

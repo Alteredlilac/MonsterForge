@@ -59,6 +59,7 @@ from monsterforge.pipeline.attack_repository import (
     list_saved_cards,
     record_human_review,
     record_llm_run,
+    resolve_effective_name,
     save_card,
     save_structured_data,
 )
@@ -344,7 +345,13 @@ def _serve_cached_card(
     _structured_data, card = find_existing_card(session, active_event)
 
     edit_form_fields = {
-        "raw_attack_name": raw_field.data["name"],
+        # NOTE:
+        # card.name, not raw_field.data["name"] -- the latter is the
+        # original, immutable submission (see RawField's own docstring)
+        # and would silently discard a later name correction (MVP 2.19).
+        # card.name is exactly the name this specific card was built
+        # with, so it's already correct by construction.
+        "raw_attack_name": card.name,
         "raw_attack_modifier": raw_field.data["modifier"],
         "raw_attack_attack_type": raw_field.data["attack_type"],
         "raw_attack_attack_effect": raw_field.data["attack_effect"],
@@ -446,8 +453,12 @@ def reopen_event_for_review(
         return _message_page("This event was rejected — nothing to review.", status_code=422)
 
     raw_field = session.get(RawField, event.raw_field_id)
+    # resolve_effective_name(), not raw_field.data["name"] -- the name
+    # in effect as of THIS specific event may already reflect an
+    # earlier correction (MVP 2.19), which the original, immutable
+    # submission on raw_field never carries.
     raw_attack = RawAttack(
-        name=raw_field.data["name"], modifier=raw_field.data["modifier"],
+        name=resolve_effective_name(session, raw_field, event.id), modifier=raw_field.data["modifier"],
         attack_type=raw_field.data["attack_type"], attack_effect=raw_field.data["attack_effect"],
     )
     semantic_context = _semantic_context_from_form(
@@ -850,16 +861,21 @@ def review(
         # decision -- only the "correct" branch reads corrected_image_uri;
         # every other decision keeps the original image_uri untouched.
         final_image_uri = corrected_image_uri
+        # Recorded unconditionally on every correction, same as
+        # description/move_type/move_range above, even if the reviewer
+        # left the name unchanged -- MVP 2.19, see HumanReview.corrected_name.
+        final_corrected_name = name
     else:
         final_result = original_result
         review_status = ValidationStatus.APPROVED
         final_image_uri = image_uri
+        final_corrected_name = None
 
     review_event = record_human_review(
         session, raw_field=raw_field, referenced_event=referenced_event,
         review=HumanReview(status=review_status, result=final_result,
                             assigned_llm_score=_parse_assigned_llm_score(assigned_llm_score),
-                            edit_note=edit_note or None),
+                            edit_note=edit_note or None, corrected_name=final_corrected_name),
         actor=get_human_actor(session),
     )
 
