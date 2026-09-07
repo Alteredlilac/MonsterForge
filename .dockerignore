@@ -1,0 +1,57 @@
+# Version control -- git itself isn't needed at runtime, and unlike git,
+# docker build has no awareness of .git on its own
+.git/
+
+# virtual environment
+.venv/
+
+# env file -- never baked into the image, passed via `docker run -e` instead
+.env
+
+# SQLite database file
+*.db
+
+# personal files
+PROJECT_NOTES.md
+
+# Development notes
+**/dev-notes/
+
+# logs
+*.log
+
+# editor
+.vscode/
+
+# python cache
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Type checking
+.mypy_cache/
+.pyright/
+
+# system (linux/windows/mac optional)
+.DS_Store
+Thumbs.db
+.thumbnails/
+*~
+
+# Coverage / test cache (Python testing)
+.coverage
+.pytest_cache/
+
+# Packaging / build
+dist/
+build/
+*.egg-info/
+
+# Claude Code
+.claude/
+CLAUDE.md
+
+# Tests -- not needed to run the app, only to develop it
+tests/
