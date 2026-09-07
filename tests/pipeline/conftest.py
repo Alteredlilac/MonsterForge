@@ -23,11 +23,11 @@ from monsterforge.parsing.dnd.v3x.raw_fields.attacks import Attack as RawAttack
 from monsterforge.parsing.dnd.v3x.structured_conversions.attacks.attacks_converter import raw_to_structured_attack
 from monsterforge.pipeline.attack_repository import (
     compute_fingerprint,
-    get_default_game,
     get_or_create_raw_field,
     save_card,
     save_structured_data,
 )
+from monsterforge.pipeline.reference_lookups import get_default_game
 from monsterforge.serialization.domain_to_json import card_to_json
 from monsterforge.transformation.dnd.v3x.converters.attacks_converter import attack_converter
 

@@ -13,9 +13,6 @@ from monsterforge.pipeline.attack_repository import (
     activate_classification_event,
     compute_fingerprint,
     find_existing_card,
-    get_default_game,
-    get_human_actor,
-    get_llm_actor,
     get_or_create_raw_field,
     list_classification_events,
     list_saved_cards,
@@ -25,6 +22,7 @@ from monsterforge.pipeline.attack_repository import (
     save_card,
     save_structured_data,
 )
+from monsterforge.pipeline.reference_lookups import get_human_actor, get_llm_actor
 from monsterforge.serialization.domain_to_json import card_to_json
 from monsterforge.structured_data.dnd.v3x.effect_mechanics import EffectRange
 from monsterforge.structured_data.dnd.v3x.enums import CreatureSubtype, MoveType, UnitSystem
@@ -60,21 +58,6 @@ def test_compute_fingerprint_ignores_free_text_context():
     affect the fingerprint — see the function's own docstring for why."""
     fp = compute_fingerprint(BITE, None, None)
     assert fp == compute_fingerprint(BITE, None, None)
-
-
-# =====================
-# SEED-ROW LOOKUPS
-# =====================
-def test_get_default_game_returns_the_seeded_dnd_row(seeded_db_session):
-    assert get_default_game(seeded_db_session).name == "D&D 3.x"
-
-
-def test_get_llm_actor_returns_the_seeded_llm_row(seeded_db_session):
-    assert get_llm_actor(seeded_db_session).actor_name == "llm"
-
-
-def test_get_human_actor_returns_the_seeded_human_row(seeded_db_session):
-    assert get_human_actor(seeded_db_session).actor_name == "human_reviewer"
 
 
 # =====================

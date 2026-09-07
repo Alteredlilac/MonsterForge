@@ -9,6 +9,12 @@ consuming that data). Every function here takes an explicit
 SQLAlchemy session rather than opening its own, so both ui/app.py
 (today) and, later, attack_pipeline.py itself (MVP 1.3) can call the
 same functions without duplicating logic.
+
+Seeded reference-data lookups (the current game, the LLM/human-reviewer
+actors) live in the sibling module reference_lookups.py, not here --
+they answer a different question ("what is the row for this seeded
+name?") than anything below, and aren't specific to attacks at all,
+unlike everything else in this module.
 """
 import datetime
 import hashlib
@@ -20,8 +26,7 @@ from sqlalchemy.orm import Session
 from monsterforge.db.cards import Card
 from monsterforge.db.enums import CardType, EntityType, EventStatus, EventType, RawKind
 from monsterforge.db.pipeline import ClassificationEvent, RawField, StructuredData
-from monsterforge.db.reference_data import Actor, Game
-from monsterforge.db.seed import DND_GAME_NAME, HUMAN_REVIEWER_ACTOR_NAME, LLM_ACTOR_NAME
+from monsterforge.db.reference_data import Actor
 from monsterforge.llm.semantic_classification.attacks import (
     AttackSemanticResult,
     SemanticContextInput,
@@ -78,21 +83,6 @@ def compute_fingerprint(
     ]
     normalized = json.dumps(components)
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
-
-
-def get_default_game(session: Session) -> Game:
-    """Return the seeded D&D 3.x game row (see db/seed.py)."""
-    return session.query(Game).filter_by(name=DND_GAME_NAME).one()
-
-
-def get_llm_actor(session: Session) -> Actor:
-    """Return the seeded actor row representing the LLM (see db/seed.py)."""
-    return session.query(Actor).filter_by(actor_name=LLM_ACTOR_NAME).one()
-
-
-def get_human_actor(session: Session) -> Actor:
-    """Return the seeded actor row representing the human reviewer (see db/seed.py)."""
-    return session.query(Actor).filter_by(actor_name=HUMAN_REVIEWER_ACTOR_NAME).one()
 
 
 def get_or_create_raw_field(

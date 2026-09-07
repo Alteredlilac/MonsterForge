@@ -52,9 +52,6 @@ from monsterforge.pipeline.attack_repository import (
     activate_classification_event,
     compute_fingerprint,
     find_existing_card,
-    get_default_game,
-    get_human_actor,
-    get_llm_actor,
     get_or_create_raw_field,
     list_saved_cards,
     record_human_review,
@@ -63,6 +60,7 @@ from monsterforge.pipeline.attack_repository import (
     save_card,
     save_structured_data,
 )
+from monsterforge.pipeline.reference_lookups import get_default_game, get_human_actor, get_llm_actor
 from monsterforge.llm.client import get_llm_client
 from monsterforge.llm.clients.gemini import ModelUnavailableError
 from monsterforge.llm.semantic_classification.attacks import (
