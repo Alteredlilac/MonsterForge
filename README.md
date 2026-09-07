@@ -221,7 +221,7 @@ Built and working today:
 - Confidence-gated human review: a low-confidence classification is shown to a reviewer (raw input, full LLM context, the classification itself) before it reaches the rest of the pipeline — approve, correct specific fields, reject outright, or rerun the classification (optionally against a different prompt template)
 - The same conversion-and-review flow exposed over the web (`ui/`, FastAPI + Bootstrap), not only the CLI — plus a few things the CLI doesn't have yet: an optional image URL for the card, friendlier error messages on malformed input, and a way to revisit and correct a card's classification even after it was auto-approved
 - SQL persistence (SQLite + SQLAlchemy) for the web flow: every classification and review decision kept as its own row in an append-only log, and a deterministic fingerprint cache so the same attack always resolves to the same card — see [PERSISTENCE.md](./monsterforge/docs/PERSISTENCE.md)
-- A browsable library over that same database: every saved attack, searchable by name or id, with a full per-event history (every LLM run and human decision, with exactly what a correction changed highlighted) and the ability to reopen and reactivate any past classification, not just the current one
+- A browsable library over that same database: every saved attack, searchable by name or id, with a full per-event history (every LLM run and human decision, with exactly what a correction changed highlighted) and the ability to reopen and reactivate any past classification, not just the current one — see [CARDS_LIBRARY.md](./monsterforge/docs/CARDS_LIBRARY.md)
 
 Planned, not yet built:
 
@@ -547,6 +547,7 @@ Planned:
 - **[monsterforge/docs/RENDERING_AND_GALLERY.md](./monsterforge/docs/RENDERING_AND_GALLERY.md)** — case study: turning a MoveCard into a printable card, and browsing real pipeline output in a gallery
 - **[monsterforge/docs/WEB_UI_AND_REVIEW.md](./monsterforge/docs/WEB_UI_AND_REVIEW.md)** — case study: the conversion + human review flow over the web, live, including how to write a valid attack
 - **[monsterforge/docs/PERSISTENCE.md](./monsterforge/docs/PERSISTENCE.md)** — case study: caching a classification, not just storing one — the fingerprint cache and append-only event log behind the web flow
+- **[monsterforge/docs/CARDS_LIBRARY.md](./monsterforge/docs/CARDS_LIBRARY.md)** — case study: browsing and safely reopening that same append-only history without corrupting what's currently active
 - **[monsterforge/docs/PIPELINE_ARCHITECTURE.md](./monsterforge/docs/PIPELINE_ARCHITECTURE.md)** — full pipeline schema and architectural decisions
 - **[monsterforge/docs/LLM_ARCHITECTURE.md](./monsterforge/docs/LLM_ARCHITECTURE.md)** — how the LLM client layer is structured
 

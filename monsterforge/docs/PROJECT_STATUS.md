@@ -9,6 +9,8 @@ pipeline output, see [RENDERING_AND_GALLERY.md](./RENDERING_AND_GALLERY.md).
 For the conversion + human review flow over the web, live, and how to write
 a valid attack, see [WEB_UI_AND_REVIEW.md](./WEB_UI_AND_REVIEW.md). For how
 classifications are cached and persisted, see [PERSISTENCE.md](./PERSISTENCE.md).
+For how that history is browsed and safely reopened, see
+[CARDS_LIBRARY.md](./CARDS_LIBRARY.md).
 
 ## In short
 
@@ -255,7 +257,8 @@ The current test suite contains 721 passing tests, 0 failing.
   — only `/convert`/`/review` do.
 
 - **A browsable, searchable library of everything the database has
-  saved** (`/library/cards`): every saved attack, filterable by name or
+  saved** (`/library/cards` — see [CARDS_LIBRARY.md](./CARDS_LIBRARY.md)):
+  every saved attack, filterable by name or
   id, each with a full event-by-event history (every LLM run and human
   decision, with exactly what a correction changed highlighted) and a
   link to reopen any past attempt — not just the current one — for a
