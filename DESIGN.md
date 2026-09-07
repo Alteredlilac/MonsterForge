@@ -29,12 +29,21 @@ preserving:
 - Planned a JSON API (FastAPI) exposing the converted data, with
   human validation reachable through CLI tooling
 
+> **Status note.** This list describes the original project vision, not
+> all of it built yet: `requests`/`BeautifulSoup` web scraping is still
+> planned — manual/hand-entered attack input is the working path today.
+> Likewise, only the attack-level pipeline (Attack → MoveCard) converts
+> end to end; a full stat-block-to-`CreatureCard` pipeline doesn't exist
+> yet (see the `CreatureCard` mockup further down, and
+> [PROJECT_STATUS.md](./monsterforge/docs/PROJECT_STATUS.md) for the
+> current picture).
+
 ## Explanation
 
 A scraping project where I wanted to build a program that uses my own
 conversion algorithms (lossy, non-invertible) to transform D&D 3.5 or
 Pathfinder 1st edition monster data into game cards. Using `requests` to
-download HTML pages and BeautifulSoup on d20.org to extract OGL
+download HTML pages and BeautifulSoup on d20srd.org to extract OGL
 information and save it to a SQL DB, then applying the conversions with
 my own algorithms and generating the cards as static web pages with a
 print option to save them as images.
