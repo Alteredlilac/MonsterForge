@@ -299,9 +299,11 @@ monsterforge/
 ├── rendering/           # MoveCard → printable HTML/CSS card, and the
 │                          # real-sample gallery page
 ├── config/             # runtime settings: validation_settings.py (confidence
-│                        # threshold, force-review toggle) is built; DB/LLM-key
-│                        # config is still planned
-├── db/                  # DB schema and access (raw scraped content, generic table) (planned)
+│                        # threshold, force-review toggle), db_settings.py
+│                        # (SQLite connection), llm_settings.py (retry/backoff)
+├── db/                  # SQLite/SQLAlchemy schema and access — persistence,
+│                          fingerprint cache, append-only event log (see
+│                          PERSISTENCE.md)
 ├── rules/                 # typed conversion tables (dataclasses: size→HP, characteristic→attribute, ...)
 ├── scraping/                # HTML acquisition (requests + BeautifulSoup), writes to db/ (planned)
 ├── parsing/                   # extraction + conversion, per RPG system and edition
@@ -324,11 +326,13 @@ monsterforge/
 ├── ui/                                   # FastAPI + Bootstrap web form: the same
 │                                          conversion + review flow as entrypoints/,
 │                                          over HTTP instead of a terminal prompt
-├── api/                                  # JSON API for external consumers, FastAPI
-│                                          (planned — distinct from ui/ above, which
-│                                          already exists but returns HTML, not JSON)
-└── tests/                                  # unit tests
+└── api/                                  # JSON API for external consumers, FastAPI
+                                           (planned — distinct from ui/ above, which
+                                           already exists but returns HTML, not JSON)
 ```
+A parallel `tests/` directory at the repository root mirrors this
+structure module-for-module — it isn't nested inside `monsterforge/`
+itself.
 **Two-stage parsing.** Extraction is split into `raw_fields/` (source-format
 strings, mirroring the rulebook table structure) and a conversion stage that
 casts and normalizes into `structured_data/`. This decouples the fragile,
@@ -423,6 +427,14 @@ selected, verified, and what happens when it becomes unavailable.
 pip install -r requirements.txt
 pytest
 ```
+
+```bash
+uvicorn monsterforge.ui.app:app --reload
+```
+
+Starts the web form locally at `http://127.0.0.1:8000/convert`, reloading
+automatically on code changes — see [Example Usage](#example-usage) for
+what it does.
 
 <!-- Add linting/formatting tools here if used, e.g.: -->
 <!-- Code style: `ruff` / `black` -->
