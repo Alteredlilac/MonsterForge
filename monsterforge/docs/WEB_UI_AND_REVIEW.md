@@ -113,9 +113,11 @@ suite alone.
   resource, so a local file path silently fails to load; serving local
   images would need the server to expose them over its own HTTP route,
   which doesn't exist yet.
-- **Persistence** — every conversion is computed fresh; there's no database,
-  no stable card ID across runs, and a review decision isn't remembered
-  anywhere once you leave the page.
 - **Rerun's prompt-template choice, not its model choice** — you can pick
   which prompt classifies the attack on rerun, but not yet which LLM model
   answers it.
+
+Persistence (a database, a stable card id, a remembered review decision)
+was out of scope when this document was first written — it's since been
+built; see [PERSISTENCE.md](./PERSISTENCE.md) for what that adds on top
+of the flow described here.

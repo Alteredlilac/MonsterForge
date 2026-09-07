@@ -1,6 +1,6 @@
 # Project Status
 
-Snapshot of where MonsterForge stands as of September 6, 2026.
+Snapshot of where MonsterForge stands as of September 7, 2026.
 For the system's design and long-term architecture, see [PIPELINE_ARCHITECTURE.md](./PIPELINE_ARCHITECTURE.md)
 and [DESIGN.md](../../DESIGN.md). For how the LLM layer specifically is
 structured, see [LLM_ARCHITECTURE.md](./LLM_ARCHITECTURE.md). For how a
