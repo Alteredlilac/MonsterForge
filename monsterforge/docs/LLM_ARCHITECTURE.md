@@ -161,10 +161,16 @@ current seam is, not a plan to widen it.
 
 ## Consumers
 
-- `llm/semantic_classification/attacks.py::classify_attack()` — the
-  only production caller today; gets the client via `get_llm_client()`,
+- `llm/semantic_classification/attacks.py::classify_attack()` — gets the
+  client via `get_llm_client()` to actually generate a classification,
   never constructs a `GeminiClient` directly.
 - `entrypoints/convert_attack_cli.py` and
   `entrypoints/test_llm_prompt_cli.py` — both call
   `ensure_model_available()` once at startup and wrap their LLM-reaching
   call in `call_llm_with_model_fallback()`.
+- `ui/app.py` — also calls `get_llm_client()` directly (to read
+  `.model_name` when recording an LLM run), but deliberately doesn't use
+  the interactive model-selection helpers above: an `input()`-driven
+  prompt has no meaning inside an HTTP request/response cycle. It
+  catches `ModelUnavailableError` directly instead and reports it as a
+  plain error response.

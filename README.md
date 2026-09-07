@@ -554,6 +554,13 @@ Planned:
 
 ## License & Data Sources
 
-The codebase in this repository is original work.
+The codebase in this repository is original work, licensed under the
+[MIT License](./LICENSE).
 
-Monster and rule data are derived from sources released under the **Open Game License (OGL)**. No proprietary, non-OGL content is scraped, stored, or redistributed. This project is a technical/portfolio project and does not aim to reproduce or distribute copyrighted game material beyond what OGL permits.
+Monster and rule data are derived from sources released under the
+[Open Game License (OGL) v1.0a](./LICENSE-OGL). No proprietary, non-OGL
+content is scraped, stored, or redistributed. This project is a
+technical/portfolio project and does not aim to reproduce or distribute
+copyrighted game material beyond what OGL permits. See
+[monsterforge/docs/LICENSING.md](./monsterforge/docs/LICENSING.md) for
+the full breakdown of what's licensed under which terms.

@@ -158,10 +158,14 @@ and `llm/`.
 > `structured_data` conversion this stage is drawn for — the same
 > vertical-slice-first approach already applied throughout this project
 > (see decision 7 below). "Keeps a history of corrections" above is also
-> not yet true on either interface: today's review is stateless,
-> in-session/in-request only — no correction history is persisted
-> anywhere yet. See [PROJECT_STATUS.md](./PROJECT_STATUS.md) for exactly
-> what's built and what's still designed-only.
+> not fully true yet: today's review is stateless, in-session/in-request
+> only, on the CLI — no correction history is persisted there. The web
+> interface no longer matches this: every classification and review
+> decision is persisted as an append-only history (see
+> [PERSISTENCE.md](./PERSISTENCE.md)), reachable through a browsable
+> library, not confined to a single request. See
+> [PROJECT_STATUS.md](./PROJECT_STATUS.md) for exactly what's built and
+> what's still designed-only.
 
 ---
 
@@ -339,11 +343,15 @@ decision logic, different composition — dictated by the transport, not
 a design split.
 
 **Scope, deliberately narrow for now**: this gate exists only for the
-attack pipeline, on both interfaces, and is stateless on both — no
-review decision is persisted anywhere yet, so the same low-confidence
-input reviewed twice gets reviewed twice. Persistence, and extending the
-same gate to other future `structured_data` sources (talents, spells,
-special qualities), are both deferred; see
+attack pipeline, on both interfaces. It's still stateless on the CLI —
+no review decision is persisted there, so the same low-confidence input
+reviewed twice through the CLI gets reviewed twice. The web interface no
+longer matches this: every classification and review decision is now
+persisted, keyed by a deterministic fingerprint (see
+[PERSISTENCE.md](./PERSISTENCE.md)), so a repeat submission through the
+web form resolves to the already-decided result instead of asking
+again. Extending the same gate to other future `structured_data` sources
+(talents, spells, special qualities) remains deferred; see
 [PROJECT_STATUS.md](./PROJECT_STATUS.md) for current status.
 
 ---
