@@ -429,6 +429,24 @@ pytest
 
 ---
 
+## Run with Docker
+
+```bash
+docker build -t monsterforge .
+docker run --env-file .env -p 8000:8000 monsterforge
+```
+
+Builds and runs the same web form as `uvicorn monsterforge.ui.app:app --reload`
+above, at `http://localhost:8000/convert`, from the project's own `Dockerfile`
+(`python:3.12-slim`). Needs a local `.env` file with `GEMINI_API_KEY` set — read
+from the host at container startup, never baked into the image.
+
+No volume is mounted for the database: it resets with every container
+restart. Run the app outside Docker (see [Development](#development)) instead
+if you want your own results to persist across runs.
+
+---
+
 ## Testing
 
 Tests ensure that transformation rules remain stable as the system evolves.
@@ -498,6 +516,7 @@ Currently used:
   [PERSISTENCE.md](./monsterforge/docs/PERSISTENCE.md))
 - Jinja2 (LLM prompts, HTML/CSS card + gallery templates, and the `ui/` web form)
 - Bootstrap 5 / highlight.js (via CDN, gallery and web form UI only — not a pip dependency)
+- Docker (containerizes the `ui/` web app — see [Run with Docker](#run-with-docker))
 - dataclasses
 - pytest
 

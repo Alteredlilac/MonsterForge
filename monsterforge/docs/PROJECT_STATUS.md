@@ -105,6 +105,11 @@ The test suite now also runs automatically on GitHub for every push
 and pull request, with a status badge at the top of the repository's
 README.
 
+The web app can also be built and run as a Docker container: a
+`Dockerfile` and `.dockerignore` package `ui/` into a `python:3.12-slim`
+image, with no database volume mounted by default — see
+[README.md](../../README.md#run-with-docker) for the exact commands.
+
 The current test suite contains 721 passing tests, 0 failing.
 
 ## What works today
@@ -272,6 +277,21 @@ The current test suite contains 721 passing tests, 0 failing.
   enforced, consistent with this project's own proportional-not-
   exhaustive testing philosophy (see [Test coverage](#test-coverage)
   below). Status badge at the top of the repository's README.
+
+- **A Docker image for the web app**: a `Dockerfile` (`python:3.12-slim`,
+  dependencies installed in their own layer so unrelated code changes
+  don't invalidate that build cache) and a matching `.dockerignore`
+  package `ui/` into a container that runs the same conversion + review
+  flow as the local/Render deployment — `docker build -t monsterforge .`
+  then `docker run --env-file .env -p 8000:8000 monsterforge`. No
+  database volume is mounted by default: today this container mainly
+  serves the public demo, with no user relying on results surviving a
+  restart, and the project's own free-tier hosting already treats
+  storage the same way, so this default doesn't add a new limitation.
+  Anyone who wants their own results to persist already has simpler
+  options than changing the image — running the app outside Docker
+  keeps the database on disk permanently, or a volume can be added on
+  top of the same `Dockerfile`.
 
 ## Test coverage
 
