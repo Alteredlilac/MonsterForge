@@ -48,17 +48,19 @@ from monsterforge.transformation.dnd.v3x.converters.attacks_converter import att
 from monsterforge.entrypoints.sample_attacks_web_seed import SAMPLE_ATTACKS_WEB_SEED
 from monsterforge.pipeline.attack_pipeline import is_blank_attack
 from monsterforge.pipeline.attack_repository import (
-    InconsistentActiveClassificationError,
     activate_classification_event,
     compute_fingerprint,
-    find_existing_card,
     get_or_create_raw_field,
-    list_saved_cards,
     record_human_review,
     record_llm_run,
-    resolve_effective_name,
     save_card,
     save_structured_data,
+)
+from monsterforge.pipeline.attack_repository_queries import (
+    InconsistentActiveClassificationError,
+    find_existing_card,
+    list_saved_cards,
+    resolve_effective_name,
 )
 from monsterforge.pipeline.reference_lookups import get_default_game, get_human_actor, get_llm_actor
 from monsterforge.llm.client import get_llm_client
