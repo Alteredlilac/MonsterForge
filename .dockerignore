@@ -5,7 +5,8 @@
 # virtual environment
 .venv/
 
-# env file -- never baked into the image, passed via `docker run -e` instead
+# env file -- never baked into the image, passed via
+# `docker run --env-file` instead
 .env
 
 # SQLite database file
