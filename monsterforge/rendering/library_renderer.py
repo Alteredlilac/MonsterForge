@@ -1,6 +1,6 @@
 """
 Renders a browsable page of every card currently saved in the database,
-one entry per raw_field (see pipeline.attack_repository.list_saved_cards()).
+one entry per raw_field (see pipeline.attack_repository_queries.list_saved_cards()).
 
 Deliberately separate from rendering/gallery_renderer.py, which renders
 a curated dataset of real API runs for the public, portfolio-facing
@@ -33,7 +33,7 @@ def _format_move_range(move_range: dict | None) -> str | None:
 
 def _build_history_entry(event: dict, previous_event: dict | None) -> dict:
     """
-    Format one pipeline.attack_repository.list_classification_events()
+    Format one pipeline.attack_repository_queries.list_classification_events()
     summary for display: a header (type/decision/actor+authority/when)
     plus every field of that event in one JSON-look block — the four
     fields a human correction can actually change (name/description/
@@ -167,7 +167,7 @@ def _build_library_entry(index: int, entry: dict) -> dict:
 
 def render_library_html(entries: list[dict], query: str = "") -> str:
     """
-    Render the cards-library page from pipeline.attack_repository.list_saved_cards()'s output.
+    Render the cards-library page from pipeline.attack_repository_queries.list_saved_cards()'s output.
 
     Each entry is expected to have the shape that function builds:
     {"raw_field_id", "name", "case", "context", "classification_result",

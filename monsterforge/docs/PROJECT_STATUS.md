@@ -308,7 +308,7 @@ field on a correction (and Approve/Reject/Rerun correctly ignoring it),
 and a reopened attempt correctly carrying over its own saved image
 (or a blank one, tolerated rather than raised, when it never had a
 card at all). Before that, 43 of those cover the cards library added
-this session: `pipeline/attack_repository.py::list_saved_cards()`/
+this session: `pipeline/attack_repository_queries.py::list_saved_cards()`/
 `list_classification_events()` (name/id search, skipping rejected or
 anomalous rows, walking back to the originating LLM run for
 confidence/rationale after a review), the rendering/history-highlight
@@ -324,8 +324,9 @@ table round-trips, enum values are stored as their string value rather
 than their Python name, foreign-key constraints are actually enforced —
 SQLite disables that by default), 21 for the repository functions in
 `pipeline/attack_repository.py` (fingerprint determinism, get-or-create
-idempotency, the append-only event log's activate/archive behavior,
-both anomaly branches of the missing-card check), and 3 for the web
+idempotency, the append-only event log's activate/archive behavior) and
+`pipeline/attack_repository_queries.py` (both anomaly branches of the
+missing-card check), and 3 for the web
 wiring itself (a repeat submission triggering no second classification
 call, a previously-rejected attack recognized without reclassifying,
 and the missing-card anomaly surfaced through the actual HTTP route).
