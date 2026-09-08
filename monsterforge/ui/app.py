@@ -32,7 +32,7 @@ from fastapi import Depends, FastAPI, Form, Request
 from fastapi.responses import FileResponse, HTMLResponse
 from sqlalchemy.orm import Session
 from monsterforge.config import validation_settings
-from monsterforge.db.enums import CardType, EventType
+from monsterforge.db.enums import EventType
 from monsterforge.db.pipeline import ClassificationEvent, RawField
 from monsterforge.db.seed import seed_reference_data
 from monsterforge.db.session import create_all_tables, get_session
@@ -42,9 +42,7 @@ from monsterforge.parsing.dnd.v3x.raw_fields.attacks import Attack as RawAttack
 from monsterforge.parsing.dnd.v3x.structured_conversions.attacks.attacks_converter import (
     UnknownAttackRange,
     is_melee,
-    raw_to_structured_attack,
 )
-from monsterforge.transformation.dnd.v3x.converters.attacks_converter import attack_converter
 from monsterforge.entrypoints.sample_attacks_web_seed import SAMPLE_ATTACKS_WEB_SEED
 from monsterforge.pipeline.attack_pipeline import is_blank_attack
 from monsterforge.pipeline.attack_repository import (
@@ -53,8 +51,6 @@ from monsterforge.pipeline.attack_repository import (
     get_or_create_raw_field,
     record_human_review,
     record_llm_run,
-    save_card,
-    save_structured_data,
 )
 from monsterforge.pipeline.attack_repository_queries import (
     InconsistentActiveClassificationError,
@@ -73,11 +69,10 @@ from monsterforge.llm.semantic_classification.attacks import (
     classify_attack,
 )
 from monsterforge.rendering.library_renderer import render_library_html
-from monsterforge.rendering.move_card_renderer import render_move_card_html_with_edit
-from monsterforge.serialization.domain_to_json import card_to_json
 from monsterforge.structured_data.dnd.v3x.enums import CreatureSubtype, MoveType, UnitSystem
 from monsterforge.ui.context import parse_positive_range, range_context_note, semantic_context_from_form
-from monsterforge.ui.hidden_fields import semantic_result_from_json, semantic_result_to_json
+from monsterforge.ui.hidden_fields import semantic_result_from_json
+from monsterforge.ui.responses import message_page, render_card, review_form_context, serve_cached_card
 from monsterforge.validation.enums import ValidationStatus
 from monsterforge.validation.review import HumanReview, needs_review
 
@@ -112,163 +107,6 @@ app = FastAPI(lifespan=lifespan)
 ATTACK_TYPE_OPTIONS = ("melee", "melee touch", "ranged", "ranged touch")
 
 
-def _review_form_context(
-        raw_attack: RawAttack,
-        semantic_context: SemanticContextInput,
-        semantic_result: AttackSemanticResult,
-        template_name: str,
-        image_uri: str,
-        raw_field_id: str,
-        classification_event_id: str,
-        error_message: str | None = None) -> dict:
-    """Shared template context for review_form.html.jinja2, built by
-    a fresh /convert classification, a revisit via /review/edit, or a
-    bounce-back from a failed card build (error_message set — see
-    UnknownAttackRange handling in convert()/review()).
-
-    raw_field_id/classification_event_id identify which raw_fields row
-    and which specific LLM_RUN classification_events row a decision
-    made on this form is about — carried as hidden fields the same way
-    raw_attack/semantic_result already are, since there's no
-    server-side session to hold onto them instead."""
-    return {
-        "raw_attack": raw_attack,
-        "semantic_context": semantic_context,
-        "semantic_result": semantic_result,
-        "semantic_result_json": semantic_result_to_json(semantic_result),
-        "template_name": template_name,
-        "image_uri": image_uri,
-        "raw_field_id": raw_field_id,
-        "classification_event_id": classification_event_id,
-        "move_types": [move_type.value for move_type in MoveType],
-        "unit_systems": [unit.value for unit in UnitSystem],
-        "prompt_templates": ATTACK_PROMPT_TEMPLATE_OPTIONS,
-        "is_melee": is_melee(raw_attack),
-        "error_message": error_message,
-    }
-
-
-# =====================
-# DEAD-END RESPONSES
-# =====================
-def _message_page(message: str, status_code: int = 200) -> HTMLResponse:
-    """A plain response for an outcome that produces no card (blank
-    input, a classification failure, a rejected review) — always with a
-    way back to /convert, rather than a bare dead-end message."""
-    return HTMLResponse(f'<p>{message}</p><p><a href="/convert">Home</a></p>', status_code=status_code)
-
-
-# =====================
-# CARD RENDERING
-# =====================
-def _render_card(
-        session: Session,
-        raw_field: RawField,
-        classification_event: ClassificationEvent,
-        raw_attack: RawAttack,
-        semantic_result: AttackSemanticResult,
-        semantic_context: SemanticContextInput,
-        template_name: str,
-        image_uri: str) -> HTMLResponse:
-    """Build the final card, persist it as structured_data/cards for
-    `classification_event`, and activate that event — all three only on
-    success. Activation happens here, after the save, deliberately not
-    left to the caller: if it happened before (or the caller activated
-    it up front), a mid-build failure like UnknownAttackRange would
-    leave raw_field pointing at an ACTIVE event with no saved card, the
-    exact anomaly find_existing_card() exists to catch on a later
-    fingerprint hit."""
-    try:
-        structured_attack = raw_to_structured_attack(raw_attack, semantic_result)
-        move_card = attack_converter(structured_attack, attack_image_uri=image_uri or None)
-    except UnknownAttackRange:
-        # Re-raised rather than turned into a dead end here: the caller
-        # (convert()/review()) has the raw_attack/semantic_result/context
-        # needed to send the reviewer back to the correction form
-        # instead, where the range fields this error is actually about
-        # are right there to fill in.
-        raise
-    except Exception as exc:
-        # NOTE:
-        # Deliberately broad: raw_to_structured_attack()/attack_converter()
-        # are deterministic regex/rule-based parsing over free-typed input
-        # (e.g. an attack_effect like "2d80" or another malformed dice
-        # expression) — without this, any parsing failure here reaches
-        # the browser as FastAPI's generic, contextless 500 error page,
-        # with the actual exception visible only in the server's own
-        # terminal, not to whoever is using the form.
-        return _message_page(f"Could not build the card: {exc}", status_code=422)
-
-    card_data = json.loads(card_to_json(move_card))
-
-    structured_data = save_structured_data(
-        session, raw_field=raw_field, classification_event=classification_event,
-        structured_attack=structured_attack,
-    )
-    save_card(session, structured_data=structured_data, card_data=card_data, card_type=CardType.MOVE_CARD)
-    activate_classification_event(session, raw_field=raw_field, event=classification_event)
-
-    edit_form_fields = {
-        "raw_attack_name": raw_attack.name,
-        "raw_attack_modifier": raw_attack.modifier,
-        "raw_attack_attack_type": raw_attack.attack_type,
-        "raw_attack_attack_effect": raw_attack.attack_effect,
-        "additional_description": semantic_context.additional_description or "",
-        "creature_description": semantic_context.creature_description or "",
-        "creature_subtype": semantic_context.creature_subtype.value if semantic_context.creature_subtype else "",
-        "template_name": template_name,
-        "image_uri": image_uri,
-        "raw_field_id": raw_field.id,
-        "classification_event_id": classification_event.id,
-        "semantic_result_json": semantic_result_to_json(semantic_result),
-    }
-
-    return HTMLResponse(render_move_card_html_with_edit(card_data, "/review/edit", edit_form_fields))
-
-
-def _serve_cached_card(
-        session: Session,
-        raw_field: RawField,
-        active_event: ClassificationEvent,
-        template_name: str,
-        image_uri: str) -> HTMLResponse:
-    """Serve an already-saved card for `raw_field`'s active event —
-    the fingerprint cache hit path. No LLM call, no new database row,
-    no raw_to_structured_attack()/attack_converter() recomputation: the
-    saved card content is passed straight to the renderer as-is.
-
-    Raises:
-        InconsistentActiveClassificationError:
-            Propagated from find_existing_card() if the active event has
-            no saved card — the caller reports this as an error rather
-            than silently reclassifying.
-    """
-    _structured_data, card = find_existing_card(session, active_event)
-
-    edit_form_fields = {
-        # NOTE:
-        # card.name, not raw_field.data["name"] -- the latter is the
-        # original, immutable submission (see RawField's own docstring)
-        # and would silently discard a later name correction (MVP 2.19).
-        # card.name is exactly the name this specific card was built
-        # with, so it's already correct by construction.
-        "raw_attack_name": card.name,
-        "raw_attack_modifier": raw_field.data["modifier"],
-        "raw_attack_attack_type": raw_field.data["attack_type"],
-        "raw_attack_attack_effect": raw_field.data["attack_effect"],
-        "additional_description": raw_field.data.get("additional_description") or "",
-        "creature_description": raw_field.data.get("creature_description") or "",
-        "creature_subtype": raw_field.data.get("creature_subtype") or "",
-        "template_name": template_name,
-        "image_uri": image_uri,
-        "raw_field_id": raw_field.id,
-        "classification_event_id": active_event.id,
-        "semantic_result_json": json.dumps(active_event.result),
-    }
-
-    return HTMLResponse(render_move_card_html_with_edit(card.content, "/review/edit", edit_form_fields))
-
-
 # =====================
 # ROUTES
 # =====================
@@ -298,21 +136,21 @@ def view_saved_card(raw_field_id: str, session: Session = Depends(get_db_session
     """Reopen an already-saved card for printing or further review,
     found by raw_field_id (e.g. a link from the cards library) rather
     than through a fresh fingerprint hit. Delegates to
-    _serve_cached_card() for the actual rendering — the same page
+    serve_cached_card() for the actual rendering — the same page
     /convert's own cache-hit path already builds, with Print and "Edit
     this classification" (-> /review/edit) both already on it."""
     raw_field = session.get(RawField, raw_field_id)
     if raw_field is None or raw_field.current_classification_event_id is None:
-        return _message_page("No saved card found for that id.", status_code=404)
+        return message_page("No saved card found for that id.", status_code=404)
 
     active_event = session.get(ClassificationEvent, raw_field.current_classification_event_id)
     if active_event.decision == ValidationStatus.REJECTED:
-        return _message_page("This attack was previously rejected — no card to show.", status_code=422)
+        return message_page("This attack was previously rejected — no card to show.", status_code=422)
 
     try:
         _structured_data, card = find_existing_card(session, active_event)
     except InconsistentActiveClassificationError as exc:
-        return _message_page(f"Could not load the saved card: {exc}", status_code=500)
+        return message_page(f"Could not load the saved card: {exc}", status_code=500)
 
     # NOTE:
     # template_name isn't a column on a HUMAN_REVIEW row (see
@@ -330,7 +168,7 @@ def view_saved_card(raw_field_id: str, session: Session = Depends(get_db_session
     # column (promoted from its content, see db/cards.py).
     image_uri = card.image_uri or ""
 
-    return _serve_cached_card(session, raw_field, active_event, template_name, image_uri)
+    return serve_cached_card(session, raw_field, active_event, template_name, image_uri)
 
 
 @app.get("/library/events/{classification_event_id}/review", response_class=HTMLResponse)
@@ -349,9 +187,9 @@ def reopen_event_for_review(
     case this URL is reached some other way."""
     event = session.get(ClassificationEvent, classification_event_id)
     if event is None:
-        return _message_page("No such classification event.", status_code=404)
+        return message_page("No such classification event.", status_code=404)
     if event.decision == ValidationStatus.REJECTED:
-        return _message_page("This event was rejected — nothing to review.", status_code=422)
+        return message_page("This event was rejected — nothing to review.", status_code=422)
 
     raw_field = session.get(RawField, event.raw_field_id)
     # resolve_effective_name(), not raw_field.data["name"] -- the name
@@ -389,7 +227,7 @@ def reopen_event_for_review(
 
     return templates.TemplateResponse(
         request, "review_form.html.jinja2",
-        _review_form_context(
+        review_form_context(
             raw_attack, semantic_context, semantic_result, template_name, image_uri,
             raw_field_id=raw_field.id, classification_event_id=event.id,
         ),
@@ -427,14 +265,14 @@ def convert(
     raw_attack = RawAttack(name=name, modifier=modifier, attack_type=attack_type, attack_effect=attack_effect)
 
     if is_blank_attack(raw_attack):
-        return _message_page("No card produced: the submitted attack was blank.")
+        return message_page("No card produced: the submitted attack was blank.")
 
     # NOTE:
     # Not a Literal[...] like attack_type — that would duplicate the
     # path list ATTACK_PROMPT_TEMPLATE_OPTIONS already exists to be the
     # single source of. Checked against the option paths directly instead.
     if template_name not in {option.path for option in ATTACK_PROMPT_TEMPLATE_OPTIONS}:
-        return _message_page(f"Unknown prompt template: {template_name!r}.", status_code=422)
+        return message_page(f"Unknown prompt template: {template_name!r}.", status_code=422)
 
     # NOTE:
     # A ranged/ranged touch attack needs to resolve a distance somehow —
@@ -446,7 +284,7 @@ def convert(
     if (attack_type in ("ranged", "ranged touch")
             and not additional_description.strip()
             and not (range_value.strip() and range_unit.strip())):
-        return _message_page(
+        return message_page(
             "A ranged attack needs either a range value and unit, or a description "
             "mentioning its range — neither was provided.",
             status_code=422,
@@ -455,7 +293,7 @@ def convert(
     try:
         explicit_range = None if is_melee(raw_attack) else parse_positive_range(range_value, range_unit)
     except ValueError as exc:
-        return _message_page(f"Invalid range value: {exc}", status_code=422)
+        return message_page(f"Invalid range value: {exc}", status_code=422)
 
     semantic_context = semantic_context_from_form(additional_description, creature_description, creature_subtype)
 
@@ -484,11 +322,11 @@ def convert(
     if raw_field.current_classification_event_id is not None:
         active_event = session.get(ClassificationEvent, raw_field.current_classification_event_id)
         if active_event.decision == ValidationStatus.REJECTED:
-            return _message_page("This attack was previously rejected.", status_code=422)
+            return message_page("This attack was previously rejected.", status_code=422)
         try:
-            return _serve_cached_card(session, raw_field, active_event, template_name, image_uri)
+            return serve_cached_card(session, raw_field, active_event, template_name, image_uri)
         except InconsistentActiveClassificationError as exc:
-            return _message_page(f"Could not load the saved card: {exc}", status_code=500)
+            return message_page(f"Could not load the saved card: {exc}", status_code=500)
 
     try:
         semantic_result = classify_attack(
@@ -499,9 +337,9 @@ def convert(
             template_name=template_name,
         )
     except ModelUnavailableError as exc:
-        return _message_page(f"The configured LLM model is unavailable: {exc}", status_code=503)
+        return message_page(f"The configured LLM model is unavailable: {exc}", status_code=503)
     except Exception as exc:
-        return _message_page(f"Classification failed: {exc}", status_code=502)
+        return message_page(f"Classification failed: {exc}", status_code=502)
 
     if explicit_range is not None:
         # The form's own range/unit is trusted over whatever the LLM
@@ -537,21 +375,21 @@ def convert(
         # unreviewed result look like the raw_field's current one.
         return templates.TemplateResponse(
             request, "review_form.html.jinja2",
-            _review_form_context(
+            review_form_context(
                 raw_attack, semantic_context, semantic_result, template_name, image_uri,
                 raw_field_id=raw_field.id, classification_event_id=llm_event.id,
             ),
         )
 
     try:
-        return _render_card(
+        return render_card(
             session, raw_field, llm_event, raw_attack, semantic_result, semantic_context,
             template_name, image_uri,
         )
     except UnknownAttackRange as exc:
         return templates.TemplateResponse(
             request, "review_form.html.jinja2",
-            _review_form_context(
+            review_form_context(
                 raw_attack, semantic_context, semantic_result, template_name, image_uri,
                 raw_field_id=raw_field.id, classification_event_id=llm_event.id,
                 error_message=f"Could not build the card: {exc} Provide a range below and try again.",
@@ -593,7 +431,7 @@ def edit_review(
 
     return templates.TemplateResponse(
         request, "review_form.html.jinja2",
-        _review_form_context(
+        review_form_context(
             raw_attack, semantic_context, semantic_result, template_name, image_uri,
             raw_field_id=raw_field_id, classification_event_id=classification_event_id,
         ),
@@ -666,11 +504,11 @@ def review(
         # genuinely good current result. The rejection is still recorded in
         # the history either way, via record_human_review() above.
         if raw_field.current_classification_event_id not in (None, referenced_event.id):
-            return _message_page(
+            return message_page(
                 "This old attempt was marked as rejected. The currently active result was not affected."
             )
         activate_classification_event(session, raw_field=raw_field, event=review_event)
-        return _message_page("No card produced: the classification was rejected.")
+        return message_page("No card produced: the classification was rejected.")
 
     if decision == "rerun":
         # NOTE:
@@ -688,7 +526,7 @@ def review(
         if rerun_template_name not in {option.path for option in ATTACK_PROMPT_TEMPLATE_OPTIONS}:
             return templates.TemplateResponse(
                 request, "review_form.html.jinja2",
-                _review_form_context(
+                review_form_context(
                     raw_attack, semantic_context, original_result, template_name, image_uri,
                     raw_field_id=raw_field_id, classification_event_id=classification_event_id,
                     error_message=f"Unknown prompt template: {rerun_template_name!r}.",
@@ -724,7 +562,7 @@ def review(
             )
             return templates.TemplateResponse(
                 request, "review_form.html.jinja2",
-                _review_form_context(
+                review_form_context(
                     raw_attack, rerun_context, new_result, rerun_template_name, image_uri,
                     raw_field_id=raw_field_id, classification_event_id=new_event.id,
                 ),
@@ -732,7 +570,7 @@ def review(
 
         return templates.TemplateResponse(
             request, "review_form.html.jinja2",
-            _review_form_context(
+            review_form_context(
                 raw_attack, semantic_context, original_result, template_name, image_uri,
                 raw_field_id=raw_field_id, classification_event_id=classification_event_id,
                 error_message=error_message,
@@ -741,14 +579,14 @@ def review(
 
     if decision == "correct":
         if not name.strip():
-            return _message_page("Name cannot be blank.", status_code=422)
+            return message_page("Name cannot be blank.", status_code=422)
 
         raw_attack = dataclasses.replace(raw_attack, name=name)
 
         try:
             corrected_range = parse_positive_range(range_value, range_unit)
         except ValueError as exc:
-            return _message_page(f"Invalid range value: {exc}", status_code=422)
+            return message_page(f"Invalid range value: {exc}", status_code=422)
 
         final_result = dataclasses.replace(
             original_result,
@@ -781,14 +619,14 @@ def review(
     )
 
     try:
-        return _render_card(
+        return render_card(
             session, raw_field, review_event, raw_attack, final_result, semantic_context,
             template_name, final_image_uri,
         )
     except UnknownAttackRange as exc:
         return templates.TemplateResponse(
             request, "review_form.html.jinja2",
-            _review_form_context(
+            review_form_context(
                 raw_attack, semantic_context, final_result, template_name, final_image_uri,
                 raw_field_id=raw_field_id, classification_event_id=classification_event_id,
                 error_message=f"Could not build the card: {exc} Provide a range below and try again.",
