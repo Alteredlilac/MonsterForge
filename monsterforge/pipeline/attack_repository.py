@@ -10,7 +10,7 @@ schema (tables, columns, relationships), this module is the
 access/orchestration logic that uses it, the same split already
 established between rules/ (static data) and transformation/ (functions
 consuming that data). Every function here takes an explicit
-SQLAlchemy session rather than opening its own, so both ui/app.py
+SQLAlchemy session rather than opening its own, so both ui/routes/
 (today) and, later, attack_pipeline.py itself (MVP 1.3) can call the
 same functions without duplicating logic.
 
@@ -233,8 +233,8 @@ def activate_classification_event(
     usable result"; callers must check `event.decision` separately
     before treating an active event as something to build a card from.
     Rejecting an old, already-superseded event does NOT call this — see
-    ui/app.py::review()'s reject branch, added for MVP 2.18's ability to
-    reopen any past event for review.
+    ui/routes/review.py::review()'s reject branch, added for MVP 2.18's
+    ability to reopen any past event for review.
     """
     previous_active_id = raw_field.current_classification_event_id
     if previous_active_id is not None:

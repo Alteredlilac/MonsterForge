@@ -180,9 +180,9 @@ def list_saved_cards(session: Session, *, query: str | None = None) -> list[dict
       originating LLM_RUN's pre-correction answer. confidence/rationale
       are always present here even on a HUMAN_REVIEW row: a correction
       only ever replaces description/move_type/move_range (see
-      ui/app.py's "correct" branch), never confidence/rationale, so
-      they're carried through from the original classification either
-      way.
+      ui/routes/review.py's "correct" branch), never confidence/
+      rationale, so they're carried through from the original
+      classification either way.
     - assigned_llm_score/edit_note come straight from the active event
       (populated only for HUMAN_REVIEW/MANUAL_CORRECTION) — None when
       the active event is an auto-approved LLM_RUN with no human

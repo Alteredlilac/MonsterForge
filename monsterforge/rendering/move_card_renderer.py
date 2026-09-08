@@ -40,8 +40,11 @@ def format_move_effects(move_effects: list[dict]) -> str:
     - Each entry with a damage_type renders as
       "{effect_value} {damage_type.upper()} DAMAGE".
     - Entries beyond MAX_EFFECT_ENTRIES are dropped, not overflowed onto
-      the card — the physical layout was only verified up to 3 entries
-      (see MVP_0.2_RENDERING.md's domain gap note).
+      the card. This is a renderer limit, not a domain one --
+      MoveCard.move_effects itself has no length cap -- and a declared
+      one: the physical card layout has only been verified to fit up to
+      3 entries, so more are dropped rather than risk an unverified,
+      possibly broken layout.
 
     Examples:
         [{"damage_type": "physical", "effect_value": 6},
@@ -123,7 +126,7 @@ def render_move_card_html_with_edit(
     "Edit this classification" form beneath it, POSTing edit_form_fields
     (rendered as hidden inputs) to edit_form_action.
 
-    Lets a consumer (ui/app.py) make a rendered card never a dead end —
+    Lets a consumer (ui/responses.py) make a rendered card never a dead end —
     a reviewer can revisit the classification even after an
     auto-approved result, which otherwise has no correction path at all.
     Reuses move_card_fragment.html.jinja2/move_card_style.html.jinja2,

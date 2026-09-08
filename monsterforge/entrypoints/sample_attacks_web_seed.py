@@ -13,8 +13,8 @@ exist yet when those files were written).
 
 Every entry here is a FLAT dict whose keys are exactly the /convert
 form's field names (see ui/templates/convert_form.html.jinja2 and the
-POST /convert route in ui/app.py), so the auto-fill JS can set each
-form field directly from one sample object with no reshaping:
+POST /convert route in ui/routes/convert.py), so the auto-fill JS can
+set each form field directly from one sample object with no reshaping:
 name, modifier, attack_type, attack_effect, range_value, range_unit,
 additional_description, creature_description, creature_subtype.
 range_value/range_unit/additional_description/creature_description/

@@ -1,11 +1,10 @@
 """
 FastAPI dependency for a per-request database session.
 
-Split out of ui/app.py so the future ui/routes/ package can depend on
-it without creating a circular import: every route needs
-Depends(get_db_session), but app.py also needs to import the route
-modules to register them -- keeping this function in app.py itself
-would make that a cycle.
+Split out of ui/app.py so ui/routes/ can depend on it without creating
+a circular import: every route needs Depends(get_db_session), but
+app.py also needs to import the route modules to register them --
+keeping this function in app.py itself would make that a cycle.
 """
 from monsterforge.db.session import get_session
 

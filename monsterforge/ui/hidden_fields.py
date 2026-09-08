@@ -1,8 +1,8 @@
 """
 Round-tripping an AttackSemanticResult through a hidden form field.
 
-ui/app.py has no server-side session: a classification result has to
-survive from one POST/GET to the next (/convert -> /review,
+This web app keeps no server-side session: a classification result has
+to survive from one POST/GET to the next (/convert -> /review,
 /review/edit -> /review, a library reopen -> /review) as a hidden form
 field's value rather than something held in memory between requests.
 These two functions are the only place that (de)serialization happens.
