@@ -7,7 +7,7 @@ equivalent domain value? -- for the two pieces of pre-classification
 context /convert needs to resolve: the optional creature/context
 fields, and an explicit range value/unit. Form(...) fields are always
 raw strings regardless of the target type, which is what makes this
-web-specific: api/routes.py's own POST /api/cards gets typed values
+web-specific: api/creation.py's own POST /api/cards gets typed values
 directly from its Pydantic request model, with no equivalent parsing
 step of its own.
 """

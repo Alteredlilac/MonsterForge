@@ -5,8 +5,8 @@ client/RAW_ATTACK_FORM/make_semantic_result()/extract_hidden_field()/
 extract_semantic_result_json()/extract_review_ids() were promoted here
 from test_app.py once ui/app.py's own routes started splitting into
 ui/routes/ (see tests/ui/routes/), so more than one test module needs
-them -- same promotion pattern already used for
-tests/pipeline/conftest.py.
+them -- same promotion pattern already used for tests/conftest.py's
+own make_raw_field()/build_and_save_card().
 """
 import html
 import re

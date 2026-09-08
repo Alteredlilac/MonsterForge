@@ -106,7 +106,7 @@ def build_and_save_card(seeded_db_session):
     persist it as structured_data + cards for `event`, returning the
     already-serialized card dict -- the same three-call sequence
     pipeline.attack_repository's own callers (ui/routes/convert.py,
-    ui/routes/review.py, api/routes.py) go through."""
+    ui/routes/review.py, api/creation.py) go through."""
     def _build(raw_field, event, raw_attack, result):
         structured_attack = raw_to_structured_attack(raw_attack, result)
         move_card = attack_converter(structured_attack)
