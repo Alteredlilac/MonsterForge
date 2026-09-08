@@ -28,16 +28,16 @@ import json
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Literal
-import jinja2
 from fastapi import Depends, FastAPI, Form, Request
 from fastapi.responses import FileResponse, HTMLResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from monsterforge.config import validation_settings
 from monsterforge.db.enums import CardType, EventType
 from monsterforge.db.pipeline import ClassificationEvent, RawField
 from monsterforge.db.seed import seed_reference_data
 from monsterforge.db.session import create_all_tables, get_session
+from monsterforge.ui.dependencies import get_db_session
+from monsterforge.ui.jinja_templating import templates
 from monsterforge.parsing.dnd.v3x.raw_fields.attacks import Attack as RawAttack
 from monsterforge.parsing.dnd.v3x.structured_conversions.attacks.attacks_converter import (
     UnknownAttackRange,
@@ -96,30 +96,7 @@ async def lifespan(_app: FastAPI):
     yield
 
 
-def get_db_session():
-    """FastAPI dependency: yields a session scoped to one request, always
-    closed afterward. Overridden in tests (tests/ui/conftest.py) to
-    yield an isolated in-memory session instead of the real database."""
-    session = get_session()
-    try:
-        yield session
-    finally:
-        session.close()
-
-
 app = FastAPI(lifespan=lifespan)
-# NOTE:
-# Jinja2Templates(directory=...) hardcodes autoescape=jinja2.select_autoescape(),
-# whose extension check never matches "*.html.jinja2" (every template in
-# this project) — the same silent-autoescape-off gap already found in
-# rendering/move_card_renderer.py, undiscovered here until a rationale
-# containing an apostrophe broke the hidden semantic_result_json field.
-# Passing an explicit env= with autoescape=True is the only way to
-# override that default.
-templates = Jinja2Templates(env=jinja2.Environment(
-    loader=jinja2.FileSystemLoader(Path(__file__).parent / "templates"),
-    autoescape=True,
-))
 
 # NOTE:
 # raw_fields.Attack.attack_type is deliberately an unconstrained str

@@ -5,7 +5,8 @@ from unittest.mock import patch
 
 import pytest
 
-from monsterforge.ui.app import app, get_db_session
+from monsterforge.ui.app import app
+from monsterforge.ui.dependencies import get_db_session
 
 
 @pytest.fixture(autouse=True)
