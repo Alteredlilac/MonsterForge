@@ -1,11 +1,15 @@
 """
-Turning raw form input into domain values, before classification.
+Turning raw web-form input into domain values, before classification.
 
-These three functions all answer the same question -- given a string
+These two functions both answer the same question -- given a string
 (or a few strings) straight off a Form(...) field, what's the
 equivalent domain value? -- for the two pieces of pre-classification
-context every route needs to resolve: the optional creature/context
-fields, and an explicit range value/unit.
+context /convert needs to resolve: the optional creature/context
+fields, and an explicit range value/unit. Form(...) fields are always
+raw strings regardless of the target type, which is what makes this
+web-specific: api/routes.py's own POST /api/cards gets typed values
+directly from its Pydantic request model, with no equivalent parsing
+step of its own.
 """
 from monsterforge.structured_data.dnd.v3x.effect_mechanics import EffectRange
 from monsterforge.structured_data.dnd.v3x.enums import CreatureSubtype, UnitSystem
@@ -32,14 +36,6 @@ def parse_positive_range(range_value: str, range_unit: str) -> EffectRange | Non
         raise ValueError(f"range value must be positive, got {value}.")
 
     return EffectRange(effect_range=value, range_unit_system=UnitSystem(range_unit))
-
-
-def range_context_note(effect_range: EffectRange) -> str:
-    """Render an EffectRange as a short sentence to prepend to the LLM's
-    additional_description context, so its own confidence reflects that
-    the range is already known rather than guessed."""
-    unit = "feet" if effect_range.range_unit_system == UnitSystem.IMPERIAL else "meters"
-    return f"Range: {effect_range.effect_range} {unit}."
 
 
 def semantic_context_from_form(

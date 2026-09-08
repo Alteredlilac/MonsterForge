@@ -71,6 +71,21 @@ def get_modifier(raw_attack: RawAttack) -> int | None:
 # =====================
 # MALEE OR RANGED
 # =====================
+# NOTE:
+# raw_fields.Attack.attack_type is deliberately an unconstrained str
+# (see parsing/dnd/v3x/raw_fields/attacks.py), not an enum -- but
+# is_melee()/is_touch() below only recognize these exact English
+# substrings ("melee" in attack_type.lower(), etc.). Free text is fine
+# for the CLI, where a person is already expected to match the parser's
+# own vocabulary; any structured caller (a web form dropdown, this
+# API's JSON schema) should constrain input to exactly these four
+# values instead, since a value like "mischia" (Italian for melee)
+# would otherwise silently fall through to "ranged" here. The single
+# source of truth for that constrained set, shared by every such
+# caller rather than duplicated in each one.
+ATTACK_TYPE_OPTIONS: tuple[str, ...] = ("melee", "melee touch", "ranged", "ranged touch")
+
+
 def is_melee(raw_attack: RawAttack) -> bool:
     """Return whether a raw attack is melee rather than ranged."""
     if not raw_attack.attack_type:

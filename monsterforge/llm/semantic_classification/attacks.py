@@ -203,6 +203,18 @@ class SemanticContextInput:
     creature_subtype: CreatureSubtype | None
 
 
+def range_context_note(effect_range: EffectRange) -> str:
+    """Render an EffectRange as a short sentence to prepend to a
+    caller's own additional_description before classification, so the
+    LLM's confidence reflects that the range is already known rather
+    than guessed. Shared by every caller that can supply an explicit,
+    pre-classification range (ui/routes/convert.py's structured range
+    fields, api/routes.py's POST /api/cards) rather than duplicated in
+    each one."""
+    unit = "feet" if effect_range.range_unit_system == UnitSystem.IMPERIAL else "meters"
+    return f"Range: {effect_range.effect_range} {unit}."
+
+
 # =====================
 # ERRORS
 # =====================

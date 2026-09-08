@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 
 from monsterforge.config import validation_settings
 from monsterforge.db.pipeline import ClassificationEvent
+from monsterforge.db.session import get_db_session
 from monsterforge.entrypoints.sample_attacks_web_seed import SAMPLE_ATTACKS_WEB_SEED
 from monsterforge.llm.client import get_llm_client
 from monsterforge.llm.clients.gemini import ModelUnavailableError
@@ -23,35 +24,26 @@ from monsterforge.llm.semantic_classification.attacks import (
     ATTACK_PROMPT_TEMPLATE,
     ATTACK_PROMPT_TEMPLATE_OPTIONS,
     classify_attack,
+    range_context_note,
 )
 from monsterforge.parsing.dnd.v3x.raw_fields.attacks import Attack as RawAttack
-from monsterforge.parsing.dnd.v3x.structured_conversions.attacks.attacks_converter import UnknownAttackRange, is_melee
+from monsterforge.parsing.dnd.v3x.structured_conversions.attacks.attacks_converter import (
+    ATTACK_TYPE_OPTIONS,
+    UnknownAttackRange,
+    is_melee,
+)
 from monsterforge.pipeline.attack_pipeline import is_blank_attack
 from monsterforge.pipeline.attack_repository import compute_fingerprint, get_or_create_raw_field, record_llm_run
 from monsterforge.pipeline.attack_repository_queries import InconsistentActiveClassificationError
 from monsterforge.pipeline.reference_lookups import get_default_game, get_llm_actor
-from monsterforge.db.session import get_db_session
 from monsterforge.structured_data.dnd.v3x.enums import CreatureSubtype, UnitSystem
-from monsterforge.ui.context import parse_positive_range, range_context_note, semantic_context_from_form
+from monsterforge.ui.context import parse_positive_range, semantic_context_from_form
 from monsterforge.ui.jinja_templating import templates
 from monsterforge.ui.responses import message_page, render_card, review_form_context, serve_cached_card
 from monsterforge.validation.enums import ValidationStatus
 from monsterforge.validation.review import needs_review
 
 router = APIRouter()
-
-# NOTE:
-# raw_fields.Attack.attack_type is deliberately an unconstrained str
-# (see parsing/dnd/v3x/raw_fields/attacks.py), not an enum — but
-# is_melee()/is_touch() in attacks_converter.py only recognize these
-# exact English substrings ("melee" in attack_type.lower(), etc.). A
-# free-text web input let a value like "mischia" (not matching any of
-# them) silently fall through to "ranged", triggering an LLM range
-# lookup for what was actually a melee attack. Constrained to a
-# dropdown here for that reason — the CLI keeps free text, since a
-# person typing at a terminal is already expected to match the
-# parser's vocabulary.
-ATTACK_TYPE_OPTIONS = ("melee", "melee touch", "ranged", "ranged touch")
 
 
 @router.get("/convert", response_class=HTMLResponse)
@@ -70,7 +62,7 @@ def convert(
         request: Request,
         name: str = Form(...),
         modifier: str = Form(""),
-        attack_type: Literal["", "melee", "melee touch", "ranged", "ranged touch"] = Form(""),
+        attack_type: Literal["", *ATTACK_TYPE_OPTIONS] = Form(""),
         attack_effect: str = Form(""),
         additional_description: str = Form(""),
         creature_description: str = Form(""),
