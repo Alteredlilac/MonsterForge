@@ -1,10 +1,7 @@
 """
-Tests for the MVP 1 FastAPI web app (ui/app.py): the cards library and
-reopening a past event for review. GET/POST /convert and POST /review,
-POST /review/edit moved to tests/ui/routes/ once those routes split
-into their own modules (ui/routes/convert.py, ui/routes/review.py) --
-the three /library/* routes are still in ui/app.py itself, pending the
-same treatment.
+Tests for the cards library (ui/routes/library.py): GET /library/cards,
+GET /library/cards/{raw_field_id}, and GET /library/events/
+{classification_event_id}/review.
 """
 import html
 from unittest.mock import patch
