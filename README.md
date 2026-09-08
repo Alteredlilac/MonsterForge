@@ -555,6 +555,7 @@ Planned:
 - **[monsterforge/docs/WEB_UI_AND_REVIEW.md](./monsterforge/docs/WEB_UI_AND_REVIEW.md)** — case study: the conversion + human review flow over the web, live, including how to write a valid attack
 - **[monsterforge/docs/PERSISTENCE.md](./monsterforge/docs/PERSISTENCE.md)** — case study: caching a classification, not just storing one — the fingerprint cache and append-only event log behind the web flow
 - **[monsterforge/docs/CARDS_LIBRARY.md](./monsterforge/docs/CARDS_LIBRARY.md)** — case study: browsing and safely reopening that same append-only history without corrupting what's currently active
+- **[monsterforge/docs/JSON_API.md](./monsterforge/docs/JSON_API.md)** — case study: adding a second, independent consumer on top of the same pipeline without duplicating the logic it needs to stay correct
 - **[monsterforge/docs/PIPELINE_ARCHITECTURE.md](./monsterforge/docs/PIPELINE_ARCHITECTURE.md)** — full pipeline schema and architectural decisions
 - **[monsterforge/docs/LLM_ARCHITECTURE.md](./monsterforge/docs/LLM_ARCHITECTURE.md)** — how the LLM client layer is structured
 

@@ -10,7 +10,8 @@ For the conversion + human review flow over the web, live, and how to write
 a valid attack, see [WEB_UI_AND_REVIEW.md](./WEB_UI_AND_REVIEW.md). For how
 classifications are cached and persisted, see [PERSISTENCE.md](./PERSISTENCE.md).
 For how that history is browsed and safely reopened, see
-[CARDS_LIBRARY.md](./CARDS_LIBRARY.md).
+[CARDS_LIBRARY.md](./CARDS_LIBRARY.md). For the JSON API deployed
+separately from the web UI, see [JSON_API.md](./JSON_API.md).
 
 ## In short
 
@@ -93,7 +94,8 @@ replayed from a past Gemini run, not reclassified on every restart) so
 scope: no human review and no deletion are exposed through it — an
 attack whose confidence is too low to auto-approve comes back as a
 pending status rather than a resolved card, since deciding an ambiguous
-case stays a human, web-only action.
+case stays a human, web-only action. See
+[JSON_API.md](./JSON_API.md) for what that design demonstrates.
 
 Everything the persistence layer saves is now browsable, too: a cards
 library (`/library/cards`) lists every saved attack, searchable by
@@ -307,7 +309,8 @@ The current test suite contains 755 passing tests, 0 failing.
   routes already needed. The deployed instance is pre-seeded with 8
   real, already-classified cards (replayed deterministically from a
   past Gemini run, not reclassified on every restart) so the live demo
-  shows something real immediately instead of an empty list.
+  shows something real immediately instead of an empty list. See
+  [JSON_API.md](./JSON_API.md) for what this design demonstrates.
 
 - **Continuous integration** (GitHub Actions): the full test suite runs
   automatically on every push and pull request, with coverage reported
