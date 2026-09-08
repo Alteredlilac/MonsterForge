@@ -71,13 +71,13 @@ from monsterforge.llm.semantic_classification.attacks import (
     AttackSemanticResult,
     SemanticContextInput,
     classify_attack,
-    semantic_result_to_dict,
 )
 from monsterforge.rendering.library_renderer import render_library_html
 from monsterforge.rendering.move_card_renderer import render_move_card_html_with_edit
 from monsterforge.serialization.domain_to_json import card_to_json
 from monsterforge.structured_data.dnd.v3x.effect_mechanics import EffectRange
 from monsterforge.structured_data.dnd.v3x.enums import CreatureSubtype, MoveType, UnitSystem
+from monsterforge.ui.hidden_fields import semantic_result_from_json, semantic_result_to_json
 from monsterforge.validation.enums import ValidationStatus
 from monsterforge.validation.review import HumanReview, needs_review
 
@@ -110,35 +110,6 @@ app = FastAPI(lifespan=lifespan)
 # person typing at a terminal is already expected to match the
 # parser's vocabulary.
 ATTACK_TYPE_OPTIONS = ("melee", "melee touch", "ranged", "ranged touch")
-
-
-# =====================
-# SEMANTIC RESULT (DE)SERIALIZATION
-# =====================
-def _semantic_result_to_json(result: AttackSemanticResult) -> str:
-    """Serialize an AttackSemanticResult for a hidden form field, to
-    survive the round trip from POST /convert to POST /review — there's
-    no server-side session to hold onto it instead."""
-    return json.dumps(semantic_result_to_dict(result))
-
-
-def _semantic_result_from_json(text: str) -> AttackSemanticResult:
-    data = json.loads(text)
-    move_range = None
-
-    if data["move_range"]:
-        move_range = EffectRange(
-            effect_range=data["move_range"]["effect_range"],
-            range_unit_system=UnitSystem(data["move_range"]["range_unit_system"]),
-        )
-
-    return AttackSemanticResult(
-        description=data["description"],
-        move_type=MoveType(data["move_type"]),
-        move_range=move_range,
-        confidence=data["confidence"],
-        rationale=data["rationale"],
-    )
 
 
 # =====================
@@ -211,7 +182,7 @@ def _review_form_context(
         "raw_attack": raw_attack,
         "semantic_context": semantic_context,
         "semantic_result": semantic_result,
-        "semantic_result_json": _semantic_result_to_json(semantic_result),
+        "semantic_result_json": semantic_result_to_json(semantic_result),
         "template_name": template_name,
         "image_uri": image_uri,
         "raw_field_id": raw_field_id,
@@ -296,7 +267,7 @@ def _render_card(
         "image_uri": image_uri,
         "raw_field_id": raw_field.id,
         "classification_event_id": classification_event.id,
-        "semantic_result_json": _semantic_result_to_json(semantic_result),
+        "semantic_result_json": semantic_result_to_json(semantic_result),
     }
 
     return HTMLResponse(render_move_card_html_with_edit(card_data, "/review/edit", edit_form_fields))
@@ -443,7 +414,7 @@ def reopen_event_for_review(
         raw_field.data.get("creature_description") or "",
         raw_field.data.get("creature_subtype") or "",
     )
-    semantic_result = _semantic_result_from_json(json.dumps(event.result))
+    semantic_result = semantic_result_from_json(json.dumps(event.result))
 
     # Same by-id walk-back as view_saved_card() above, for the same reason.
     origin_event = event
@@ -665,7 +636,7 @@ def edit_review(
         attack_effect=raw_attack_attack_effect,
     )
     semantic_context = _semantic_context_from_form(additional_description, creature_description, creature_subtype)
-    semantic_result = _semantic_result_from_json(semantic_result_json)
+    semantic_result = semantic_result_from_json(semantic_result_json)
 
     return templates.TemplateResponse(
         request, "review_form.html.jinja2",
@@ -722,7 +693,7 @@ def review(
         attack_effect=raw_attack_attack_effect,
     )
     semantic_context = _semantic_context_from_form(additional_description, creature_description, creature_subtype)
-    original_result = _semantic_result_from_json(semantic_result_json)
+    original_result = semantic_result_from_json(semantic_result_json)
     raw_field = session.get(RawField, raw_field_id)
     referenced_event = session.get(ClassificationEvent, classification_event_id)
 
