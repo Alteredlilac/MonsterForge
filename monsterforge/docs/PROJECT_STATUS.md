@@ -129,7 +129,7 @@ The web app can also be built and run as a Docker container: a
 image, with no database volume mounted by default — see
 [README.md](../../README.md#run-with-docker) for the exact commands.
 
-The current test suite contains 755 passing tests, 0 failing.
+The current test suite contains 770 passing tests, 0 failing.
 
 ## What works today
 
@@ -336,7 +336,16 @@ The current test suite contains 755 passing tests, 0 failing.
 
 ## Test coverage
 
-**755 passing, 0 failing.** 34 of those cover the new JSON API
+**770 passing, 0 failing.** 15 of those cover the API's demo-seed
+feature (`entrypoints/api_demo_seed_data.py`, `api/demo_seed.py`):
+integrity of the 8 curated demo attacks (valid enum values, range
+value/unit always given together, every attack_effect parsing without
+error) and `seed_demo_cards()` itself (populates every entry, is
+idempotent on a second call, preserves a secondary-effect card, and
+the result is visible through `GET /api/cards`) — no LLM mocking
+needed anywhere in that second group, since the whole point of that
+module is that it never calls `classify_attack()` at all. Before that,
+34 of those cover the JSON API
 (`api/reads.py`, `api/creation.py`): the two read routes (an empty
 list, a populated one, name/id search, a rejected attack's card
 correctly excluded, an unknown id, a rejected attack's classification,
