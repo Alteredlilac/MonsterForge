@@ -79,17 +79,21 @@ just locally. See [PERSISTENCE.md](./PERSISTENCE.md) for what that
 design demonstrates. The CLI doesn't use this cache yet — see
 [Limitations](#limitations--not-yet-built) below.
 
-A JSON API for non-interactive consumers is also built now, as its own
-FastAPI application separate from the web UI: `GET /api/cards`/
+A JSON API for non-interactive consumers is also live now, as its own
+FastAPI application deployed separately from the web UI —
+**[try it on Swagger](https://monsterforge-api.onrender.com/docs)**
+(same free-tier wake-up delay as above): `GET /api/cards`/
 `GET /api/cards/{id}` list and fetch already-saved cards, `POST
 /api/cards` creates one (reusing the same fingerprint cache and
 confidence gate the web form uses), and `POST /api/cards/{id}/rerun`
-reclassifies an existing attack from scratch. Deliberately narrow
+reclassifies an existing attack from scratch. The deployed instance is
+pre-seeded with 8 real, already-classified cards (a fixed demo set
+replayed from a past Gemini run, not reclassified on every restart) so
+`GET /api/cards` shows something real immediately. Deliberately narrow
 scope: no human review and no deletion are exposed through it — an
 attack whose confidence is too low to auto-approve comes back as a
 pending status rather than a resolved card, since deciding an ambiguous
-case stays a human, web-only action. Interactive Swagger documentation
-is available automatically at `/docs`.
+case stays a human, web-only action.
 
 Everything the persistence layer saves is now browsable, too: a cards
 library (`/library/cards`) lists every saved attack, searchable by
@@ -285,12 +289,14 @@ The current test suite contains 755 passing tests, 0 failing.
   highlighted row when it changes, and resolved correctly whether
   reopening a saved card or an old, already-superseded attempt.
 
-- **A JSON API for non-interactive consumers** (`GET /api/cards`,
-  `GET /api/cards/{raw_field_id}`, `POST /api/cards`,
-  `POST /api/cards/{raw_field_id}/rerun`): its own FastAPI application,
-  independent from the web UI, sharing only the persistence and
-  pipeline layers underneath both. Reads return exactly what's already
-  saved, filtered to real cards only; creation and rerun reuse the same
+- **A JSON API for non-interactive consumers**, deployed as its own
+  Render Web Service — see [Demo](../../README.md#demo) for the live
+  Swagger link (`GET /api/cards`, `GET /api/cards/{raw_field_id}`,
+  `POST /api/cards`, `POST /api/cards/{raw_field_id}/rerun`): its own
+  FastAPI application, independent from the web UI (its own Dockerfile,
+  its own Render service), sharing only the persistence and pipeline
+  layers underneath both. Reads return exactly what's already saved,
+  filtered to real cards only; creation and rerun reuse the same
   fingerprint cache and confidence gate `/convert`/`/review` already
   use, so the same attack at the same confidence resolves identically
   on either channel. Deliberately narrow: no route resolves an
@@ -298,7 +304,10 @@ The current test suite contains 755 passing tests, 0 failing.
   web) and none deletes anything, matching the append-only schema.
   Interactive Swagger documentation is generated automatically at
   `/docs`, with no extra code beyond the request/response models the
-  routes already needed.
+  routes already needed. The deployed instance is pre-seeded with 8
+  real, already-classified cards (replayed deterministically from a
+  past Gemini run, not reclassified on every restart) so the live demo
+  shows something real immediately instead of an empty list.
 
 - **Continuous integration** (GitHub Actions): the full test suite runs
   automatically on every push and pull request, with coverage reported
@@ -444,20 +453,18 @@ ship:
   conversion fresh, with no stable card id across runs. Deliberately
   deferred to a broader CLI pass rather than wired in isolation now.
 
-- **The JSON API isn't deployed publicly yet** — built, tested, and
-  runnable locally as its own FastAPI application, but with no live URL
-  of its own the way the web UI has one on Render.
-
 - **Other `MoveCard` sources** — only attacks produce move cards today;
   talents, spells, and special qualities aren't wired in
   (`transformation/dnd/v3x/converters/move_converter.py` remains an
   intentional stub for when a second source exists).
 
-- **No rate limiting on the live deployment** — the deployed web UI
-  calls the real Gemini API on a free-tier key with no billing attached,
-  so the realistic exposure is temporary quota exhaustion (the demo
-  becomes slow/unavailable for a while), not cost. Deliberately deferred
-  to ship the deployment itself first, not an oversight.
+- **No rate limiting on either live deployment** — both the web UI and
+  the JSON API call the real Gemini API on the same free-tier key with
+  no billing attached, so the realistic exposure is temporary quota
+  exhaustion (the demo becomes slow/unavailable for a while), not cost.
+  Deliberately deferred to ship the deployments themselves first, not
+  an oversight, and accepted identically for both rather than treating
+  the API as a new risk.
 
 Every item that was once in this "later" bucket (rendering, human
 review, the web flow, persistence with stable card identity, and now

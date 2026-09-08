@@ -106,6 +106,10 @@ inactivity can take ~30–50s to wake up.
 
 ![Filling in the live conversion form and getting back a rendered MoveCard](./monsterforge/docs/images/readme/demo_web_3.gif)
 
+The JSON API is deployed separately: **[try it on Swagger](https://monsterforge-api.onrender.com/docs)** —
+`GET /api/cards` lists a handful of pre-seeded real cards, `POST /api/cards` classifies and persists a
+new one against the real Gemini API (same free-tier wake-up delay as above).
+
 ---
 
 ## Problem
