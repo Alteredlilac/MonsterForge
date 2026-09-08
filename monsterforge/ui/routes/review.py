@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 
 from monsterforge.config import validation_settings
 from monsterforge.db.pipeline import ClassificationEvent, RawField
+from monsterforge.db.session import get_db_session
 from monsterforge.llm.client import get_llm_client
 from monsterforge.llm.clients.gemini import ModelUnavailableError
 from monsterforge.llm.semantic_classification.attacks import ATTACK_PROMPT_TEMPLATE_OPTIONS, classify_attack
@@ -25,7 +26,6 @@ from monsterforge.pipeline.attack_repository import activate_classification_even
 from monsterforge.pipeline.reference_lookups import get_human_actor, get_llm_actor
 from monsterforge.structured_data.dnd.v3x.enums import MoveType
 from monsterforge.ui.context import parse_positive_range, semantic_context_from_form
-from monsterforge.ui.dependencies import get_db_session
 from monsterforge.ui.hidden_fields import semantic_result_from_json
 from monsterforge.ui.jinja_templating import templates
 from monsterforge.ui.responses import message_page, render_card, review_form_context

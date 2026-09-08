@@ -30,9 +30,9 @@ from monsterforge.pipeline.attack_pipeline import is_blank_attack
 from monsterforge.pipeline.attack_repository import compute_fingerprint, get_or_create_raw_field, record_llm_run
 from monsterforge.pipeline.attack_repository_queries import InconsistentActiveClassificationError
 from monsterforge.pipeline.reference_lookups import get_default_game, get_llm_actor
+from monsterforge.db.session import get_db_session
 from monsterforge.structured_data.dnd.v3x.enums import CreatureSubtype, UnitSystem
 from monsterforge.ui.context import parse_positive_range, range_context_note, semantic_context_from_form
-from monsterforge.ui.dependencies import get_db_session
 from monsterforge.ui.jinja_templating import templates
 from monsterforge.ui.responses import message_page, render_card, review_form_context, serve_cached_card
 from monsterforge.validation.enums import ValidationStatus

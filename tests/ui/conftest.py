@@ -15,10 +15,10 @@ from unittest.mock import patch
 import pytest
 from fastapi.testclient import TestClient
 
+from monsterforge.db.session import get_db_session
 from monsterforge.llm.semantic_classification.attacks import AttackSemanticResult
 from monsterforge.structured_data.dnd.v3x.enums import MoveType
 from monsterforge.ui.app import app
-from monsterforge.ui.dependencies import get_db_session
 
 client = TestClient(app)
 

@@ -9,13 +9,17 @@ hidden-field (de)serialization, building an HTTP response from a
 resolved state) live in their own modules alongside routes/ (context.py,
 hidden_fields.py, responses.py), imported by whichever router needs
 them rather than by this file.
+
+api/app.py is a separate FastAPI app, not registered here: the human-
+facing web UI and the JSON API are independent branches sharing only
+the layers underneath them (pipeline/, db/, validation/), deployed and
+run as two separate services rather than one process serving both.
 """
 from contextlib import asynccontextmanager
 from pathlib import Path
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
-from monsterforge.db.session import create_all_tables, get_session
-from monsterforge.db.seed import seed_reference_data
+from monsterforge.db.session import init_database
 from monsterforge.ui.routes.convert import router as convert_router
 from monsterforge.ui.routes.library import router as library_router
 from monsterforge.ui.routes.review import router as review_router
@@ -24,15 +28,10 @@ from monsterforge.ui.routes.review import router as review_router
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     """Create the database tables and seed reference rows once, at
-    startup — this project has no migration tool, so table creation
+    startup -- this project has no migration tool, so table creation
     must be triggered explicitly rather than happening on import (see
-    db/session.py::create_all_tables())."""
-    create_all_tables()
-    session = get_session()
-    try:
-        seed_reference_data(session)
-    finally:
-        session.close()
+    db/session.py::init_database())."""
+    init_database()
     yield
 
 

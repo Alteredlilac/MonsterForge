@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from monsterforge.db.enums import EventType
 from monsterforge.db.pipeline import ClassificationEvent, RawField
+from monsterforge.db.session import get_db_session
 from monsterforge.llm.semantic_classification.attacks import ATTACK_PROMPT_TEMPLATE
 from monsterforge.parsing.dnd.v3x.raw_fields.attacks import Attack as RawAttack
 from monsterforge.pipeline.attack_repository_queries import (
@@ -23,7 +24,6 @@ from monsterforge.pipeline.attack_repository_queries import (
 )
 from monsterforge.rendering.library_renderer import render_library_html
 from monsterforge.ui.context import semantic_context_from_form
-from monsterforge.ui.dependencies import get_db_session
 from monsterforge.ui.hidden_fields import semantic_result_from_json
 from monsterforge.ui.jinja_templating import templates
 from monsterforge.ui.responses import message_page, review_form_context, serve_cached_card

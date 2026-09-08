@@ -2,10 +2,13 @@
 Engine and session setup for the db/ package.
 
 Provides get_engine()/get_session() as the single source of SQLite
-connection/session configuration, plus create_all_tables() for explicit
-table creation. This project uses no migration tool (Alembic), so table
-creation must be triggered deliberately by a caller (an init/seed
-script) rather than happening implicitly on import.
+connection/session configuration, create_all_tables() for explicit
+table creation, get_db_session() for a request-scoped session any
+FastAPI app can depend on, and init_database() for the one-time startup
+sequence every such app needs. This project uses no migration tool
+(Alembic), so table creation must be triggered deliberately by a caller
+(an init/seed script, an app's own startup) rather than happening
+implicitly on import.
 """
 
 import sqlalchemy as sa
@@ -13,6 +16,7 @@ from sqlalchemy.orm import Session
 
 from monsterforge.config.db_settings import DATABASE_URL
 from monsterforge.db.base import Base
+from monsterforge.db.seed import seed_reference_data
 
 # Importing these registers every model class on Base.metadata, so a
 # caller only needs to import db.session (not each model module
@@ -71,3 +75,31 @@ def create_all_tables() -> None:
     importing db.session.
     """
     Base.metadata.create_all(get_engine())
+
+
+def get_db_session():
+    """FastAPI dependency: yields a session scoped to one request, always
+    closed afterward. Not specific to any one app -- ui/app.py and
+    api/app.py both depend on it, the same way both depend on the schema
+    itself, rather than either importing it from the other. Overridden
+    in tests (tests/ui/conftest.py) to yield an isolated in-memory
+    session instead of the real database."""
+    session = get_session()
+    try:
+        yield session
+    finally:
+        session.close()
+
+
+def init_database() -> None:
+    """Create every table and seed reference rows once, at process
+    startup -- called from both ui/app.py's and api/app.py's own
+    lifespan(). Each FastAPI app starts up independently, but both need
+    this identical two-step sequence, so it lives here once rather than
+    being copied into each app's lifespan body."""
+    create_all_tables()
+    session = get_session()
+    try:
+        seed_reference_data(session)
+    finally:
+        session.close()
