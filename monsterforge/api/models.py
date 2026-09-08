@@ -63,3 +63,14 @@ class AttackCreateRequest(BaseModel):
         if (self.range_value is None) != (self.range_unit is None):
             raise ValueError("range_value and range_unit must be given together.")
         return self
+
+
+class AttackRerunRequest(BaseModel):
+    """
+    POST /api/cards/{raw_field_id}/rerun body -- entirely optional, same
+    two fields ui/routes/review.py's own rerun decision collects: a note
+    appended to whatever context the raw_field was originally submitted
+    with, and which prompt template to classify against this time.
+    """
+    note: str | None = None
+    template_name: str = ATTACK_PROMPT_TEMPLATE

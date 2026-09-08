@@ -1,15 +1,18 @@
 """
-POST /api/cards -- create (or reuse) a card for a submitted attack, as
-opposed to api/reads.py's read-only lookups.
+POST /api/cards, POST /api/cards/{raw_field_id}/rerun -- the two routes
+that make something new happen (classify, then persist or report
+pending review), as opposed to api/reads.py's read-only lookups.
 
-Mirrors ui/routes/convert.py's own /convert sequence (fingerprint,
-cache hit, classify, confidence gate, build and persist), duplicated
-rather than reused: that route always returns HTMLResponse with
-web-specific edit-form fields, a contract this API has no use for.
+Creation mirrors ui/routes/convert.py's own /convert sequence
+(fingerprint, cache hit, classify, confidence gate, build and persist),
+duplicated rather than reused: that route always returns HTMLResponse
+with web-specific edit-form fields, a contract this API has no use for.
+Rerun mirrors ui/routes/review.py's own rerun decision the same way.
 Human review itself (approve/correct/reject/rerun as a human decision)
 stays a web-only, human-only action on purpose: this module can create
-a card, but never resolves an ambiguous classification itself -- that
-decision stays exclusively on the web, through POST /review.
+or reclassify an attack, but never resolves an ambiguous classification
+itself -- that decision stays exclusively on the web, through
+POST /review.
 
 Reuses the same repository functions ui/routes/ already calls, and the
 same get_db_session dependency -- neither is duplicated here. Both this
@@ -24,7 +27,7 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
-from monsterforge.api.models import AttackCreateRequest, ErrorResponse, PendingReviewResponse
+from monsterforge.api.models import AttackCreateRequest, AttackRerunRequest, ErrorResponse, PendingReviewResponse
 from monsterforge.config import validation_settings
 from monsterforge.db.enums import CardType
 from monsterforge.db.pipeline import ClassificationEvent, RawField
@@ -51,10 +54,15 @@ from monsterforge.pipeline.attack_repository import (
     save_card,
     save_structured_data,
 )
-from monsterforge.pipeline.attack_repository_queries import InconsistentActiveClassificationError, find_existing_card
+from monsterforge.pipeline.attack_repository_queries import (
+    InconsistentActiveClassificationError,
+    find_existing_card,
+    resolve_effective_name,
+)
 from monsterforge.pipeline.reference_lookups import get_default_game, get_llm_actor
 from monsterforge.serialization.domain_to_json import card_to_json
 from monsterforge.structured_data.dnd.v3x.effect_mechanics import EffectRange
+from monsterforge.structured_data.dnd.v3x.enums import CreatureSubtype
 from monsterforge.transformation.dnd.v3x.converters.attacks_converter import attack_converter
 from monsterforge.validation.enums import ValidationStatus
 from monsterforge.validation.review import needs_review
@@ -221,3 +229,94 @@ def create_card(payload: AttackCreateRequest, session: Session = Depends(get_db_
         return JSONResponse({"status": "pending_review", "event_id": llm_event.id}, status_code=202)
 
     return _build_and_persist_card(session, raw_field, llm_event, raw_attack, semantic_result, payload.image_uri)
+
+
+# =====================
+# POST /api/cards/{raw_field_id}/rerun
+# =====================
+@router.post(
+    "/cards/{raw_field_id}/rerun",
+    responses={
+        202: {"model": PendingReviewResponse},
+        404: {"model": ErrorResponse},
+        422: {"model": ErrorResponse},
+        502: {"model": ErrorResponse},
+        503: {"model": ErrorResponse},
+    },
+)
+def rerun_card(
+        raw_field_id: str,
+        payload: AttackRerunRequest = AttackRerunRequest(),
+        session: Session = Depends(get_db_session)) -> JSONResponse:
+    """
+    Reclassify a raw_field from scratch, ignoring any cache -- a rerun
+    is a deliberate manual retry, always a new attempt, never
+    deduplicated against a fingerprint (same rule as /review's own
+    rerun decision). raw_attack is rebuilt from raw_field.data itself
+    (a rerun is looked up by raw_field_id, not resubmitted field by
+    field), using resolve_effective_name() for the name in case an
+    earlier correction already changed it, and the modifier/attack_type/
+    attack_effect/context fields as originally submitted -- only name
+    is ever corrected in this project, see resolve_effective_name()'s
+    own docstring.
+    """
+    raw_field = session.get(RawField, raw_field_id)
+    if raw_field is None:
+        return JSONResponse({"error": "No such raw field."}, status_code=404)
+
+    if raw_field.current_classification_event_id is not None:
+        active_event = session.get(ClassificationEvent, raw_field.current_classification_event_id)
+        if active_event.decision == ValidationStatus.REJECTED:
+            return JSONResponse({"error": "This attack was previously rejected."}, status_code=422)
+
+    if payload.template_name not in {option.path for option in ATTACK_PROMPT_TEMPLATE_OPTIONS}:
+        return JSONResponse({"error": f"Unknown prompt template: {payload.template_name!r}."}, status_code=422)
+
+    raw_attack = RawAttack(
+        name=resolve_effective_name(session, raw_field, raw_field.current_classification_event_id),
+        modifier=raw_field.data["modifier"], attack_type=raw_field.data["attack_type"],
+        attack_effect=raw_field.data["attack_effect"],
+    )
+    semantic_context = SemanticContextInput(
+        additional_description=raw_field.data.get("additional_description"),
+        creature_description=raw_field.data.get("creature_description"),
+        creature_subtype=(
+            CreatureSubtype(raw_field.data["creature_subtype"]) if raw_field.data.get("creature_subtype") else None
+        ),
+    )
+
+    rerun_context = semantic_context
+    if payload.note and payload.note.strip():
+        combined_description = (
+            f"{semantic_context.additional_description}\n{payload.note}"
+            if semantic_context.additional_description else payload.note
+        )
+        rerun_context = dataclasses.replace(semantic_context, additional_description=combined_description)
+
+    try:
+        semantic_result = classify_attack(
+            raw_attack=raw_attack,
+            additional_description=rerun_context.additional_description,
+            creature_description=rerun_context.creature_description,
+            creature_subtype=rerun_context.creature_subtype,
+            template_name=payload.template_name,
+        )
+    except ModelUnavailableError as exc:
+        return JSONResponse({"error": f"The configured LLM model is unavailable: {exc}"}, status_code=503)
+    except Exception as exc:
+        return JSONResponse({"error": f"Classification failed: {exc}"}, status_code=502)
+
+    requires_review = needs_review(confidence=semantic_result.confidence)
+
+    llm_event = record_llm_run(
+        session, raw_field=raw_field, semantic_result=semantic_result, actor=get_llm_actor(session),
+        prompt_name=payload.template_name, model_name=get_llm_client().model_name,
+        confidence_threshold=validation_settings.CONFIDENCE_THRESHOLD,
+        decision=None if requires_review else ValidationStatus.AUTO_APPROVED,
+        rerun_note=payload.note or None,
+    )
+
+    if requires_review:
+        return JSONResponse({"status": "pending_review", "event_id": llm_event.id}, status_code=202)
+
+    return _build_and_persist_card(session, raw_field, llm_event, raw_attack, semantic_result, image_uri=None)
