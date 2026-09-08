@@ -8,12 +8,14 @@ and sharing only the layers underneath them (pipeline/, db/,
 validation/) -- run and deployed as two separate services, potentially
 on two separate hosts, rather than one process serving both.
 
-Just the app instance, startup (lifespan()), and api/routes.py's
-router -- every actual route handler lives there.
+Just the app instance, startup (lifespan()), and the two route routers
+(api/reads.py, api/creation.py) -- every actual route handler lives in
+one of those modules.
 """
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from monsterforge.api.routes import router as api_router
+from monsterforge.api.creation import router as creation_router
+from monsterforge.api.reads import router as reads_router
 from monsterforge.db.session import init_database
 
 
@@ -28,4 +30,5 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
-app.include_router(api_router)
+app.include_router(reads_router)
+app.include_router(creation_router)

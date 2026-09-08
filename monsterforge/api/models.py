@@ -1,9 +1,9 @@
 """
-Pydantic request/response models for api/routes.py.
+Pydantic request/response models for api/reads.py and api/creation.py.
 
-Kept in its own module rather than inline in routes.py: this file
-answers "what shape does a request or response have", routes.py
-answers "what does handling one actually do" -- two different
+Kept in its own module rather than inline in either route module: this
+file answers "what shape does a request or response have", the route
+modules answer "what does handling one actually do" -- two different
 questions, the same split this project already draws elsewhere between
 static data and the logic that consumes it (rules/ vs. transformation/).
 """
