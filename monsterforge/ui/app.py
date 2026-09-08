@@ -4,12 +4,12 @@ FastAPI web app for MVP 1: the same conversion + human review flow MVP
 entrypoints/_review_input.py), exposed over HTTP instead of a terminal
 prompt.
 
-Rerun is deliberately not included in this first web pass — it's left
-as a later increment, once experience with the plain review flow here
-shows what it should actually need. Correction otherwise has full
-parity with the CLI: free text for description and the range's numeric
-value, constrained dropdowns for move_type and the range's unit,
-assigned_llm_score/edit_note on every decision.
+Correction has full parity with the CLI: free text for description and
+the range's numeric value, constrained dropdowns for move_type and the
+range's unit, assigned_llm_score/edit_note on every decision. Rerun
+(reclassify, optionally with a note and/or a different prompt template)
+is also supported, mirroring entrypoints/_review_input.py's CLI rerun
+as one HTTP round trip instead of a loop inside the same process.
 
 No server-side session state, matching MVP 0.5's own statelessness:
 raw_attack and the original classification travel from GET/POST
@@ -27,7 +27,6 @@ import dataclasses
 import json
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Literal
 from fastapi import Depends, FastAPI, Form, Request
 from fastapi.responses import FileResponse, HTMLResponse
 from sqlalchemy.orm import Session
@@ -39,26 +38,15 @@ from monsterforge.db.session import create_all_tables, get_session
 from monsterforge.ui.dependencies import get_db_session
 from monsterforge.ui.jinja_templating import templates
 from monsterforge.parsing.dnd.v3x.raw_fields.attacks import Attack as RawAttack
-from monsterforge.parsing.dnd.v3x.structured_conversions.attacks.attacks_converter import (
-    UnknownAttackRange,
-    is_melee,
-)
-from monsterforge.entrypoints.sample_attacks_web_seed import SAMPLE_ATTACKS_WEB_SEED
-from monsterforge.pipeline.attack_pipeline import is_blank_attack
-from monsterforge.pipeline.attack_repository import (
-    activate_classification_event,
-    compute_fingerprint,
-    get_or_create_raw_field,
-    record_human_review,
-    record_llm_run,
-)
+from monsterforge.parsing.dnd.v3x.structured_conversions.attacks.attacks_converter import UnknownAttackRange
+from monsterforge.pipeline.attack_repository import activate_classification_event, record_human_review, record_llm_run
 from monsterforge.pipeline.attack_repository_queries import (
     InconsistentActiveClassificationError,
     find_existing_card,
     list_saved_cards,
     resolve_effective_name,
 )
-from monsterforge.pipeline.reference_lookups import get_default_game, get_human_actor, get_llm_actor
+from monsterforge.pipeline.reference_lookups import get_human_actor, get_llm_actor
 from monsterforge.llm.client import get_llm_client
 from monsterforge.llm.clients.gemini import ModelUnavailableError
 from monsterforge.llm.semantic_classification.attacks import (
@@ -69,12 +57,13 @@ from monsterforge.llm.semantic_classification.attacks import (
     classify_attack,
 )
 from monsterforge.rendering.library_renderer import render_library_html
-from monsterforge.structured_data.dnd.v3x.enums import CreatureSubtype, MoveType, UnitSystem
-from monsterforge.ui.context import parse_positive_range, range_context_note, semantic_context_from_form
+from monsterforge.structured_data.dnd.v3x.enums import MoveType
+from monsterforge.ui.context import parse_positive_range, semantic_context_from_form
 from monsterforge.ui.hidden_fields import semantic_result_from_json
 from monsterforge.ui.responses import message_page, render_card, review_form_context, serve_cached_card
+from monsterforge.ui.routes.convert import router as convert_router
 from monsterforge.validation.enums import ValidationStatus
-from monsterforge.validation.review import HumanReview, needs_review
+from monsterforge.validation.review import HumanReview
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
@@ -92,19 +81,7 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
-
-# NOTE:
-# raw_fields.Attack.attack_type is deliberately an unconstrained str
-# (see parsing/dnd/v3x/raw_fields/attacks.py), not an enum — but
-# is_melee()/is_touch() in attacks_converter.py only recognize these
-# exact English substrings ("melee" in attack_type.lower(), etc.). A
-# free-text web input let a value like "mischia" (not matching any of
-# them) silently fall through to "ranged", triggering an LLM range
-# lookup for what was actually a melee attack. Constrained to a
-# dropdown here for that reason — the CLI keeps free text, since a
-# person typing at a terminal is already expected to match the
-# parser's vocabulary.
-ATTACK_TYPE_OPTIONS = ("melee", "melee touch", "ranged", "ranged touch")
+app.include_router(convert_router)
 
 
 # =====================
@@ -232,169 +209,6 @@ def reopen_event_for_review(
             raw_field_id=raw_field.id, classification_event_id=event.id,
         ),
     )
-
-
-@app.get("/convert", response_class=HTMLResponse)
-def show_convert_form(request: Request) -> HTMLResponse:
-    return templates.TemplateResponse(request, "convert_form.html.jinja2", {
-        "creature_subtypes": [subtype.value for subtype in CreatureSubtype],
-        "attack_types": ATTACK_TYPE_OPTIONS,
-        "unit_systems": [unit.value for unit in UnitSystem],
-        "prompt_templates": ATTACK_PROMPT_TEMPLATE_OPTIONS,
-        "sample_attacks": SAMPLE_ATTACKS_WEB_SEED,
-    })
-
-
-@app.post("/convert", response_class=HTMLResponse)
-def convert(
-        request: Request,
-        name: str = Form(...),
-        modifier: str = Form(""),
-        attack_type: Literal["", "melee", "melee touch", "ranged", "ranged touch"] = Form(""),
-        attack_effect: str = Form(""),
-        additional_description: str = Form(""),
-        creature_description: str = Form(""),
-        creature_subtype: str = Form(""),
-        image_uri: str = Form(""),
-        force_review: bool = Form(False),
-        range_value: str = Form(""),
-        range_unit: str = Form(""),
-        template_name: str = Form(ATTACK_PROMPT_TEMPLATE),
-        session: Session = Depends(get_db_session),
-        ) -> HTMLResponse:
-    raw_attack = RawAttack(name=name, modifier=modifier, attack_type=attack_type, attack_effect=attack_effect)
-
-    if is_blank_attack(raw_attack):
-        return message_page("No card produced: the submitted attack was blank.")
-
-    # NOTE:
-    # Not a Literal[...] like attack_type — that would duplicate the
-    # path list ATTACK_PROMPT_TEMPLATE_OPTIONS already exists to be the
-    # single source of. Checked against the option paths directly instead.
-    if template_name not in {option.path for option in ATTACK_PROMPT_TEMPLATE_OPTIONS}:
-        return message_page(f"Unknown prompt template: {template_name!r}.", status_code=422)
-
-    # NOTE:
-    # A ranged/ranged touch attack needs to resolve a distance somehow —
-    # either from an explicit range value/unit here, or from prose in
-    # additional_description (the existing, already-reliable path for
-    # most real attacks). Only required as a last resort, when neither
-    # is present, rather than forcing structured input on attacks that
-    # already work fine from context alone.
-    if (attack_type in ("ranged", "ranged touch")
-            and not additional_description.strip()
-            and not (range_value.strip() and range_unit.strip())):
-        return message_page(
-            "A ranged attack needs either a range value and unit, or a description "
-            "mentioning its range — neither was provided.",
-            status_code=422,
-        )
-
-    try:
-        explicit_range = None if is_melee(raw_attack) else parse_positive_range(range_value, range_unit)
-    except ValueError as exc:
-        return message_page(f"Invalid range value: {exc}", status_code=422)
-
-    semantic_context = semantic_context_from_form(additional_description, creature_description, creature_subtype)
-
-    if explicit_range is not None:
-        range_note = range_context_note(explicit_range)
-        semantic_context = dataclasses.replace(
-            semantic_context,
-            additional_description=(
-                f"{range_note} {semantic_context.additional_description}"
-                if semantic_context.additional_description else range_note
-            ),
-        )
-
-    # NOTE:
-    # get_or_create_raw_field() is always called, never conditioned on a
-    # separate "does an active result exist?" check first — see its own
-    # docstring for why (a raw_field can already exist for this
-    # fingerprint with no active event yet, and checking a different way
-    # around risks an IntegrityError on fingerprint's UNIQUE constraint).
-    fingerprint = compute_fingerprint(raw_attack, semantic_context.creature_subtype, explicit_range)
-    raw_field = get_or_create_raw_field(
-        session, game_id=get_default_game(session).id, raw_attack=raw_attack,
-        semantic_context=semantic_context, fingerprint=fingerprint,
-    )
-
-    if raw_field.current_classification_event_id is not None:
-        active_event = session.get(ClassificationEvent, raw_field.current_classification_event_id)
-        if active_event.decision == ValidationStatus.REJECTED:
-            return message_page("This attack was previously rejected.", status_code=422)
-        try:
-            return serve_cached_card(session, raw_field, active_event, template_name, image_uri)
-        except InconsistentActiveClassificationError as exc:
-            return message_page(f"Could not load the saved card: {exc}", status_code=500)
-
-    try:
-        semantic_result = classify_attack(
-            raw_attack=raw_attack,
-            additional_description=semantic_context.additional_description,
-            creature_description=semantic_context.creature_description,
-            creature_subtype=semantic_context.creature_subtype,
-            template_name=template_name,
-        )
-    except ModelUnavailableError as exc:
-        return message_page(f"The configured LLM model is unavailable: {exc}", status_code=503)
-    except Exception as exc:
-        return message_page(f"Classification failed: {exc}", status_code=502)
-
-    if explicit_range is not None:
-        # The form's own range/unit is trusted over whatever the LLM
-        # returned for move_range — it was already handed to the LLM as
-        # context above (so confidence reflects that it had the value),
-        # but the actual domain value used downstream comes from the
-        # deterministic form input, not the LLM's own reconstruction of it.
-        semantic_result = dataclasses.replace(semantic_result, move_range=explicit_range)
-
-    # NOTE:
-    # force_review is a per-request local value, never written to
-    # config.validation_settings.ALWAYS_ON — that setting is shared,
-    # process-wide, mutable state, safe for a single sequential batch
-    # script (see entrypoints/collect_real_pipeline_conversions_with_simulated_review.py)
-    # but not for a web server handling concurrent requests: mutating it
-    # here could leak "always review" into an unrelated request that
-    # never asked for it.
-    requires_review = force_review or needs_review(confidence=semantic_result.confidence)
-
-    # decision is resolved here, before the row is even written, and
-    # never changed afterward — classification_events' append-only rule
-    # (see db/pipeline.py) allows only `status` to change post-write.
-    llm_event = record_llm_run(
-        session, raw_field=raw_field, semantic_result=semantic_result, actor=get_llm_actor(session),
-        prompt_name=template_name, model_name=get_llm_client().model_name,
-        confidence_threshold=validation_settings.CONFIDENCE_THRESHOLD,
-        decision=None if requires_review else ValidationStatus.AUTO_APPROVED,
-    )
-
-    if requires_review:
-        # Deliberately not activated: PENDING until a human decides, in
-        # /review — activating an unresolved event here would make an
-        # unreviewed result look like the raw_field's current one.
-        return templates.TemplateResponse(
-            request, "review_form.html.jinja2",
-            review_form_context(
-                raw_attack, semantic_context, semantic_result, template_name, image_uri,
-                raw_field_id=raw_field.id, classification_event_id=llm_event.id,
-            ),
-        )
-
-    try:
-        return render_card(
-            session, raw_field, llm_event, raw_attack, semantic_result, semantic_context,
-            template_name, image_uri,
-        )
-    except UnknownAttackRange as exc:
-        return templates.TemplateResponse(
-            request, "review_form.html.jinja2",
-            review_form_context(
-                raw_attack, semantic_context, semantic_result, template_name, image_uri,
-                raw_field_id=raw_field.id, classification_event_id=llm_event.id,
-                error_message=f"Could not build the card: {exc} Provide a range below and try again.",
-            ),
-        )
 
 
 @app.post("/review/edit", response_class=HTMLResponse)
