@@ -168,9 +168,10 @@ current seam is, not a plan to widen it.
   `entrypoints/test_llm_prompt_cli.py` — both call
   `ensure_model_available()` once at startup and wrap their LLM-reaching
   call in `call_llm_with_model_fallback()`.
-- `ui/app.py` — also calls `get_llm_client()` directly (to read
-  `.model_name` when recording an LLM run), but deliberately doesn't use
-  the interactive model-selection helpers above: an `input()`-driven
-  prompt has no meaning inside an HTTP request/response cycle. It
-  catches `ModelUnavailableError` directly instead and reports it as a
-  plain error response.
+- `ui/routes/convert.py`/`ui/routes/review.py` — also call
+  `get_llm_client()` directly (to read `.model_name` when recording an
+  LLM run), but deliberately don't use the interactive
+  model-selection helpers above: an `input()`-driven prompt has no
+  meaning inside an HTTP request/response cycle. They catch
+  `ModelUnavailableError` directly instead and report it as a plain
+  error response.
