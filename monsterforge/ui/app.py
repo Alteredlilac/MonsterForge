@@ -75,8 +75,8 @@ from monsterforge.llm.semantic_classification.attacks import (
 from monsterforge.rendering.library_renderer import render_library_html
 from monsterforge.rendering.move_card_renderer import render_move_card_html_with_edit
 from monsterforge.serialization.domain_to_json import card_to_json
-from monsterforge.structured_data.dnd.v3x.effect_mechanics import EffectRange
 from monsterforge.structured_data.dnd.v3x.enums import CreatureSubtype, MoveType, UnitSystem
+from monsterforge.ui.context import parse_positive_range, range_context_note, semantic_context_from_form
 from monsterforge.ui.hidden_fields import semantic_result_from_json, semantic_result_to_json
 from monsterforge.validation.enums import ValidationStatus
 from monsterforge.validation.review import HumanReview, needs_review
@@ -110,53 +110,6 @@ app = FastAPI(lifespan=lifespan)
 # person typing at a terminal is already expected to match the
 # parser's vocabulary.
 ATTACK_TYPE_OPTIONS = ("melee", "melee touch", "ranged", "ranged touch")
-
-
-# =====================
-# RANGE CONTEXT HELPERS
-# =====================
-def _parse_positive_range(range_value: str, range_unit: str) -> EffectRange | None:
-    """
-    Build an EffectRange from raw form input, deterministically — a
-    numeric value plus a unit dropdown is already fixed, structured
-    data, so it's built directly rather than round-tripped through the
-    LLM's own free-text interpretation of it.
-
-    Returns None if no range value was given (range is optional unless
-    the caller has already required it). Raises ValueError if a range
-    value is given but isn't a positive integer, or if the unit is
-    missing/invalid — a negative or zero range has no real meaning.
-    """
-    if not range_value.strip():
-        return None
-
-    value = int(range_value)
-    if value < 1:
-        raise ValueError(f"range value must be positive, got {value}.")
-
-    return EffectRange(effect_range=value, range_unit_system=UnitSystem(range_unit))
-
-
-def _range_context_note(effect_range: EffectRange) -> str:
-    """Render an EffectRange as a short sentence to prepend to the LLM's
-    additional_description context, so its own confidence reflects that
-    the range is already known rather than guessed."""
-    unit = "feet" if effect_range.range_unit_system == UnitSystem.IMPERIAL else "meters"
-    return f"Range: {effect_range.effect_range} {unit}."
-
-
-# =====================
-# SEMANTIC CONTEXT HELPERS
-# =====================
-def _semantic_context_from_form(
-        additional_description: str,
-        creature_description: str,
-        creature_subtype: str) -> SemanticContextInput:
-    return SemanticContextInput(
-        additional_description=additional_description or None,
-        creature_description=creature_description or None,
-        creature_subtype=CreatureSubtype(creature_subtype) if creature_subtype else None,
-    )
 
 
 def _review_form_context(
@@ -409,7 +362,7 @@ def reopen_event_for_review(
         name=resolve_effective_name(session, raw_field, event.id), modifier=raw_field.data["modifier"],
         attack_type=raw_field.data["attack_type"], attack_effect=raw_field.data["attack_effect"],
     )
-    semantic_context = _semantic_context_from_form(
+    semantic_context = semantic_context_from_form(
         raw_field.data.get("additional_description") or "",
         raw_field.data.get("creature_description") or "",
         raw_field.data.get("creature_subtype") or "",
@@ -500,14 +453,14 @@ def convert(
         )
 
     try:
-        explicit_range = None if is_melee(raw_attack) else _parse_positive_range(range_value, range_unit)
+        explicit_range = None if is_melee(raw_attack) else parse_positive_range(range_value, range_unit)
     except ValueError as exc:
         return _message_page(f"Invalid range value: {exc}", status_code=422)
 
-    semantic_context = _semantic_context_from_form(additional_description, creature_description, creature_subtype)
+    semantic_context = semantic_context_from_form(additional_description, creature_description, creature_subtype)
 
     if explicit_range is not None:
-        range_note = _range_context_note(explicit_range)
+        range_note = range_context_note(explicit_range)
         semantic_context = dataclasses.replace(
             semantic_context,
             additional_description=(
@@ -635,7 +588,7 @@ def edit_review(
         attack_type=raw_attack_attack_type,
         attack_effect=raw_attack_attack_effect,
     )
-    semantic_context = _semantic_context_from_form(additional_description, creature_description, creature_subtype)
+    semantic_context = semantic_context_from_form(additional_description, creature_description, creature_subtype)
     semantic_result = semantic_result_from_json(semantic_result_json)
 
     return templates.TemplateResponse(
@@ -692,7 +645,7 @@ def review(
         attack_type=raw_attack_attack_type,
         attack_effect=raw_attack_attack_effect,
     )
-    semantic_context = _semantic_context_from_form(additional_description, creature_description, creature_subtype)
+    semantic_context = semantic_context_from_form(additional_description, creature_description, creature_subtype)
     original_result = semantic_result_from_json(semantic_result_json)
     raw_field = session.get(RawField, raw_field_id)
     referenced_event = session.get(ClassificationEvent, classification_event_id)
@@ -793,7 +746,7 @@ def review(
         raw_attack = dataclasses.replace(raw_attack, name=name)
 
         try:
-            corrected_range = _parse_positive_range(range_value, range_unit)
+            corrected_range = parse_positive_range(range_value, range_unit)
         except ValueError as exc:
             return _message_page(f"Invalid range value: {exc}", status_code=422)
 
