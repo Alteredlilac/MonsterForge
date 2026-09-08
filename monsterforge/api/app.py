@@ -15,13 +15,15 @@ Swagger UI at /docs (and the OpenAPI schema at /openapi.json, no extra
 code required for either) show something more useful than the generic
 "FastAPI" default.
 """
+import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from monsterforge.api.creation import router as creation_router
+from monsterforge.api.demo_seed import seed_demo_cards
 from monsterforge.api.reads import router as reads_router
-from monsterforge.db.session import init_database
+from monsterforge.db.session import get_session, init_database
 
 
 @asynccontextmanager
@@ -29,8 +31,18 @@ async def lifespan(_app: FastAPI):
     """Same startup sequence as ui/app.py's own lifespan() -- each app
     starts up independently, but both need the database tables created
     and reference rows seeded before serving a single request (see
-    db/session.py::init_database())."""
+    db/session.py::init_database()). SEED_DEMO_DATA additionally
+    populates a handful of real, already-classified cards for the
+    public demo deployment (see api/demo_seed.py) -- only set on that
+    specific Render service, never in local development or tests, so
+    this has no effect unless explicitly opted into."""
     init_database()
+    if os.environ.get("SEED_DEMO_DATA") == "true":
+        session = get_session()
+        try:
+            seed_demo_cards(session)
+        finally:
+            session.close()
     yield
 
 
