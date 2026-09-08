@@ -35,8 +35,10 @@ caches and persists every classification in a SQLite database, keyed by a
 deterministic fingerprint of the attack, and a browsable library
 (searchable by name or id, with a full per-event history and the option
 to reopen and reactivate any past classification) sits on top of that
-database — the CLI doesn't use that cache yet, and a JSON API for
-external consumers is still just a stub.
+database — the CLI doesn't use that cache yet. A separate JSON API for
+non-interactive consumers now also exists, reusing that same cache and
+review gate for reads, creation, and reclassification, with interactive
+Swagger documentation generated automatically.
 
 For the full, up-to-date picture (what's implemented, test coverage, known
 limitations) see **[monsterforge/docs/PROJECT_STATUS.md](./monsterforge/docs/PROJECT_STATUS.md)**.
@@ -222,12 +224,12 @@ Built and working today:
 - The same conversion-and-review flow exposed over the web (`ui/`, FastAPI + Bootstrap), not only the CLI — plus a few things the CLI doesn't have yet: an optional image URL for the card, friendlier error messages on malformed input, and a way to revisit and correct a card's classification even after it was auto-approved
 - SQL persistence (SQLite + SQLAlchemy) for the web flow: every classification and review decision kept as its own row in an append-only log, and a deterministic fingerprint cache so the same attack always resolves to the same card — see [PERSISTENCE.md](./monsterforge/docs/PERSISTENCE.md)
 - A browsable library over that same database: every saved attack, searchable by name or id, with a full per-event history (every LLM run and human decision, with exactly what a correction changed highlighted) and the ability to reopen and reactivate any past classification, not just the current one — see [CARDS_LIBRARY.md](./monsterforge/docs/CARDS_LIBRARY.md)
+- A JSON API (`api/`) for non-interactive consumers — its own FastAPI application, independent from the web review UI above (which returns HTML, not JSON): reads already-saved cards, creates new ones, and reclassifies an existing attack, reusing the same fingerprint cache and confidence gate as the web form. No human review or deletion is exposed through it; interactive Swagger documentation is generated automatically at `/docs`.
 
 Planned, not yet built:
 
 - Web scraping with `requests` + `BeautifulSoup`
 - Persistence and review history for the CLI channel (the web flow already has both — see above)
-- A JSON API (`api/`) exposing the domain model to external consumers — distinct from the web review UI above, which already uses FastAPI but returns HTML, not JSON
 
 ---
 
@@ -326,9 +328,9 @@ monsterforge/
 ├── ui/                                   # FastAPI + Bootstrap web form: the same
 │                                          conversion + review flow as entrypoints/,
 │                                          over HTTP instead of a terminal prompt
-└── api/                                  # JSON API for external consumers, FastAPI
-                                           (planned — distinct from ui/ above, which
-                                           already exists but returns HTML, not JSON)
+└── api/                                  # JSON API for non-interactive consumers, its
+                                           own FastAPI application — distinct from ui/
+                                           above, which returns HTML, not JSON
 ```
 A parallel `tests/` directory at the repository root mirrors this
 structure module-for-module — it isn't nested inside `monsterforge/`
@@ -505,7 +507,6 @@ just not yet wired to a single end-to-end `convert()` call like this.
 
 ## Future Improvements
 
-- A JSON API (`api/`) exposing the domain model to external consumers
 - Persistence and review history for the CLI channel (the web flow already has both)
 - Images served from local files instead of only web URLs
 - Transformation versioning system
@@ -523,7 +524,9 @@ Currently used:
 - `google-genai` (Gemini API — migrated from the now-deprecated
   `google-generativeai`, see
   [PROJECT_STATUS.md](./monsterforge/docs/PROJECT_STATUS.md))
-- FastAPI + `uvicorn` (the `ui/` web form) + `python-multipart` (HTML form parsing)
+- FastAPI + `uvicorn` (the `ui/` web form and the separate `api/` JSON API)
+  + `python-multipart` (HTML form parsing) + Pydantic (the JSON API's
+  request/response models, also generating its automatic Swagger docs)
 - SQLite / SQLAlchemy (persistence and fingerprint cache for the web flow — see
   [PERSISTENCE.md](./monsterforge/docs/PERSISTENCE.md))
 - Jinja2 (LLM prompts, HTML/CSS card + gallery templates, and the `ui/` web form)

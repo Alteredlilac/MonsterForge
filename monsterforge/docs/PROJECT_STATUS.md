@@ -1,6 +1,6 @@
 # Project Status
 
-Snapshot of where MonsterForge stands as of September 7, 2026.
+Snapshot of where MonsterForge stands as of September 8, 2026.
 For the system's design and long-term architecture, see [PIPELINE_ARCHITECTURE.md](./PIPELINE_ARCHITECTURE.md)
 and [DESIGN.md](../../DESIGN.md). For how the LLM layer specifically is
 structured, see [LLM_ARCHITECTURE.md](./LLM_ARCHITECTURE.md). For how a
@@ -76,9 +76,20 @@ fingerprint of the attack's mechanical fields. Submitting the exact same
 attack twice returns the identical card, with the second submission
 making no LLM call at all — verified against the live deployment, not
 just locally. See [PERSISTENCE.md](./PERSISTENCE.md) for what that
-design demonstrates. The CLI doesn't use this cache yet, and a JSON API
-for external consumers is still just a stub — see
+design demonstrates. The CLI doesn't use this cache yet — see
 [Limitations](#limitations--not-yet-built) below.
+
+A JSON API for non-interactive consumers is also built now, as its own
+FastAPI application separate from the web UI: `GET /api/cards`/
+`GET /api/cards/{id}` list and fetch already-saved cards, `POST
+/api/cards` creates one (reusing the same fingerprint cache and
+confidence gate the web form uses), and `POST /api/cards/{id}/rerun`
+reclassifies an existing attack from scratch. Deliberately narrow
+scope: no human review and no deletion are exposed through it — an
+attack whose confidence is too low to auto-approve comes back as a
+pending status rather than a resolved card, since deciding an ambiguous
+case stays a human, web-only action. Interactive Swagger documentation
+is available automatically at `/docs`.
 
 Everything the persistence layer saves is now browsable, too: a cards
 library (`/library/cards`) lists every saved attack, searchable by
@@ -112,7 +123,7 @@ The web app can also be built and run as a Docker container: a
 image, with no database volume mounted by default — see
 [README.md](../../README.md#run-with-docker) for the exact commands.
 
-The current test suite contains 721 passing tests, 0 failing.
+The current test suite contains 755 passing tests, 0 failing.
 
 ## What works today
 
@@ -274,6 +285,21 @@ The current test suite contains 721 passing tests, 0 failing.
   highlighted row when it changes, and resolved correctly whether
   reopening a saved card or an old, already-superseded attempt.
 
+- **A JSON API for non-interactive consumers** (`GET /api/cards`,
+  `GET /api/cards/{raw_field_id}`, `POST /api/cards`,
+  `POST /api/cards/{raw_field_id}/rerun`): its own FastAPI application,
+  independent from the web UI, sharing only the persistence and
+  pipeline layers underneath both. Reads return exactly what's already
+  saved, filtered to real cards only; creation and rerun reuse the same
+  fingerprint cache and confidence gate `/convert`/`/review` already
+  use, so the same attack at the same confidence resolves identically
+  on either channel. Deliberately narrow: no route resolves an
+  ambiguous classification itself (that decision stays human, on the
+  web) and none deletes anything, matching the append-only schema.
+  Interactive Swagger documentation is generated automatically at
+  `/docs`, with no extra code beyond the request/response models the
+  routes already needed.
+
 - **Continuous integration** (GitHub Actions): the full test suite runs
   automatically on every push and pull request, with coverage reported
   in the run's own log — informational only, no minimum threshold
@@ -298,7 +324,23 @@ The current test suite contains 721 passing tests, 0 failing.
 
 ## Test coverage
 
-**721 passing, 0 failing.** 12 of those close out MVP 2.19: recording
+**755 passing, 0 failing.** 34 of those cover the new JSON API
+(`api/reads.py`, `api/creation.py`): the two read routes (an empty
+list, a populated one, name/id search, a rejected attack's card
+correctly excluded, an unknown id, a rejected attack's classification,
+and the same data-integrity anomaly `find_existing_card()` guards
+against elsewhere), creation (auto-approved, pending review, a cache
+hit against an existing result, a previously rejected attack refusing
+to reclassify, model-unavailable and other classification failures, an
+unknown prompt template, the same range/attack-type validation
+`/convert` already enforces, and a submitted image coming through on
+the built card), and rerun (auto-approved and pending-review
+reclassification, an unknown raw field, never deduplicating against the
+fingerprint even for the identical attack twice in a row, a note
+appended to context, an earlier name correction carrying forward into
+the new attempt, and rerun working on an attack whose only
+classification was never approved or rejected). Before that, 12 of
+those close out MVP 2.19: recording
 and resolving a reviewer's name correction through the raw field's
 history, the same way an earlier session closed out four other cards-
 library gaps. Before that, 6 of those close out gaps found testing
@@ -402,9 +444,9 @@ ship:
   conversion fresh, with no stable card id across runs. Deliberately
   deferred to a broader CLI pass rather than wired in isolation now.
 
-- **JSON API for external consumers** — `api/` is still an empty stub;
-  the pipeline is reachable via the CLI or the human-facing web form
-  (`ui/`), not as machine-readable JSON over HTTP.
+- **The JSON API isn't deployed publicly yet** — built, tested, and
+  runnable locally as its own FastAPI application, but with no live URL
+  of its own the way the web UI has one on Render.
 
 - **Other `MoveCard` sources** — only attacks produce move cards today;
   talents, spells, and special qualities aren't wired in
@@ -417,10 +459,9 @@ ship:
   becomes slow/unavailable for a while), not cost. Deliberately deferred
   to ship the deployment itself first, not an oversight.
 
-The JSON API above is the one item in this list still without a
-concrete design — everything else that was once in this same "later"
-bucket (rendering, human review, the web flow, persistence with stable
-card identity) has since moved out of it and is built, at least for the
+Every item that was once in this "later" bucket (rendering, human
+review, the web flow, persistence with stable card identity, and now
+the JSON API) has since moved out of it and is built, at least for the
 web channel; see [RENDERING_AND_GALLERY.md](./RENDERING_AND_GALLERY.md)
 and [PERSISTENCE.md](./PERSISTENCE.md).
 
