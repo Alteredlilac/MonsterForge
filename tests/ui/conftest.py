@@ -73,6 +73,19 @@ def extract_review_ids(page_html: str) -> dict:
     }
 
 
+def review_page_html(confidence=0.3, **result_overrides):
+    """POST /convert with a low (or forced) confidence to land on
+    review_form.html.jinja2, returning its rendered HTML -- the setup
+    sequence most /review and library/reopen tests need at least once.
+    Promoted here from test_app.py once tests/ui/routes/test_review.py
+    needed it too, same reasoning as the other helpers above."""
+    with patch("monsterforge.ui.routes.convert.classify_attack", return_value=make_semantic_result(
+            confidence=confidence, **result_overrides)):
+        response = client.post("/convert", data=RAW_ATTACK_FORM)
+
+    return response.text
+
+
 @pytest.fixture(autouse=True)
 def _override_db_session(seeded_db_session):
     """Replace the app's real database dependency with the isolated,
@@ -96,14 +109,15 @@ def _mock_llm_client():
     41+ existing tests need their own patch for a call they don't
     otherwise care about.
 
-    get_llm_client is imported separately into ui.app (review()'s rerun
-    branch) and ui.routes.convert (convert()) — patch, being a name-
-    binding replacement rather than a global one, has to target each
-    import site on its own, so both are patched here."""
+    get_llm_client is imported separately into ui.routes.review
+    (review()'s rerun branch) and ui.routes.convert (convert()) —
+    patch, being a name-binding replacement rather than a global one,
+    has to target each import site on its own, so both are patched
+    here."""
     with (
-        patch("monsterforge.ui.app.get_llm_client") as mock_get_client,
+        patch("monsterforge.ui.routes.review.get_llm_client") as mock_get_client_review,
         patch("monsterforge.ui.routes.convert.get_llm_client") as mock_get_client_convert,
     ):
-        mock_get_client.return_value.model_name = "test-model"
+        mock_get_client_review.return_value.model_name = "test-model"
         mock_get_client_convert.return_value.model_name = "test-model"
         yield
