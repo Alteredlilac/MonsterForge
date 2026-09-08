@@ -23,7 +23,7 @@ from monsterforge.structured_data.dnd.v3x.enums import CreatureSubtype, MoveType
 from monsterforge.transformation.dnd.v3x.converters.attacks_converter import attack_converter
 from monsterforge.validation.enums import ValidationStatus
 from monsterforge.validation.review import HumanReview
-from tests.pipeline.conftest import BITE, CLAW
+from tests.conftest import BITE, CLAW
 
 
 # =====================

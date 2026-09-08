@@ -22,7 +22,7 @@ from monsterforge.pipeline.reference_lookups import get_human_actor, get_llm_act
 from monsterforge.structured_data.dnd.v3x.enums import MoveType
 from monsterforge.validation.enums import ValidationStatus
 from monsterforge.validation.review import HumanReview
-from tests.pipeline.conftest import BITE, CLAW
+from tests.conftest import BITE, CLAW
 
 
 # =====================
