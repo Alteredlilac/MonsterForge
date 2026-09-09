@@ -1,11 +1,11 @@
-# MonsterForge — RPG Data Transformation Engine
+# MonsterForge — Data Transformation Engine
 
 [![Tests](https://github.com/Alteredlilac/MonsterForge/actions/workflows/tests.yml/badge.svg)](https://github.com/Alteredlilac/MonsterForge/actions/workflows/tests.yml)
 
 A typed, multi-stage data transformation pipeline, combining
 deterministic parsing and calculation with LLM-assisted semantic
 classification, applied to a concrete case: converting D&D
-3.5/Pathfinder stat blocks into structured card entities.
+3.5 stat blocks into structured card entities.
 
 ---
 
